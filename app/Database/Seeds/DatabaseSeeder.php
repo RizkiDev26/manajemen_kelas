@@ -8,6 +8,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
+        // Seeder untuk profil sekolah (data dasar sekolah)
+        $this->call('ProfilSekolahSeeder');
+        
         // Jalankan seeder untuk tb_guru terlebih dahulu
         $this->call('TbGuruSeeder');
         
@@ -26,6 +29,7 @@ class DatabaseSeeder extends Seeder
         echo "Walikelas: username='[NIP]', password='123456'\n";
         echo "Guru: username='[NIP]', password='123456'\n";
         echo "\nTotal Data:\n";
+        echo "- Profil Sekolah: 1 record\n";
         echo "- Guru: 8 records\n";
         echo "- Walikelas: 5 records\n";
         echo "- Users: 9 records\n";

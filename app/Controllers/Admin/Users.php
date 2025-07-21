@@ -25,33 +25,36 @@ class Users extends BaseController
      */
     public function index()
     {
-        // Check if user is logged in and is admin
-        if (!session()->get('isLoggedIn')) {
-            return redirect()->to('/login');
+        // Validate session security
+        $sessionCheck = $this->validateSession();
+        if ($sessionCheck) {
+            return $sessionCheck;
         }
 
-        $userRole = session()->get('role');
+        $userRole = $this->session->get('role');
         if ($userRole !== 'admin') {
             return redirect()->to('/admin')->with('error', 'Anda tidak memiliki akses ke halaman ini');
         }
 
-        // Get all users with walikelas info
+        // Get all users with walikelas info using prepared statements for security
         $db = \Config\Database::connect();
-        $query = $db->query("
-            SELECT u.*, w.kelas 
-            FROM users u 
-            LEFT JOIN walikelas w ON u.walikelas_id = w.id 
-            ORDER BY u.created_at DESC
-        ");
-        $users = $query->getResultArray();
+        $query = $db->prepare(function($db) {
+            return $db->query("
+                SELECT u.*, w.kelas 
+                FROM users u 
+                LEFT JOIN walikelas w ON u.walikelas_id = w.id 
+                ORDER BY u.created_at DESC
+            ");
+        });
+        $users = $query->execute()->getResultArray();
 
         // Get all walikelas for dropdown
         $walikelas = $this->walikelasModel->findAll();
 
         $data = [
             'title' => 'Kelola User',
-            'users' => $users,
-            'walikelas' => $walikelas
+            'users' => $this->sanitizeOutput($users),
+            'walikelas' => $this->sanitizeOutput($walikelas)
         ];
 
         return view('admin/users/index', $data);
@@ -62,12 +65,13 @@ class Users extends BaseController
      */
     public function create()
     {
-        // Check if user is logged in and is admin
-        if (!session()->get('isLoggedIn')) {
-            return redirect()->to('/login');
+        // Validate session security
+        $sessionCheck = $this->validateSession();
+        if ($sessionCheck) {
+            return $sessionCheck;
         }
 
-        $userRole = session()->get('role');
+        $userRole = $this->session->get('role');
         if ($userRole !== 'admin') {
             return redirect()->to('/admin')->with('error', 'Anda tidak memiliki akses ke halaman ini');
         }
@@ -81,8 +85,8 @@ class Users extends BaseController
 
         $data = [
             'title' => 'Tambah User',
-            'walikelas' => $walikelas,
-            'availableKelas' => $availableKelas
+            'walikelas' => $this->sanitizeOutput($walikelas),
+            'availableKelas' => $this->sanitizeOutput($availableKelas)
         ];
 
         return view('admin/users/create', $data);
@@ -93,14 +97,31 @@ class Users extends BaseController
      */
     public function store()
     {
-        // Check if user is logged in and is admin
-        if (!session()->get('isLoggedIn')) {
-            return redirect()->to('/login');
+        // Validate session security
+        $sessionCheck = $this->validateSession();
+        if ($sessionCheck) {
+            return $sessionCheck;
         }
 
-        $userRole = session()->get('role');
+        $userRole = $this->session->get('role');
         if ($userRole !== 'admin') {
             return redirect()->to('/admin')->with('error', 'Anda tidak memiliki akses ke halaman ini');
+        }
+
+        // Enhanced validation rules with comprehensive security checks
+        $rules = [
+            'username' => 'required|min_length[3]|max_length[50]|is_unique[users.username]|regex_match[/^[a-zA-Z0-9@._-]+$/]',
+            'password' => 'required|min_length[8]|max_length[255]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/]',
+            'nama' => 'required|max_length[255]|regex_match[/^[a-zA-Z\s]+$/]',
+            'email' => 'permit_empty|valid_email|is_unique[users.email]|max_length[255]',
+            'role' => 'required|in_list[admin,walikelas,wali_kelas]',
+            'nip' => 'permit_empty|numeric|min_length[8]|max_length[20]'
+        ];
+
+        // Use enhanced validation method
+        $validatedData = $this->validateAndSanitizeInput($rules);
+        if ($validatedData === false) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         // Get walikelas_id and handle it before validation
@@ -112,32 +133,32 @@ class Users extends BaseController
             // Extract class name from "new_ClassName" format
             $kelasName = urldecode(substr($walikelasId, 4));
             
+            // Validate class name format
+            if (!preg_match('/^[a-zA-Z0-9\s-]+$/', $kelasName)) {
+                return redirect()->back()->withInput()->with('error', 'Format nama kelas tidak valid');
+            }
+            
             // Check if this class already has a wali kelas
             $existingWali = $this->walikelasModel->where('kelas', $kelasName)->first();
             if ($existingWali) {
-                return redirect()->back()->withInput()->with('error', 'Kelas ' . $kelasName . ' sudah memiliki wali kelas');
+                return redirect()->back()->withInput()->with('error', 'Kelas ' . esc($kelasName) . ' sudah memiliki wali kelas');
             }
             
             // Get NIP from request and validate
-            $nipInput = $this->request->getPost('nip');
+            $nipInput = $validatedData['nip'] ?? null;
             if ($nipInput) {
-                // Validate NIP format (must be numeric)
-                if (!is_numeric($nipInput)) {
-                    return redirect()->back()->withInput()->with('error', 'NIP harus berupa angka');
-                }
-                
                 // Check uniqueness
                 $existingNip = $this->walikelasModel->where('nip', $nipInput)->first();
                 if ($existingNip) {
-                    return redirect()->back()->withInput()->with('error', 'NIP ' . $nipInput . ' sudah digunakan');
+                    return redirect()->back()->withInput()->with('error', 'NIP ' . esc($nipInput) . ' sudah digunakan');
                 }
             }
             
             // Create new walikelas entry
             $walikelasData = [
-                'nama' => $this->request->getPost('nama'),
+                'nama' => $validatedData['nama'],
                 'kelas' => $kelasName,
-                'nip' => $nipInput ?: $this->generateUniqueNIP(), // Use input NIP or generate unique numeric NIP
+                'nip' => $nipInput ?: $this->generateUniqueNIP(),
             ];
             
             $newWalikelasId = $this->walikelasModel->insert($walikelasData);
@@ -150,31 +171,18 @@ class Users extends BaseController
             // Use existing walikelas_id
             $finalWalikelasId = $walikelasId ? (int)$walikelasId : null;
         }
-
-        // Validation rules
-        $rules = [
-            'username' => 'required|min_length[3]|max_length[50]|is_unique[users.username]',
-            'password' => 'required|min_length[6]',
-            'nama' => 'required|max_length[255]',
-            'email' => 'permit_empty|valid_email|is_unique[users.email]',
-            'role' => 'required|in_list[admin,walikelas,wali_kelas]'
-        ];
-
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
-        }
         
-        $data = [
-            'username' => $this->request->getPost('username'),
-            'password' => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
-            'nama' => $this->request->getPost('nama'),
-            'email' => $this->request->getPost('email'),
-            'role' => $this->request->getPost('role'),
+        $userData = [
+            'username' => $validatedData['username'],
+            'password' => password_hash($validatedData['password'], PASSWORD_DEFAULT),
+            'nama' => $validatedData['nama'],
+            'email' => $validatedData['email'] ?: null,
+            'role' => $validatedData['role'],
             'walikelas_id' => $finalWalikelasId,
             'is_active' => 1
         ];
 
-        if ($this->userModel->insert($data)) {
+        if ($this->userModel->insert($userData)) {
             return redirect()->to('/admin/users')->with('success', 'User berhasil ditambahkan');
         } else {
             return redirect()->back()->withInput()->with('error', 'Gagal menambahkan user');

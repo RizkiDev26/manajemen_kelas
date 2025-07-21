@@ -11,11 +11,10 @@ class Dashboard extends BaseController
 {
     public function index()
     {
-        $session = session();
-        
-        // Check if user is logged in
-        if (!$session->get('isLoggedIn')) {
-            return redirect()->to('/login');
+        // Validate session security
+        $sessionCheck = $this->validateSession();
+        if ($sessionCheck) {
+            return $sessionCheck;
         }
 
         $userModel = new UserModel();
@@ -23,7 +22,7 @@ class Dashboard extends BaseController
         $siswaModel = new SiswaModel();
         
         // Get current user info with walikelas data if applicable
-        $currentUser = $userModel->getUserWithWalikelas($session->get('user_id'));
+        $currentUser = $userModel->getUserWithWalikelas($this->session->get('user_id'));
         
         // Dashboard statistics
         $totalGuru = $guruModel->countAllResults();
@@ -31,16 +30,17 @@ class Dashboard extends BaseController
         $totalUsers = $userModel->where('is_active', 1)->countAllResults();
         $siswaStats = $siswaModel->getStatistics();
         
+        // Sanitize output data
         $data = [
-            'currentUser' => $currentUser,
-            'totalGuru' => $totalGuru,
-            'totalWalikelas' => $totalWalikelas,
-            'totalUsers' => $totalUsers,
-            'totalSiswa' => $siswaStats['total'],
-            'siswaLaki' => $siswaStats['laki_laki'],
-            'siswaPerempuan' => $siswaStats['perempuan'],
-            'recentGuru' => $guruModel->orderBy('created_at', 'DESC')->findAll(5),
-            'recentSiswa' => $siswaModel->orderBy('created_at', 'DESC')->findAll(5)
+            'currentUser' => $this->sanitizeOutput($currentUser),
+            'totalGuru' => (int)$totalGuru,
+            'totalWalikelas' => (int)$totalWalikelas,
+            'totalUsers' => (int)$totalUsers,
+            'totalSiswa' => (int)$siswaStats['total'],
+            'siswaLaki' => (int)$siswaStats['laki_laki'],
+            'siswaPerempuan' => (int)$siswaStats['perempuan'],
+            'recentGuru' => $this->sanitizeOutput($guruModel->orderBy('created_at', 'DESC')->findAll(5)),
+            'recentSiswa' => $this->sanitizeOutput($siswaModel->orderBy('created_at', 'DESC')->findAll(5))
         ];
 
         return view('admin/dashboard', $data);

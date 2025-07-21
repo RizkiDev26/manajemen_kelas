@@ -39,7 +39,7 @@
             <label for="password" class="block text-gray-700 font-medium mb-1">Password <span class="text-red-500">*</span></label>
             <input type="password" id="password" name="password" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <p class="text-sm text-gray-500 mt-1">Min. 6 karakter</p>
+            <p class="text-sm text-gray-500 mt-1">Min. 8 karakter, harus mengandung huruf besar, huruf kecil, dan angka</p>
         </div>
 
         <div>

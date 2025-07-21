@@ -35,13 +35,13 @@ abstract class BaseController extends Controller
      *
      * @var list<string>
      */
-    protected $helpers = [];
+    protected $helpers = ['form', 'html', 'security'];
 
     /**
      * Be sure to declare properties for any property fetch you initialized.
      * The creation of dynamic property is deprecated in PHP 8.2.
      */
-    // protected $session;
+    protected $session;
 
     /**
      * @return void
@@ -52,7 +52,81 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
 
         // Preload any models, libraries, etc, here.
-
-        // E.g.: $this->session = service('session');
+        $this->session = service('session');
+        
+        // Set secure headers
+        $this->response->setHeader('X-Frame-Options', 'SAMEORIGIN');
+        $this->response->setHeader('X-Content-Type-Options', 'nosniff');
+        $this->response->setHeader('X-XSS-Protection', '1; mode=block');
+        $this->response->setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    }
+    
+    /**
+     * Validate session security
+     */
+    protected function validateSession()
+    {
+        if (!$this->session->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+        
+        // Check if user agent changed (potential session hijacking)
+        $currentUserAgent = $this->request->getUserAgent();
+        $sessionUserAgent = $this->session->get('user_agent');
+        
+        if ($sessionUserAgent && $sessionUserAgent !== (string)$currentUserAgent) {
+            $this->session->destroy();
+            return redirect()->to('/login')->with('error', 'Sesi tidak valid. Silakan login kembali.');
+        }
+        
+        // Check session timeout (8 hours)
+        $loginTime = $this->session->get('login_time');
+        if ($loginTime && (time() - $loginTime) > 28800) {
+            $this->session->destroy();
+            return redirect()->to('/login')->with('error', 'Sesi telah berakhir. Silakan login kembali.');
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Sanitize output to prevent XSS attacks
+     */
+    protected function sanitizeOutput($data)
+    {
+        if (is_array($data)) {
+            return array_map([$this, 'sanitizeOutput'], $data);
+        }
+        
+        if (is_string($data)) {
+            return esc($data);
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Validate and sanitize input
+     */
+    protected function validateAndSanitizeInput(array $rules, array $data = null)
+    {
+        $data = $data ?? $this->request->getPost();
+        
+        // Sanitize input data
+        $sanitizedData = [];
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                $sanitizedData[$key] = trim(strip_tags($value));
+            } else {
+                $sanitizedData[$key] = $value;
+            }
+        }
+        
+        // Validate
+        if (!$this->validate($rules, $sanitizedData)) {
+            return false;
+        }
+        
+        return $sanitizedData;
     }
 }

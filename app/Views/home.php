@@ -239,6 +239,21 @@
     <section class="py-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Berita Terbaru</h2>
+            
+            <!-- Error Message Display -->
+            <?php if (isset($error_message) && !empty($error_message)): ?>
+                <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700"><?= esc($error_message) ?></p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <?php if (!empty($berita) && is_array($berita)): ?>
                     <?php foreach ($berita as $item): ?>
@@ -254,7 +269,22 @@
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-center text-gray-600 col-span-3">Belum ada berita tersedia.</p>
+                    <div class="col-span-3 text-center py-12">
+                        <div class="mx-auto h-16 w-16 text-gray-400 mb-4">
+                            <i class="fas fa-newspaper text-4xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Belum Ada Berita</h3>
+                        <p class="text-gray-600 mb-6">Saat ini belum ada berita yang tersedia. Silakan kembali lagi nanti untuk update terbaru dari sekolah kami.</p>
+                        <div class="bg-blue-50 rounded-lg p-6 max-w-md mx-auto">
+                            <h4 class="font-semibold text-blue-800 mb-2">Informasi Sekolah</h4>
+                            <p class="text-blue-700 text-sm">
+                                Untuk informasi lebih lanjut tentang kegiatan sekolah, silakan hubungi kantor administrasi atau kunjungi kami langsung di:
+                            </p>
+                            <p class="text-blue-800 font-medium text-sm mt-2">
+                                Jl. Kemandoran I Rt. 004 Rw.005 Kel. Grogol Utara Kec. Kebayoran Lama Jakarta Selatan
+                            </p>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

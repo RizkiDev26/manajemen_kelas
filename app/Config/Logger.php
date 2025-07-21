@@ -36,6 +36,8 @@ class Logger extends BaseConfig
      * For a live site you'll usually enable Critical or higher (3) to be logged otherwise
      * your log files will fill up very fast.
      *
+     * Enhanced threshold for better error handling and monitoring
+     *
      * @var int|list<int>
      */
     public $threshold = (ENVIRONMENT === 'production') ? 4 : 9;
@@ -73,13 +75,16 @@ class Logger extends BaseConfig
      * Handlers are executed in the order defined in this array, starting with
      * the handler on top and continuing down.
      *
+     * Enhanced logging configuration for better error handling and monitoring
+     *
      * @var array<class-string, array<string, int|list<string>|string>>
      */
     public array $handlers = [
         /*
          * --------------------------------------------------------------------
-         * File Handler
+         * Application Logs Handler
          * --------------------------------------------------------------------
+         * Handles application-specific logs (errors, info, warnings)
          */
         FileHandler::class => [
             // The log levels that this handler will handle.
@@ -87,11 +92,9 @@ class Logger extends BaseConfig
                 'critical',
                 'alert',
                 'emergency',
-                'debug',
                 'error',
-                'info',
-                'notice',
                 'warning',
+                'info',
             ],
 
             /*
@@ -101,7 +104,7 @@ class Logger extends BaseConfig
              *
              * NOTE: Leaving it blank will default to 'log'.
              */
-            'fileExtension' => '',
+            'fileExtension' => 'log',
 
             /*
              * The file system permissions to be applied on newly created log files.
@@ -121,6 +124,21 @@ class Logger extends BaseConfig
         ],
 
         /*
+         * --------------------------------------------------------------------
+         * Debug Logs Handler (separate file for debugging)
+         * --------------------------------------------------------------------
+         * Handles debug-level logs separately for easier debugging
+         */
+        'DebugFileHandler' => [
+            'class' => FileHandler::class,
+            'handles' => ['debug', 'notice'],
+            'fileExtension' => 'log',
+            'filePermissions' => 0644,
+            'path' => WRITEPATH . 'logs/debug/',
+            'filePrefix' => 'debug-',
+        ],
+
+        /*
          * The ChromeLoggerHandler requires the use of the Chrome web browser
          * and the ChromeLogger extension. Uncomment this block to use it.
          */
@@ -134,17 +152,16 @@ class Logger extends BaseConfig
 
         /*
          * The ErrorlogHandler writes the logs to PHP's native `error_log()` function.
-         * Uncomment this block to use it.
+         * Uncomment this block to use it for critical errors in production.
          */
-        // 'CodeIgniter\Log\Handlers\ErrorlogHandler' => [
-        //     /* The log levels this handler can handle. */
-        //     'handles' => ['critical', 'alert', 'emergency', 'debug', 'error', 'info', 'notice', 'warning'],
-        //
-        //     /*
-        //     * The message type where the error should go. Can be 0 or 4, or use the
-        //     * class constants: `ErrorlogHandler::TYPE_OS` (0) or `ErrorlogHandler::TYPE_SAPI` (4)
-        //     */
-        //     'messageType' => 0,
-        // ],
+        'ProductionErrorHandler' => [
+            'class' => 'CodeIgniter\Log\Handlers\ErrorlogHandler',
+            'handles' => ['critical', 'alert', 'emergency'],
+            /*
+            * The message type where the error should go. Can be 0 or 4, or use the
+            * class constants: `ErrorlogHandler::TYPE_OS` (0) or `ErrorlogHandler::TYPE_SAPI` (4)
+            */
+            'messageType' => 0,
+        ],
     ];
 }

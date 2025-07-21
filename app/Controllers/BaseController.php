@@ -41,7 +41,7 @@ abstract class BaseController extends Controller
      * Be sure to declare properties for any property fetch you initialized.
      * The creation of dynamic property is deprecated in PHP 8.2.
      */
-    // protected $session;
+    protected $session;
 
     /**
      * @return void
@@ -52,7 +52,75 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
 
         // Preload any models, libraries, etc, here.
+        $this->session = service('session');
+    }
 
-        // E.g.: $this->session = service('session');
+    /**
+     * Handle database errors and log them
+     *
+     * @param \Exception $e
+     * @param string $context
+     * @return void
+     */
+    protected function handleDatabaseError(\Exception $e, string $context = '')
+    {
+        $message = $context ? "$context: {$e->getMessage()}" : $e->getMessage();
+        log_message('error', "Database Error - $message", [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+    }
+
+    /**
+     * Handle general application errors and log them
+     *
+     * @param \Exception $e
+     * @param string $context
+     * @return void
+     */
+    protected function handleApplicationError(\Exception $e, string $context = '')
+    {
+        $message = $context ? "$context: {$e->getMessage()}" : $e->getMessage();
+        log_message('error', "Application Error - $message", [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+    }
+
+    /**
+     * Get fallback data when primary data fails to load
+     *
+     * @param string $type
+     * @return array
+     */
+    protected function getFallbackData(string $type): array
+    {
+        switch ($type) {
+            case 'berita':
+                return [
+                    [
+                        'id' => 0,
+                        'judul' => 'Selamat Datang di Website SDN Grogol Utara 09',
+                        'isi' => 'Website resmi SDN Grogol Utara 09. Pantau terus update terbaru dari sekolah kami.',
+                        'tanggal' => date('Y-m-d'),
+                        'gambar' => ''
+                    ]
+                ];
+            case 'dashboard_stats':
+                return [
+                    'totalGuru' => 0,
+                    'totalWalikelas' => 0,
+                    'totalUsers' => 0,
+                    'totalSiswa' => 0,
+                    'siswaLaki' => 0,
+                    'siswaPerempuan' => 0,
+                    'recentGuru' => [],
+                    'recentSiswa' => []
+                ];
+            default:
+                return [];
+        }
     }
 }

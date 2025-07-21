@@ -7,6 +7,10 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
+// Health check endpoints
+$routes->get('/health', 'HealthController::check');
+$routes->get('/health/ping', 'HealthController::ping');
+
 // Test route tanpa database
 $routes->get('/test-rekap', function() {
     return view('test-index');

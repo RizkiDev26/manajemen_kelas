@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Absensi Save</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>Test Absensi Save Functionality</h1>
+    <div id="result"></div>
+    <button onclick="testSave()">Test Save</button>
+    
+    <script>
+    async function testSave() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = 'Testing...';
+        
+        try {
+            // Simulate attendance data
+            const testData = {
+                tanggal: '2025-07-21',
+                kelas: 'Kelas 5 A',
+                attendance: {
+                    1: { status: 'hadir', keterangan: '' },
+                    2: { status: 'hadir', keterangan: '' },
+                    3: { status: 'izin', keterangan: 'Sakit' }
+                }
+            };
+            
+            console.log('Sending data:', testData);
+            
+            const response = await fetch('/admin/absensi/save_all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(testData)
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers));
+            
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
+            
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                result = { error: 'Invalid JSON response', raw: responseText };
+            }
+            
+            resultDiv.innerHTML = `
+                <h3>Response (Status: ${response.status})</h3>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+                <h3>Raw Response</h3>
+                <pre>${responseText}</pre>
+            `;
+            
+        } catch (error) {
+            console.error('Error:', error);
+            resultDiv.innerHTML = `
+                <h3>Error</h3>
+                <pre>${error.message}</pre>
+            `;
+        }
+    }
+    </script>
+</body>
+</html>

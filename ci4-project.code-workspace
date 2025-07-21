@@ -1,0 +1,67 @@
+{
+    "folders": [
+        {
+            "name": "CI4-Project",
+            "path": "."
+        }
+    ],
+    "settings": {
+        // === OPTIMASI WORKSPACE ===
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/node_modules": true,
+            "**/vendor": true,
+            "**/builds": true,
+            "**/writable/cache": true,
+            "**/writable/logs": true,
+            "**/writable/session": true,
+            "**/writable/uploads": true,
+            "cleanup_*.php": true,
+            "optimize_*.bat": true
+        },
+        
+        "search.exclude": {
+            "**/node_modules": true,
+            "**/bower_components": true,
+            "**/*.code-search": true,
+            "**/vendor": true,
+            "**/builds": true,
+            "**/writable": true,
+            "**/.git": true,
+            "cleanup_*.php": true,
+            "optimize_*.bat": true
+        },
+        
+        "files.watcherExclude": {
+            "**/.git/objects/**": true,
+            "**/.git/subtree-cache/**": true,
+            "**/node_modules/*/**": true,
+            "**/vendor/**": true,
+            "**/builds/**": true,
+            "**/writable/**": true
+        },
+        
+        // === PENGATURAN PERFORMANCE ===
+        "editor.minimap.enabled": false,
+        "editor.codeLens": false,
+        "git.autorefresh": false,
+        "git.autofetch": false,
+        "extensions.autoUpdate": false,
+        "telemetry.telemetryLevel": "off"
+    },
+    "extensions": {
+        "recommendations": [
+            "bmewburn.vscode-intelephense-client",
+            "xdebug.php-debug"
+        ],
+        "unwantedRecommendations": [
+            "ms-vscode.vscode-typescript-next",
+            "ms-vscode.js-debug-nightly"
+        ]
+    }
+}

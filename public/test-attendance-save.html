@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Attendance Save</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold mb-4">Test Attendance Save</h1>
+        
+        <button id="testSave" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Test Save Attendance
+        </button>
+        
+        <div id="result" class="mt-4 p-4 rounded hidden"></div>
+    </div>
+
+    <script>
+        document.getElementById('testSave').addEventListener('click', function() {
+            const button = this;
+            const result = document.getElementById('result');
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            
+            // Test data
+            const testData = [
+                {
+                    siswa_id: '1',
+                    status: 'hadir',
+                    keterangan: 'Test attendance'
+                }
+            ];
+            
+            const formData = new FormData();
+            formData.append('tanggal', '2025-07-16');
+            formData.append('kelas', 'Kelas 5 A');
+            formData.append('attendance_data', JSON.stringify(testData));
+            
+            fetch('http://localhost:8080/admin/absensi/save_all', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.text();
+            })
+            .then(text => {
+                console.log('Response text:', text);
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed data:', data);
+                    
+                    result.className = 'mt-4 p-4 rounded ' + (data.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+                    result.textContent = data.message || 'Unknown response';
+                    result.classList.remove('hidden');
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    result.className = 'mt-4 p-4 rounded bg-red-100 text-red-800';
+                    result.textContent = 'Invalid JSON response: ' + text;
+                    result.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                result.className = 'mt-4 p-4 rounded bg-red-100 text-red-800';
+                result.textContent = 'Network error: ' + error.message;
+                result.classList.remove('hidden');
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = 'Test Save Attendance';
+            });
+        });
+    </script>
+</body>
+</html>

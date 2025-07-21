@@ -1,0 +1,26 @@
+# URUTAN UPLOAD FILE KE INFINITYFREE
+
+Upload file-file ini ke phpMyAdmin dalam urutan berikut:
+
+1. 01_absensi_batch1.sql
+2. 01_absensi_batch2.sql
+3. 02_berita.sql
+4. 03_kalender_akademik.sql
+5. 04_migrations.sql
+6. 05_tb_guru.sql
+7. 06_tb_siswa_batch1.sql
+8. 06_tb_siswa_batch2.sql
+9. 06_tb_siswa_batch3.sql
+10. 06_tb_siswa_batch4.sql
+11. 06_tb_siswa_batch5.sql
+12. 06_tb_siswa_batch6.sql
+13. 06_tb_siswa_batch7.sql
+14. 06_tb_siswa_batch8.sql
+15. 06_tb_siswa_batch9.sql
+16. 07_users.sql
+17. 08_walikelas.sql
+
+TIPS:
+- Upload satu per satu
+- Tunggu sampai selesai sebelum upload file berikutnya
+- Jika ada error, coba upload ulang file yang error

@@ -1,0 +1,30 @@
+
+RewriteEngine On
+
+# Handle Angular and Vue.js HTML5 mode
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L]
+
+# Deny access to system folders
+RewriteCond %{REQUEST_URI} ^/app.*
+RewriteRule ^(.*)$ /index.php/$1 [L]
+
+RewriteCond %{REQUEST_URI} ^/writable.*
+RewriteRule ^(.*)$ /index.php/$1 [L]
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Disable server signature
+ServerSignature Off
+
+# Prevent access to .htaccess
+<Files .htaccess>
+Order allow,deny
+Deny from all
+</Files>

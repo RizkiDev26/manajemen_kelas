@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Horizontal Layout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .student-row-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            color: white;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .student-info-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .student-avatar-horizontal {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .student-details-horizontal {
+            flex: 1;
+        }
+
+        .student-name-horizontal {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .student-meta-horizontal {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .attendance-buttons-horizontal {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-attendance-horizontal {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 80px;
+        }
+
+        .btn-hadir { background-color: #28a745; color: white; }
+        .btn-sakit { background-color: #ffc107; color: #212529; }
+        .btn-izin { background-color: #17a2b8; color: white; }
+        .btn-alpha { background-color: #dc3545; color: white; }
+
+        .btn-attendance-horizontal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-attendance-horizontal.active-hadir {
+            background-color: #155724;
+            transform: scale(1.05);
+        }
+
+        .btn-attendance-horizontal.active-sakit {
+            background-color: #d39e00;
+            transform: scale(1.05);
+        }
+
+        .btn-attendance-horizontal.active-izin {
+            background-color: #0f5132;
+            transform: scale(1.05);
+        }
+
+        .btn-attendance-horizontal.active-alpha {
+            background-color: #721c24;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .student-row-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .student-info-section {
+                width: 100%;
+            }
+            
+            .attendance-buttons-horizontal {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .btn-attendance-horizontal {
+                flex: 1;
+                min-width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="mb-4">Test Horizontal Layout - Attendance System</h2>
+        
+        <!-- Sample student rows -->
+        <div class="student-row-card" data-siswa-id="1">
+            <div class="student-info-section">
+                <div class="student-avatar-horizontal">AN</div>
+                <div class="student-details-horizontal">
+                    <div class="student-name-horizontal">Ahmad Nur</div>
+                    <div class="student-meta-horizontal">
+                        <span><i class="fas fa-id-card"></i> 12345</span>
+                        <span class="mx-2">|</span>
+                        <span><i class="fas fa-user"></i> L</span>
+                    </div>
+                </div>
+            </div>
+            <div class="attendance-buttons-horizontal">
+                <button class="btn-attendance-horizontal btn-hadir" data-status="hadir">
+                    <i class="fas fa-check"></i> HADIR
+                </button>
+                <button class="btn-attendance-horizontal btn-sakit" data-status="sakit">
+                    <i class="fas fa-thermometer-half"></i> SAKIT
+                </button>
+                <button class="btn-attendance-horizontal btn-izin" data-status="izin">
+                    <i class="fas fa-hand-paper"></i> IZIN
+                </button>
+                <button class="btn-attendance-horizontal btn-alpha" data-status="alpha">
+                    <i class="fas fa-times"></i> ALPHA
+                </button>
+            </div>
+        </div>
+
+        <div class="student-row-card" data-siswa-id="2">
+            <div class="student-info-section">
+                <div class="student-avatar-horizontal">SP</div>
+                <div class="student-details-horizontal">
+                    <div class="student-name-horizontal">Siti Permata</div>
+                    <div class="student-meta-horizontal">
+                        <span><i class="fas fa-id-card"></i> 12346</span>
+                        <span class="mx-2">|</span>
+                        <span><i class="fas fa-user"></i> P</span>
+                    </div>
+                </div>
+            </div>
+            <div class="attendance-buttons-horizontal">
+                <button class="btn-attendance-horizontal btn-hadir active-hadir" data-status="hadir">
+                    <i class="fas fa-check"></i> HADIR
+                </button>
+                <button class="btn-attendance-horizontal btn-sakit" data-status="sakit">
+                    <i class="fas fa-thermometer-half"></i> SAKIT
+                </button>
+                <button class="btn-attendance-horizontal btn-izin" data-status="izin">
+                    <i class="fas fa-hand-paper"></i> IZIN
+                </button>
+                <button class="btn-attendance-horizontal btn-alpha" data-status="alpha">
+                    <i class="fas fa-times"></i> ALPHA
+                </button>
+            </div>
+        </div>
+
+        <div class="student-row-card" data-siswa-id="3">
+            <div class="student-info-section">
+                <div class="student-avatar-horizontal">BH</div>
+                <div class="student-details-horizontal">
+                    <div class="student-name-horizontal">Budi Hartono</div>
+                    <div class="student-meta-horizontal">
+                        <span><i class="fas fa-id-card"></i> 12347</span>
+                        <span class="mx-2">|</span>
+                        <span><i class="fas fa-user"></i> L</span>
+                    </div>
+                </div>
+            </div>
+            <div class="attendance-buttons-horizontal">
+                <button class="btn-attendance-horizontal btn-hadir" data-status="hadir">
+                    <i class="fas fa-check"></i> HADIR
+                </button>
+                <button class="btn-attendance-horizontal btn-sakit active-sakit" data-status="sakit">
+                    <i class="fas fa-thermometer-half"></i> SAKIT
+                </button>
+                <button class="btn-attendance-horizontal btn-izin" data-status="izin">
+                    <i class="fas fa-hand-paper"></i> IZIN
+                </button>
+                <button class="btn-attendance-horizontal btn-alpha" data-status="alpha">
+                    <i class="fas fa-times"></i> ALPHA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test the button functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.btn-attendance-horizontal, .btn-attendance-horizontal *')) {
+                const button = e.target.closest('.btn-attendance-horizontal');
+                const card = button.closest('[data-siswa-id]');
+                const siswaId = card.dataset.siswaId;
+                const status = button.dataset.status;
+                
+                // Remove active states from all buttons in this card
+                card.querySelectorAll('.btn-attendance-horizontal').forEach(btn => {
+                    btn.className = btn.className.replace(/active-\w+/g, '').trim();
+                    btn.classList.add('btn-' + btn.dataset.status);
+                });
+                
+                // Add active state to clicked button
+                button.classList.add('active-' + status);
+                
+                console.log('Student ID:', siswaId, 'Status:', status);
+            }
+        });
+    </script>
+</body>
+</html>

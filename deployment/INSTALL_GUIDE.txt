@@ -1,0 +1,54 @@
+
+# PETUNJUK INSTALASI KE INFINITYFREE
+
+## 1. SETUP ACCOUNT INFINITYFREE
+- Daftar di https://infinityfree.net
+- Buat subdomain atau gunakan domain sendiri
+- Catat detail database MySQL yang diberikan
+
+## 2. UPDATE KONFIGURASI
+Edit file berikut dengan detail akun InfinityFree Anda:
+
+### deployment/app/Config/Database.php
+- hostname: sql200.infinityfree.com (atau sesuai yang diberikan)
+- username: if0_XXXXXXX (ganti dengan username Anda)
+- password: PASSWORD_ANDA (ganti dengan password database Anda)
+- database: if0_XXXXXXX_sdngu09 (ganti dengan nama database Anda)
+
+### deployment/app/Config/App.php
+- baseURL: https://yourdomain.infinityfreeapp.com/ (ganti dengan domain Anda)
+
+### deployment/env
+- Sesuaikan semua pengaturan dengan detail akun Anda
+
+## 3. EXPORT DATABASE
+- Export database lokal menggunakan phpMyAdmin
+- Import ke database InfinityFree via control panel
+
+## 4. UPLOAD FILES
+Gunakan File Manager atau FTP:
+- Upload folder htdocs/ ke public_html/
+- Upload folder app/ ke root directory
+- Upload folder vendor/ ke root directory  
+- Upload folder writable/ ke root directory
+- Upload file env ke root sebagai .env
+
+## 5. SET PERMISSIONS
+- writable/: 755
+- writable/cache/: 755
+- writable/logs/: 755
+- writable/session/: 755
+- writable/uploads/: 755
+
+## 6. TESTING
+- Test akses website: https://yourdomain.infinityfreeapp.com
+- Test login admin: username: admin
+- Test login walikelas: username: 199303292019031...
+- Test fitur absensi dan rekap
+
+## CATATAN PENTING
+- InfinityFree tidak support SSH dan composer
+- Upload folder vendor/ yang sudah di-generate
+- Database prefix WAJIB if0_XXXXXXX_
+- Max 5GB storage, 20GB bandwidth/month
+- PHP max_execution_time: 30 detik

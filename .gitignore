@@ -86,6 +86,10 @@ writable/debugbar/*
 
 php_errors.log
 
+# Optimized assets (generated files)
+public/assets/optimized/*
+!public/assets/optimized/.gitkeep
+
 #-------------------------
 # User Guide Temp Files
 #-------------------------

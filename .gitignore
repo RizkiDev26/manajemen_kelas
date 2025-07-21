@@ -61,10 +61,59 @@ backup/
 ci4_infinityfree_deployment.zip
 deployment/*.zip
 
-# Test files
+# Test files and development utilities
 test_*.php
 test_*.html
 *_test.php
+debug_*.php
+check_*.php
+add_*.php
+create_*.php
+fix_*.php
+simple_*.php
+cleanup*.php
+export_*.php
+finalize_*.php
+prepare_*.php
+split_*.php
+
+# Development documentation
+*_FIX.md
+*_GUIDE.md
+*_SUMMARY.md
+*_ENHANCEMENT*.md
+*_IMPROVEMENT*.md
+*_COMPLETE.md
+*TROUBLESHOOTING.md
+*DOCUMENTATION.md
+*_Plan.md
+
+# IDE and workspace files
+*.code-workspace
+.idea/
+.vscode/
+.zencoder/
+
+# Backup and temporary files
+*.backup
+*.broken
+*.old
+*_backup.*
+*_old.*
+*_new.*
+*_improved.*
+
+# Development scripts
+*.bat
+configure-firewall.bat
+restore-local-only.bat
+start-server-public.bat
+optimize-vscode.bat
+
+# Build and deployment
+builds
+deployment/
+ci4_infinityfree_deployment.zip
 
 #-------------------------
 # Temporary Files

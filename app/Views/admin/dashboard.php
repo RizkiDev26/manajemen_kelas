@@ -1,4 +1,4 @@
-<?= $this->extend('admin/layout_improved') ?>
+<?= $this->extend('admin/layout') ?>
 
 <?= $this->section('content') ?>
 <!-- Page Header -->

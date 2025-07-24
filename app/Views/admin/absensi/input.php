@@ -2,16 +2,16 @@
 
 <?= $this->section('content') ?>
 
-<!-- Add margin to prevent header being too close to sidebar -->
-<div style="margin-left: 20px; margin-right: 20px;">
+<!-- Enhanced Attendance System with Modern Design -->
+<div class="attendance-container">
 
 <!-- Debug Info (remove later) -->
 <?php if (ENVIRONMENT === 'development'): ?>
-<div class="alert alert-info small mb-3">
-    <strong>Debug Info:</strong> 
-    selectedKelas = <?= $selectedKelas ? $selectedKelas : 'NULL' ?>, 
-    students count = <?= count($students) ?>, 
-    userRole = <?= $userRole ?>
+<div class="debug-info">
+    <strong>Debug:</strong> 
+    Kelas: <?= $selectedKelas ? $selectedKelas : 'NULL' ?> | 
+    Siswa: <?= count($students) ?> | 
+    Role: <?= $userRole ?>
 </div>
 <?php endif; ?>
 
@@ -26,40 +26,90 @@ $dayNames = [
     'Saturday' => 'Sabtu',
     'Sunday' => 'Minggu'
 ];
-$englishDay = date('l', strtotime($selectedDate));
+$englishDay = date('l', strtotime($selectedDate ?? date('Y-m-d')));
 $indonesianDay = $dayNames[$englishDay] ?? $englishDay;
+$formattedDate = date('d M Y', strtotime($selectedDate ?? date('Y-m-d')));
 ?>
 
 <?php if ($selectedKelas && !empty($students)): ?>
-<!-- Header Section -->
-<div class="attendance-header">
+<!-- Enhanced Header Section -->
+<div class="page-header">
     <div class="header-content">
-        <div class="header-title">
-            <h2 class="mb-0">Absensi Kelas <?= $selectedKelas ?></h2>
-            <p class="mb-0 date-display"><?= $indonesianDay ?>, <?= date('d M Y', strtotime($selectedDate)) ?></p>
+        <div class="header-info">
+            <div class="header-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="header-text">
+                <h1>Absensi Kelas <?= $selectedKelas ?></h1>
+                <p class="date-info"><?= $indonesianDay ?>, <?= $formattedDate ?></p>
+            </div>
         </div>
         
-        <!-- All filter controls in one row -->
-        <div class="filter-controls">
-            <form id="filterForm" method="GET" class="filter-form">
-                <!-- Previous day button -->
-                <button type="button" class="btn btn-nav" id="prevDay" title="Hari sebelumnya">
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number"><?= count($students) ?></div>
+                <div class="stat-label">Total Siswa</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="attendedCount">0</div>
+                <div class="stat-label">Sudah Absen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingCount"><?= count($students) ?></div>
+                <div class="stat-label">Belum Absen</div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button type="button" id="markAllPresent" class="btn btn-success">
+                <i class="fas fa-check-circle"></i>
+                Hadir Semua
+            </button>
+            <button type="button" id="exportData" class="btn btn-secondary">
+                <i class="fas fa-download"></i>
+                Export
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Filter Controls -->
+<div class="filter-section">
+    <div class="filter-header">
+        <h3><i class="fas fa-filter"></i> Filter & Navigasi</h3>
+        <button type="button" class="filter-toggle" id="filterToggle" title="Tampilkan/Sembunyikan Menu Filter">
+            <i class="fas fa-chevron-up"></i>
+            <span class="toggle-text">Sembunyikan Menu</span>
+        </button>
+    </div>
+    
+    <form id="filterForm" method="GET" class="filter-form">
+        <div class="filter-grid">
+            <!-- Date Navigation -->
+            <div class="date-navigation">
+                <button type="button" class="btn-nav" id="prevDay" title="Hari sebelumnya">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 
-                <!-- Date input -->
-                <input type="date" class="form-control" id="tanggal" name="tanggal" 
-                       value="<?= $selectedDate ?>" required>
+                <div class="date-input-group">
+                    <label for="tanggal">Tanggal</label>
+                    <input type="date" class="form-control" id="tanggal" name="tanggal" 
+                           value="<?= $selectedDate ?>" required>
+                </div>
                 
-                <!-- Next day button -->
-                <button type="button" class="btn btn-nav" id="nextDay" title="Hari selanjutnya">
+                <button type="button" class="btn-nav" id="nextDay" title="Hari selanjutnya">
                     <i class="fas fa-chevron-right"></i>
                 </button>
-                
-                <?php if ($userRole === 'admin'): ?>
-                <!-- Class dropdown -->
+            </div>
+            
+            <!-- Class Selection -->
+            <?php if ($userRole === 'admin'): ?>
+            <div class="input-group">
+                <label for="kelas">Kelas</label>
                 <select class="form-control" id="kelas" name="kelas" required>
-                    <option value="">Kelas</option>
+                    <option value="">Pilih Kelas</option>
                     <?php foreach ($allKelas as $kelas): ?>
                     <option value="<?= $kelas['kelas'] ?>" 
                             <?= $selectedKelas === $kelas['kelas'] ? 'selected' : '' ?>>
@@ -67,137 +117,795 @@ $indonesianDay = $dayNames[$englishDay] ?? $englishDay;
                     </option>
                     <?php endforeach; ?>
                 </select>
-                <?php else: ?>
-                <input type="hidden" name="kelas" value="<?= $userKelas ?>">
-                <?php endif; ?>
-                
-                <!-- Apply filter button - Hidden since auto-reload is enabled -->
-                <button type="submit" class="btn btn-apply" style="display: none;">
-                    Terapkan
-                </button>
-                
-                <!-- Auto-load indicator -->
-                <span class="auto-reload-indicator">
-                    <i class="fas fa-magic"></i> Auto-reload aktif
-                </span>
-                
-                <!-- Mark all present button -->
-                <button type="button" class="btn btn-mark-all" id="markAllHadir">
-                    Hadir Semua
-                </button>
-            </form>
+            </div>
+            <?php else: ?>
+            <input type="hidden" name="kelas" value="<?= $userKelas ?>">
+            <?php endif; ?>
+            
+            <!-- Filter Status -->
+            <div class="input-group">
+                <label for="filterStatus">Filter Status</label>
+                <select class="form-control" id="filterStatus">
+                    <option value="all">Semua</option>
+                    <option value="hadir">Hadir</option>
+                    <option value="sakit">Sakit</option>
+                    <option value="izin">Izin</option>
+                    <option value="alpha">Alpha</option>
+                    <option value="belum">Belum Absen</option>
+                </select>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
-<!-- Students Grid Layout -->
-<div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-32 animate-fade-in-up">
+<!-- Floating Filter Button (shows when filter is collapsed) -->
+<div class="floating-filter-btn" id="floatingFilterBtn" style="display: none;">
+    <button type="button" class="btn-float-filter" title="Buka Menu Filter">
+        <i class="fas fa-filter"></i>
+        <span>Filter</span>
+    </button>
+</div>
+
+<!-- Enhanced Students Grid -->
+<div class="students-grid" id="studentsGrid">
     <?php foreach ($students as $index => $student): ?>
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1" data-siswa-id="<?= $student['siswa_id'] ?>">
-        <!-- Baris atas: Avatar dan Data Siswa -->
-        <div class="flex items-center p-4 space-x-4">
-            <!-- Kolom kiri: Avatar -->
-            <div class="flex-shrink-0">
-                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                    <span class="text-white font-bold text-lg">
-                        <?= strtoupper(substr($student['nama'], 0, 2)) ?>
-                    </span>
+    <div class="student-card" data-siswa-id="<?= $student['siswa_id'] ?>" 
+         data-student-name="<?= strtolower($student['nama']) ?>"
+         data-student-nisn="<?= $student['nisn'] ?? '' ?>">
+        
+        <!-- Student Header -->
+        <div class="student-header">
+            <div class="student-avatar">
+                <div class="avatar-circle">
+                    <span><?= strtoupper(substr($student['nama'], 0, 2)) ?></span>
                 </div>
+                <div class="status-indicator" data-status="<?= $student['status'] ?? 'none' ?>"></div>
             </div>
             
-            <!-- Kolom kanan: Data Siswa -->
-            <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-semibold text-gray-900 truncate mb-1">
-                    <?= $student['nama'] ?>
-                </h3>
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-600 truncate">
-                        <span class="font-medium">NISN:</span> <?= $student['nisn'] ?? '-' ?>
-                    </p>
-                    <p class="text-sm text-gray-600">
-                        <span class="font-medium">Gender:</span> 
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= isset($student['jk']) && $student['jk'] == 'L' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800' ?>">
+            <div class="student-info">
+                <h3 class="student-name"><?= $student['nama'] ?></h3>
+                <div class="student-details">
+                    <div class="detail-item">
+                        <i class="fas fa-id-card"></i>
+                        <span>NISN: <?= $student['nisn'] ?? '-' ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-<?= isset($student['jk']) && $student['jk'] == 'L' ? 'mars' : 'venus' ?>"></i>
+                        <span class="gender-badge <?= isset($student['jk']) && $student['jk'] == 'L' ? 'male' : 'female' ?>">
                             <?= isset($student['jk']) ? ($student['jk'] == 'L' ? 'Laki-laki' : 'Perempuan') : '-' ?>
                         </span>
-                    </p>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Baris kedua: Tombol Status Kehadiran -->
-        <div class="px-4 pb-4">
-            <div class="grid grid-cols-2 gap-2">
-                <button type="button" class="btn-attendance group relative overflow-hidden rounded-lg border-2 transition-all duration-300 <?= $student['status']==='hadir' ? 'border-green-500 bg-green-500 text-white shadow-lg' : 'border-green-200 bg-green-50 text-green-700 hover:border-green-300 hover:bg-green-100' ?>" data-status="hadir">
-                    <div class="flex flex-col items-center justify-center py-3">
-                        <i class="fas fa-check text-lg mb-1"></i>
-                        <span class="text-xs font-semibold uppercase tracking-wider">Hadir</span>
-                    </div>
-                </button>
-                
-                <button type="button" class="btn-attendance group relative overflow-hidden rounded-lg border-2 transition-all duration-300 <?= $student['status']==='sakit' ? 'border-yellow-500 bg-yellow-500 text-white shadow-lg' : 'border-yellow-200 bg-yellow-50 text-yellow-700 hover:border-yellow-300 hover:bg-yellow-100' ?>" data-status="sakit">
-                    <div class="flex flex-col items-center justify-center py-3">
-                        <i class="fas fa-thermometer-half text-lg mb-1"></i>
-                        <span class="text-xs font-semibold uppercase tracking-wider">Sakit</span>
-                    </div>
-                </button>
-                
-                <button type="button" class="btn-attendance group relative overflow-hidden rounded-lg border-2 transition-all duration-300 <?= $student['status']==='izin' ? 'border-blue-500 bg-blue-500 text-white shadow-lg' : 'border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100' ?>" data-status="izin">
-                    <div class="flex flex-col items-center justify-center py-3">
-                        <i class="fas fa-hand-paper text-lg mb-1"></i>
-                        <span class="text-xs font-semibold uppercase tracking-wider">Izin</span>
-                    </div>
-                </button>
-                
-                <button type="button" class="btn-attendance group relative overflow-hidden rounded-lg border-2 transition-all duration-300 <?= $student['status']==='alpha' ? 'border-red-500 bg-red-500 text-white shadow-lg' : 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100' ?>" data-status="alpha">
-                    <div class="flex flex-col items-center justify-center py-3">
-                        <i class="fas fa-times text-lg mb-1"></i>
-                        <span class="text-xs font-semibold uppercase tracking-wider">Alpha</span>
-                    </div>
-                </button>
+        <!-- Attendance Buttons -->
+        <div class="attendance-buttons">
+            <button type="button" class="btn-attendance hadir <?= $student['status']==='hadir' ? 'active' : '' ?>" 
+                    data-status="hadir" title="Hadir">
+                <i class="fas fa-check"></i>
+                <span>Hadir</span>
+            </button>
+            
+            <button type="button" class="btn-attendance sakit <?= $student['status']==='sakit' ? 'active' : '' ?>" 
+                    data-status="sakit" title="Sakit">
+                <i class="fas fa-thermometer-half"></i>
+                <span>Sakit</span>
+            </button>
+            
+            <button type="button" class="btn-attendance izin <?= $student['status']==='izin' ? 'active' : '' ?>" 
+                    data-status="izin" title="Izin">
+                <i class="fas fa-hand-paper"></i>
+                <span>Izin</span>
+            </button>
+            
+            <button type="button" class="btn-attendance alpha <?= $student['status']==='alpha' ? 'active' : '' ?>" 
+                    data-status="alpha" title="Alpha">
+                <i class="fas fa-times"></i>
+                <span>Alpha</span>
+            </button>
+        </div>
+        
+        <!-- Notes Section -->
+        <div class="notes-section">
+            <button type="button" class="btn-notes" onclick="toggleNotes(this)">
+                <i class="fas fa-sticky-note"></i>
+                Catatan
+            </button>
+            <div class="notes-input" style="display: none;">
+                <textarea class="student-keterangan" placeholder="Tambahkan catatan..."><?= $student['keterangan'] ?? '' ?></textarea>
             </div>
         </div>
         
-        <input type="hidden" class="student-keterangan" value="<?= $student['keterangan'] ?? '' ?>">
+        <div class="card-number">#<?= str_pad($index + 1, 2, '0', STR_PAD_LEFT) ?></div>
     </div>
     <?php endforeach; ?>
 </div>
 
-<!-- Bottom Action Bar -->
-<div class="bottom-action-bar">
-    <button type="button" class="btn-submit" id="saveAll">
+<!-- Floating Action Button -->
+<div class="floating-action">
+    <button type="button" id="saveAll" class="fab">
         <i class="fas fa-paper-plane"></i>
-        Kirim Daftar Hadir
-        <span class="pending-badge" id="pendingCount" style="display: none;">0</span>
+        <span>Kirim Daftar Hadir</span>
+        <div class="fab-badge" id="fabBadge" style="display: none;">0</div>
     </button>
 </div>
+
 <?php elseif ($selectedKelas): ?>
-<div class="card shadow mb-4">
-    <div class="card-body text-center">
-        <div class="my-4">
-            <i class="fas fa-users fa-3x text-gray-300 mb-3"></i>
-            <h5 class="text-gray-600">Tidak ada siswa ditemukan untuk kelas <?= $selectedKelas ?></h5>
-            <p class="text-gray-500">Pastikan kelas yang dipilih memiliki siswa aktif.</p>
-        </div>
+<!-- Empty State -->
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="fas fa-users"></i>
     </div>
+    <h3>Tidak ada siswa ditemukan</h3>
+    <p>Kelas <?= $selectedKelas ?> belum memiliki siswa yang terdaftar atau semua siswa sedang tidak aktif.</p>
+    <button type="button" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i>
+        Kelola Data Siswa
+    </button>
 </div>
 <?php else: ?>
-<div class="card shadow mb-4">
-    <div class="card-body text-center">
-        <div class="my-4">
-            <i class="fas fa-calendar-alt fa-3x text-gray-300 mb-3"></i>
-            <h5 class="text-gray-600">Pilih tanggal dan kelas untuk memulai input absensi</h5>
-            <p class="text-gray-500">Gunakan filter di atas untuk memilih tanggal dan kelas.</p>
-        </div>
+<!-- Initial State -->
+<div class="initial-state">
+    <div class="initial-icon">
+        <i class="fas fa-calendar-alt"></i>
+    </div>
+    <h3>Mulai Input Absensi</h3>
+    <p>Pilih tanggal dan kelas pada filter di atas untuk memulai proses input absensi siswa.</p>
+    <div class="initial-actions">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('tanggal').focus()">
+            <i class="fas fa-calendar"></i>
+            Pilih Tanggal
+        </button>
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('kelas').focus()">
+            <i class="fas fa-school"></i>
+            Pilih Kelas
+        </button>
     </div>
 </div>
 <?php endif; ?>
 
-</div> <!-- Close the margin wrapper -->
+</div>
 
 <style>
-/* Additional custom styles for attendance system */
-.btn-attendance {
+/**
+ * ==========================================
+ * ENHANCED ATTENDANCE SYSTEM STYLES
+ * ==========================================
+ * Modern, consistent design system
+ * Author: Manus AI
+ * Version: 2.0
+ */
+
+/* CSS Custom Properties for Design System */
+:root {
+    /* Colors */
+    --primary-color: #667eea;
+    --primary-dark: #5a67d8;
+    --secondary-color: #764ba2;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --info-color: #3b82f6;
+    
+    /* Grays */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* Transitions */
+    --transition-fast: 150ms ease-in-out;
+    --transition-normal: 300ms ease-in-out;
+    --transition-slow: 500ms ease-in-out;
+}
+
+/* Global Improvements */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+}
+
+/* Fix untuk menghilangkan area putih */
+.content-area {
+    background-color: #f8fafc !important;
+    min-height: 100vh;
+}
+
+/* Pastikan tidak ada gap atau spacing yang berlebihan */
+.attendance-container > * {
+    margin-bottom: 0;
+}
+
+.attendance-container > *:not(:last-child) {
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Debug untuk area putih (hapus setelah masalah teratasi) */
+.page-header, .filter-section, .students-grid, .empty-state, .initial-state {
+    border: 2px solid transparent;
+}
+
+/* Pastikan floating button tidak mengganggu layout */
+.floating-action {
+    position: fixed;
+    bottom: var(--spacing-xl);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.floating-action .fab {
+    pointer-events: all;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--gray-700);
+    background-color: #f8fafc !important;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.attendance-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    padding-bottom: 120px; /* Space for floating button */
+    background-color: transparent;
+    min-height: calc(100vh - 144px); /* Adjust for header and padding */
+    width: 100%;
     position: relative;
+}
+
+/* Debug Info */
+.debug-info {
+    background: var(--info-color);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: 0.875rem;
+    box-shadow: var(--shadow-md);
+}
+
+/* Enhanced Page Header */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--radius-2xl);
+    padding: var(--spacing-2xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-xl);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="1" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+}
+
+.header-content {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: var(--spacing-xl);
+    align-items: center;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.header-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-text h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.date-info {
+    margin: var(--spacing-xs) 0 0 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    transition: var(--transition-normal);
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* Enhanced Filter Section */
+.filter-section {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    margin: 0 0 var(--spacing-xl) 0;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    transition: var(--transition-normal);
+    width: 100%;
+}
+
+.filter-section.collapsed {
+    padding-bottom: var(--spacing-lg);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.1), 0 2px 4px -1px rgba(102, 126, 234, 0.06);
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.filter-header h3 {
+    margin: 0;
+    color: var(--gray-800);
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, var(--gray-50), white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-toggle:hover {
+    background: linear-gradient(135deg, var(--gray-100), var(--gray-50));
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.filter-toggle:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-toggle i {
+    transition: var(--transition-normal);
+    font-size: 0.875rem;
+}
+
+.filter-toggle.collapsed i {
+    transform: rotate(180deg);
+    color: var(--primary-color);
+}
+
+.filter-toggle.collapsed {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(102, 126, 234, 0.05));
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.filter-form {
+    transition: all var(--transition-normal) ease-in-out;
+    overflow: hidden;
+    max-height: 1000px; /* Set a reasonable max height */
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.filter-form.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: calc(-1 * var(--spacing-lg));
+    padding-top: 0;
+    padding-bottom: 0;
+    transform: translateY(-10px);
+}
+
+/* Responsive adjustments for toggle */
+@media (max-width: 768px) {
+    .filter-toggle .toggle-text {
+        display: none;
+    }
+    
+    .filter-toggle {
+        padding: var(--spacing-sm);
+        min-width: 44px;
+        justify-content: center;
+    }
+}
+
+.auto-reload-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--success-color);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: var(--spacing-lg);
+    align-items: end;
+}
+
+.date-navigation {
+    display: flex;
+    align-items: end;
+    gap: var(--spacing-sm);
+}
+
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.input-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.form-control {
+    padding: var(--spacing-md);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+    background: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-nav {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--gray-300);
+    background: white;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    color: var(--gray-600);
+}
+
+.btn-nav:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--gray-50);
+}
+
+.quick-filters {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--gray-200);
+}
+
+.filter-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-right: var(--spacing-sm);
+}
+
+.filter-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--gray-300);
+    background: white;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    color: var(--gray-600);
+}
+
+.filter-btn:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-400);
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Enhanced Students Grid */
+.students-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin: 0 0 var(--spacing-lg) 0;
+    width: 100%;
+}
+
+.student-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    transition: var(--transition-normal);
+    position: relative;
+    min-width: 0;
+}
+
+.student-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.student-card.filtered-out {
+    opacity: 0.3;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+.student-header {
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, var(--gray-50), white);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.student-avatar {
+    position: relative;
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+}
+
+.status-indicator[data-status="hadir"] { background: var(--success-color); }
+.status-indicator[data-status="sakit"] { background: var(--warning-color); }
+.status-indicator[data-status="izin"] { background: var(--info-color); }
+.status-indicator[data-status="alpha"] { background: var(--danger-color); }
+.status-indicator[data-status="none"] { background: var(--gray-300); }
+
+.student-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.student-name {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.student-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.75rem;
+    color: var(--gray-600);
+}
+
+.detail-item i {
+    width: 16px;
+    color: var(--gray-400);
+}
+
+.gender-badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.gender-badge.male {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--info-color);
+}
+
+.gender-badge.female {
+    background: rgba(236, 72, 153, 0.1);
+    color: #ec4899;
+}
+
+/* Enhanced Attendance Buttons */
+.attendance-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+}
+
+.btn-attendance {
+    padding: var(--spacing-xs);
+    border: 1px solid;
+    border-radius: var(--radius-sm);
+    background: white;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1px;
+    position: relative;
+    overflow: hidden;
+    min-height: 35px;
 }
 
 .btn-attendance::before {
@@ -208,211 +916,211 @@ $indonesianDay = $dayNames[$englishDay] ?? $englishDay;
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left 0.5s;
+    transition: left var(--transition-slow);
 }
 
 .btn-attendance:hover::before {
     left: 100%;
 }
 
-/* Pulse animation for pending submissions */
-.pulse-animation {
-    animation: pulse 2s infinite;
+.btn-attendance i {
+    font-size: 0.85rem;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+.btn-attendance.hadir {
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--success-color);
 }
 
-/* Animation Keyframes */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.animate-fade-in-up {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-/* Header styling remains the same */
-.attendance-header {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 16px;
-    margin-bottom: 24px;
-    padding: 24px;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.header-title h2 {
-    color: white;
-    margin: 0;
-    font-size: 28px;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.date-display {
-    color: rgba(255,255,255,0.9);
-    font-size: 16px;
-    margin: 5px 0 0 0;
-    font-weight: 500;
-}
-
-.filter-controls {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.filter-form {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.form-control {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    min-width: 140px;
-}
-
-.form-control:focus {
-    background: white;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-    transform: translateY(-1px);
-    outline: none;
-}
-
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 14px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-nav {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    backdrop-filter: blur(10px);
-}
-
-.btn-nav:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-1px);
-}
-
-.btn-apply {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    color: white;
-    backdrop-filter: blur(10px);
-}
-
-.btn-apply:hover {
-    background: white;
-    color: #667eea;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-.btn-mark-all {
-    background: linear-gradient(135deg, #10b981, #059669);
+.btn-attendance.hadir:hover,
+.btn-attendance.hadir.active {
+    border-color: var(--success-color);
+    background: var(--success-color);
     color: white;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.btn-mark-all:hover {
-    background: linear-gradient(135deg, #059669, #047857);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+.btn-attendance.sakit {
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--warning-color);
 }
 
-/* Bottom Action Bar */
-.bottom-action-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95));
-    backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(148, 163, 184, 0.1);
-    padding: 20px;
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.1);
-    z-index: 1000;
+.btn-attendance.sakit:hover,
+.btn-attendance.sakit.active {
+    border-color: var(--warning-color);
+    background: var(--warning-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.btn-attendance.izin {
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--info-color);
+}
+
+.btn-attendance.izin:hover,
+.btn-attendance.izin.active {
+    border-color: var(--info-color);
+    background: var(--info-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-attendance.alpha {
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger-color);
+}
+
+.btn-attendance.alpha:hover,
+.btn-attendance.alpha.active {
+    border-color: var(--danger-color);
+    background: var(--danger-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Notes Section */
+.notes-section {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+.btn-notes {
+    width: 100%;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--gray-300);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: var(--transition-fast);
     display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-notes:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+}
+
+.notes-input {
+    margin-top: var(--spacing-sm);
+}
+
+.student-keterangan {
+    width: 100%;
+    padding: var(--spacing-xs);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    resize: vertical;
+    min-height: 40px;
+}
+
+.card-number {
+    position: absolute;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+    background: var(--gray-100);
+    color: var(--gray-500);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Floating Filter Button */
+.floating-filter-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    animation: slideInRight 0.3s ease-out;
+}
+
+.btn-float-filter {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border: none;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 100px;
     justify-content: center;
 }
 
-.btn-submit {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+.btn-float-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+    background: linear-gradient(135deg, var(--primary-dark), var(--secondary-color));
+}
+
+.btn-float-filter:active {
+    transform: translateY(0);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+}
+
+.fab {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     border: none;
     color: white;
-    padding: 16px 40px;
+    padding: var(--spacing-lg) var(--spacing-2xl);
     border-radius: 50px;
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    min-width: 200px;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
     position: relative;
+    min-width: 240px;
+    justify-content: center;
 }
 
-.btn-submit:hover {
-    background: linear-gradient(135deg, #764ba2, #667eea);
+.fab:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-.pending-badge {
+.fab-badge {
     position: absolute;
     top: -8px;
     right: -8px;
-    background: #ef4444;
+    background: var(--danger-color);
     color: white;
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 700;
     width: 24px;
     height: 24px;
@@ -423,134 +1131,329 @@ $indonesianDay = $dayNames[$englishDay] ?? $englishDay;
     border: 2px solid white;
 }
 
-/* Auto-reload indicator styling */
-.auto-reload-indicator {
-    color: rgba(255,255,255,0.8);
-    font-size: 12px;
-    margin-left: 10px;
-    background: rgba(255,255,255,0.1);
-    padding: 4px 8px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.2);
+/* Button Styles */
+.btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    text-decoration: none;
+    font-size: 0.875rem;
 }
 
-.auto-reload-indicator i {
-    margin-right: 4px;
-    color: #10b981;
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-secondary {
+    background: var(--gray-600);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: var(--gray-700);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--gray-300);
+    color: var(--gray-700);
+}
+
+.btn-outline:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Empty States */
+.empty-state,
+.initial-state {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+}
+
+.empty-icon,
+.initial-icon {
+    font-size: 4rem;
+    color: var(--gray-300);
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-state h3,
+.initial-state h3 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--gray-800);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.empty-state p,
+.initial-state p {
+    color: var(--gray-600);
+    margin-bottom: var(--spacing-xl);
+    font-size: 1rem;
+}
+
+.initial-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1400px) {
+    .students-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
     .header-content {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+        text-align: center;
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .date-navigation {
+        justify-content: center;
+    }
+    
+    .students-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 768px) {
+    .attendance-container {
+        padding: var(--spacing-md);
+    }
+    
+    .page-header {
+        padding: var(--spacing-lg);
+    }
+    
+    .header-info {
         flex-direction: column;
         text-align: center;
-        gap: 16px;
+        gap: var(--spacing-md);
     }
     
-    .filter-controls {
-        justify-content: center;
-        width: 100%;
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
     }
     
-    .filter-form {
+    .students-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+    
+    .fab {
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: 0.875rem;
+        min-width: 200px;
+    }
+    
+    .initial-actions {
         flex-direction: column;
-        width: 100%;
+        align-items: center;
     }
-    
-    .form-control {
-        width: 100%;
+}
+
+@media (max-width: 480px) {
+    .students-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
     }
-    
-    .btn-submit {
-        padding: 14px 32px;
-        font-size: 14px;
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.slide-up {
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Student attendance tracking
+    // Initialize attendance tracking
     let attendanceData = {};
-    let pendingCount = 0;
+    let totalStudents = document.querySelectorAll('.student-card').length;
     
-    // Initialize attendance data from existing statuses
-    document.querySelectorAll('[data-siswa-id]').forEach(card => {
+    // Filter Toggle Functionality
+    const filterToggle = document.getElementById('filterToggle');
+    const filterForm = document.querySelector('.filter-form');
+    const filterSection = document.querySelector('.filter-section');
+    const toggleIcon = filterToggle.querySelector('i');
+    const toggleText = filterToggle.querySelector('.toggle-text');
+    const floatingFilterBtn = document.getElementById('floatingFilterBtn');
+    
+    function updateFilterToggleUI(isCollapsed) {
+        if (isCollapsed) {
+            // Collapsed state
+            filterForm.classList.add('collapsed');
+            filterSection.classList.add('collapsed');
+            filterToggle.classList.add('collapsed');
+            toggleIcon.className = 'fas fa-chevron-down';
+            if (toggleText) toggleText.textContent = 'Tampilkan Menu';
+            
+            // Show floating button
+            floatingFilterBtn.style.display = 'block';
+            floatingFilterBtn.style.animation = 'slideInRight 0.3s ease-out';
+        } else {
+            // Expanded state
+            filterForm.classList.remove('collapsed');
+            filterSection.classList.remove('collapsed');
+            filterToggle.classList.remove('collapsed');
+            toggleIcon.className = 'fas fa-chevron-up';
+            if (toggleText) toggleText.textContent = 'Sembunyikan Menu';
+            
+            // Hide floating button
+            floatingFilterBtn.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => {
+                floatingFilterBtn.style.display = 'none';
+            }, 300);
+        }
+    }
+    
+    filterToggle.addEventListener('click', function() {
+        const isCollapsed = filterForm.classList.contains('collapsed');
+        updateFilterToggleUI(!isCollapsed);
+        
+        // Save state to localStorage
+        localStorage.setItem('filter-collapsed', !isCollapsed);
+    });
+    
+    // Floating filter button click handler
+    floatingFilterBtn?.querySelector('.btn-float-filter').addEventListener('click', function() {
+        updateFilterToggleUI(false);
+        localStorage.setItem('filter-collapsed', false);
+    });
+    
+    // Restore filter state from localStorage
+    const savedFilterState = localStorage.getItem('filter-collapsed');
+    if (savedFilterState === 'true') {
+        updateFilterToggleUI(true);
+    }
+    
+    // Initialize from existing data
+    document.querySelectorAll('.student-card').forEach(card => {
         const siswaId = card.dataset.siswaId;
-        const activeButton = card.querySelector('.btn-attendance.border-green-500, .btn-attendance.border-yellow-500, .btn-attendance.border-blue-500, .btn-attendance.border-red-500');
+        const activeButton = card.querySelector('.btn-attendance.active');
         if (activeButton) {
-            const status = activeButton.dataset.status;
             attendanceData[siswaId] = {
-                status: status,
+                status: activeButton.dataset.status,
                 keterangan: card.querySelector('.student-keterangan').value || ''
             };
         }
     });
     
-    // Update pending count display
-    function updatePendingCount() {
-        const count = Object.keys(attendanceData).length;
-        const badge = document.getElementById('pendingCount');
-        const button = document.getElementById('saveAll');
+    // Update counters
+    function updateCounters() {
+        const attendedCount = Object.keys(attendanceData).length;
+        const pendingCount = totalStudents - attendedCount;
         
-        if (badge) {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'flex' : 'none';
+        document.getElementById('attendedCount').textContent = attendedCount;
+        document.getElementById('pendingCount').textContent = pendingCount;
+        
+        const fabBadge = document.getElementById('fabBadge');
+        if (attendedCount > 0) {
+            fabBadge.textContent = attendedCount;
+            fabBadge.style.display = 'flex';
+        } else {
+            fabBadge.style.display = 'none';
         }
         
-        if (button) {
-            if (count > 0) {
-                button.classList.add('pulse-animation');
+        // Update status indicators
+        document.querySelectorAll('.student-card').forEach(card => {
+            const siswaId = card.dataset.siswaId;
+            const indicator = card.querySelector('.status-indicator');
+            if (attendanceData[siswaId]) {
+                indicator.dataset.status = attendanceData[siswaId].status;
             } else {
-                button.classList.remove('pulse-animation');
+                indicator.dataset.status = 'none';
             }
-        }
+        });
     }
     
     // Handle attendance button clicks
     document.addEventListener('click', function(e) {
         if (e.target.matches('.btn-attendance, .btn-attendance *')) {
             const button = e.target.closest('.btn-attendance');
-            const card = button.closest('[data-siswa-id]');
+            const card = button.closest('.student-card');
             const siswaId = card.dataset.siswaId;
             const status = button.dataset.status;
             
-            // Remove active states from all buttons in this card
+            // Remove active state from all buttons in this card
             card.querySelectorAll('.btn-attendance').forEach(btn => {
-                const btnStatus = btn.dataset.status;
-                // Remove active classes and add inactive classes
-                btn.className = btn.className.replace(/border-\w+-500|bg-\w+-500|text-white|shadow-lg/g, '');
-                
-                // Add inactive state classes based on status
-                if (btnStatus === 'hadir') {
-                    btn.classList.add('border-green-200', 'bg-green-50', 'text-green-700');
-                    btn.classList.remove('border-green-500', 'bg-green-500', 'text-white', 'shadow-lg');
-                } else if (btnStatus === 'sakit') {
-                    btn.classList.add('border-yellow-200', 'bg-yellow-50', 'text-yellow-700');
-                    btn.classList.remove('border-yellow-500', 'bg-yellow-500', 'text-white', 'shadow-lg');
-                } else if (btnStatus === 'izin') {
-                    btn.classList.add('border-blue-200', 'bg-blue-50', 'text-blue-700');
-                    btn.classList.remove('border-blue-500', 'bg-blue-500', 'text-white', 'shadow-lg');
-                } else if (btnStatus === 'alpha') {
-                    btn.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
-                    btn.classList.remove('border-red-500', 'bg-red-500', 'text-white', 'shadow-lg');
-                }
+                btn.classList.remove('active');
             });
             
             // Add active state to clicked button
-            if (status === 'hadir') {
-                button.classList.remove('border-green-200', 'bg-green-50', 'text-green-700');
-                button.classList.add('border-green-500', 'bg-green-500', 'text-white', 'shadow-lg');
-            } else if (status === 'sakit') {
-                button.classList.remove('border-yellow-200', 'bg-yellow-50', 'text-yellow-700');
-                button.classList.add('border-yellow-500', 'bg-yellow-500', 'text-white', 'shadow-lg');
-            } else if (status === 'izin') {
-                button.classList.remove('border-blue-200', 'bg-blue-50', 'text-blue-700');
-                button.classList.add('border-blue-500', 'bg-blue-500', 'text-white', 'shadow-lg');
-            } else if (status === 'alpha') {
-                button.classList.remove('border-red-200', 'bg-red-50', 'text-red-700');
-                button.classList.add('border-red-500', 'bg-red-500', 'text-white', 'shadow-lg');
-            }
+            button.classList.add('active');
             
             // Update attendance data
             attendanceData[siswaId] = {
@@ -558,52 +1461,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 keterangan: card.querySelector('.student-keterangan').value || ''
             };
             
-            // Update pending count
-            updatePendingCount();
-            
-            // Add visual feedback
+            // Visual feedback
             button.style.transform = 'scale(0.95)';
             setTimeout(() => {
                 button.style.transform = '';
             }, 150);
             
-            console.log('Updated attendance for student', siswaId, ':', attendanceData[siswaId]);
+            // Update counters
+            updateCounters();
+            
+            console.log('Updated attendance:', attendanceData);
         }
     });
     
     // Mark All Present
-    document.getElementById('markAllHadir')?.addEventListener('click', function() {
+    document.getElementById('markAllPresent')?.addEventListener('click', function() {
         const button = this;
-        const originalText = button.innerHTML;
+        const originalHTML = button.innerHTML;
         
-        // Show loading state
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
+        button.innerHTML = '<i class="fas fa-spinner spinner"></i> Memproses...';
         button.disabled = true;
         
-        document.querySelectorAll('[data-siswa-id]').forEach((card, index) => {
+        document.querySelectorAll('.student-card').forEach((card, index) => {
             setTimeout(() => {
                 const siswaId = card.dataset.siswaId;
                 const hadirButton = card.querySelector('[data-status="hadir"]');
                 
-                // Reset all buttons in card to inactive state
+                // Reset all buttons
                 card.querySelectorAll('.btn-attendance').forEach(btn => {
-                    const btnStatus = btn.dataset.status;
-                    btn.className = btn.className.replace(/border-\w+-500|bg-\w+-500|text-white|shadow-lg/g, '');
-                    
-                    if (btnStatus === 'hadir') {
-                        btn.classList.add('border-green-200', 'bg-green-50', 'text-green-700');
-                    } else if (btnStatus === 'sakit') {
-                        btn.classList.add('border-yellow-200', 'bg-yellow-50', 'text-yellow-700');
-                    } else if (btnStatus === 'izin') {
-                        btn.classList.add('border-blue-200', 'bg-blue-50', 'text-blue-700');
-                    } else if (btnStatus === 'alpha') {
-                        btn.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
-                    }
+                    btn.classList.remove('active');
                 });
                 
                 // Activate hadir button
-                hadirButton.classList.remove('border-green-200', 'bg-green-50', 'text-green-700');
-                hadirButton.classList.add('border-green-500', 'bg-green-500', 'text-white', 'shadow-lg');
+                hadirButton.classList.add('active');
                 
                 // Update data
                 attendanceData[siswaId] = {
@@ -611,24 +1501,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     keterangan: ''
                 };
                 
-                // Add animation
+                // Animation
                 card.style.transform = 'scale(1.02)';
                 setTimeout(() => {
                     card.style.transform = '';
                 }, 200);
                 
-                // Update pending count on last card
-                if (index === document.querySelectorAll('[data-siswa-id]').length - 1) {
-                    updatePendingCount();
-                    
-                    // Restore button
+                // Update counters on last iteration
+                if (index === document.querySelectorAll('.student-card').length - 1) {
+                    updateCounters();
                     setTimeout(() => {
-                        button.innerHTML = originalText;
+                        button.innerHTML = originalHTML;
                         button.disabled = false;
                         showNotification('Semua siswa telah ditandai hadir!', 'success');
                     }, 300);
                 }
-            }, index * 50); // Stagger animation
+            }, index * 50);
+        });
+    });
+    
+    // Filter functionality with dropdown
+    document.getElementById('filterStatus')?.addEventListener('change', function() {
+        const filter = this.value;
+        
+        document.querySelectorAll('.student-card').forEach(card => {
+            const siswaId = card.dataset.siswaId;
+            const hasAttendance = attendanceData[siswaId];
+            
+            let show = false;
+            
+            if (filter === 'all') {
+                show = true;
+            } else if (filter === 'belum') {
+                show = !hasAttendance;
+            } else {
+                show = hasAttendance && attendanceData[siswaId].status === filter;
+            }
+            
+            if (show) {
+                card.classList.remove('filtered-out');
+            } else {
+                card.classList.add('filtered-out');
+            }
         });
     });
     
@@ -649,53 +1563,40 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.dispatchEvent(new Event('change'));
     });
     
-    // Auto-submit on date/class change
+    // Auto-submit on change
     document.getElementById('tanggal')?.addEventListener('change', function() {
         document.getElementById('filterForm').submit();
     });
     
-    const kelasSelect = document.getElementById('kelas');
-    if (kelasSelect) {
-        kelasSelect.addEventListener('change', function() {
-            document.getElementById('filterForm').submit();
-        });
-    }
+    document.getElementById('kelas')?.addEventListener('change', function() {
+        document.getElementById('filterForm').submit();
+    });
     
-    // Save All Attendance with enhanced UX
+    // Save All functionality
     document.getElementById('saveAll')?.addEventListener('click', function() {
         const button = this;
         const originalHTML = button.innerHTML;
         
-        // Validate all selections
-        const totalStudents = document.querySelectorAll('[data-siswa-id]').length;
-        const selectedStudents = Object.keys(attendanceData).length;
-        
-        if (selectedStudents === 0) {
+        if (Object.keys(attendanceData).length === 0) {
             showNotification('Silakan pilih status kehadiran untuk setidaknya satu siswa', 'warning');
             return;
         }
         
-        if (selectedStudents < totalStudents) {
-            const remaining = totalStudents - selectedStudents;
-            if (!confirm(`Masih ada ${remaining} siswa yang belum dipilih status kehadirannya. Lanjutkan menyimpan?`)) {
+        if (Object.keys(attendanceData).length < totalStudents) {
+            const remaining = totalStudents - Object.keys(attendanceData).length;
+            if (!confirm(`Masih ada ${remaining} siswa yang belum dipilih. Lanjutkan?`)) {
                 return;
             }
         }
         
-        // Show loading state
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+        button.innerHTML = '<i class="fas fa-spinner spinner"></i> Menyimpan...';
         button.disabled = true;
-        button.classList.add('opacity-75');
         
-        // Create progress indicator
-        const progressBar = createProgressBar();
-        
-        // Prepare data for submission
+        // Prepare data
         const formData = new FormData();
         formData.append('tanggal', document.getElementById('tanggal').value);
         formData.append('kelas', document.getElementById('kelas')?.value || '<?= $userKelas ?? '' ?>');
         
-        // Convert attendanceData object to array format expected by controller
         const attendanceArray = Object.keys(attendanceData).map(siswaId => ({
             siswa_id: siswaId,
             status: attendanceData[siswaId].status,
@@ -703,15 +1604,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
         
         formData.append('attendance_data', JSON.stringify(attendanceArray));
-        // formData.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
         
-        // Submit via fetch
-        console.log('Submitting attendance data:', {
-            tanggal: document.getElementById('tanggal').value,
-            kelas: document.getElementById('kelas')?.value || '<?= $userKelas ?? '' ?>',
-            attendanceArray: attendanceArray
-        });
-        
+        // Submit
         fetch('<?= base_url('admin/absensi/save_all') ?>', {
             method: 'POST',
             headers: {
@@ -719,60 +1613,41 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: formData
         })
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Response data:', data);
-            progressBar.complete();
-            
             if (data.success) {
+                showNotification('Data absensi berhasil disimpan!', 'success');
+                
                 // Success animation
-                document.querySelectorAll('[data-siswa-id]').forEach((card, index) => {
+                document.querySelectorAll('.student-card').forEach((card, index) => {
                     setTimeout(() => {
                         card.style.background = 'linear-gradient(135deg, #ecfdf5, #d1fae5)';
-                        card.style.transform = 'scale(1.02)';
                         setTimeout(() => {
-                            card.style.transform = '';
-                        }, 200);
+                            card.style.background = '';
+                        }, 1000);
                     }, index * 30);
                 });
                 
-                showNotification('Data absensi berhasil disimpan!', 'success');
-                
-                // Reset pending count
+                // Reset data
                 attendanceData = {};
-                updatePendingCount();
-                
-                // Confetti effect (if available)
-                if (typeof confetti !== 'undefined') {
-                    confetti({
-                        particleCount: 100,
-                        spread: 70,
-                        origin: { y: 0.6 }
-                    });
-                }
+                updateCounters();
             } else {
                 showNotification(data.message || 'Gagal menyimpan data', 'error');
             }
         })
         .catch(error => {
-            console.error('Fetch error:', error);
-            progressBar.complete();
+            console.error('Error:', error);
             showNotification('Gagal menyimpan data: ' + error.message, 'error');
         })
         .finally(() => {
-            // Reset button after delay
             setTimeout(() => {
                 button.innerHTML = originalHTML;
                 button.disabled = false;
-                button.classList.remove('opacity-75');
             }, 1000);
         });
     });
     
-    // Notification function
+    // Notification system
     function showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.style.cssText = `
@@ -793,25 +1668,25 @@ document.addEventListener('DOMContentLoaded', function() {
             gap: 12px;
         `;
         
-        // Set background based on type
-        if (type === 'success') {
-            notification.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        } else if (type === 'error') {
-            notification.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-        } else if (type === 'warning') {
-            notification.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
-        } else {
-            notification.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-        }
+        const colors = {
+            success: 'linear-gradient(135deg, #10b981, #059669)',
+            error: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            info: 'linear-gradient(135deg, #3b82f6, #2563eb)'
+        };
         
-        const icon = type === 'success' ? 'fa-check-circle' : 
-                    type === 'error' ? 'fa-times-circle' : 
-                    type === 'warning' ? 'fa-exclamation-triangle' :
-                    'fa-info-circle';
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        
+        notification.style.background = colors[type] || colors.info;
         
         notification.innerHTML = `
-            <i class="fas ${icon}" style="font-size: 18px;"></i>
-            <span style="flex: 1;">${message}</span>
+            <i class="fas ${icons[type] || icons.info}"></i>
+            <span>${message}</span>
             <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 0;">
                 <i class="fas fa-times"></i>
             </button>
@@ -819,68 +1694,46 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(notification);
         
-        // Slide in
         setTimeout(() => {
             notification.style.transform = 'translateX(0)';
         }, 100);
         
-        // Auto remove
         setTimeout(() => {
             notification.style.transform = 'translateX(400px)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 300);
+            setTimeout(() => notification.remove(), 300);
         }, 5000);
     }
     
-    // Progress bar function
-    function createProgressBar() {
-        const progressContainer = document.createElement('div');
-        progressContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: rgba(0,0,0,0.1);
-            z-index: 10001;
-        `;
-        
-        const progressBar = document.createElement('div');
-        progressBar.style.cssText = `
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
-        `;
-        
-        progressContainer.appendChild(progressBar);
-        document.body.appendChild(progressContainer);
-        
-        // Animate progress
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.random() * 20;
-            if (progress > 90) progress = 90;
-            progressBar.style.width = progress + '%';
-        }, 200);
-        
-        return {
-            complete: () => {
-                clearInterval(interval);
-                progressBar.style.width = '100%';
-                setTimeout(() => {
-                    progressContainer.remove();
-                }, 500);
-            }
-        };
-    }
+    // Initialize
+    updateCounters();
     
-    // Initialize pending count
-    updatePendingCount();
+    // Add fade-in animation to cards
+    document.querySelectorAll('.student-card').forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
 });
+
+// Toggle notes function
+function toggleNotes(button) {
+    const notesInput = button.parentElement.querySelector('.notes-input');
+    const isVisible = notesInput.style.display !== 'none';
+    
+    if (isVisible) {
+        notesInput.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-sticky-note"></i> Catatan';
+    } else {
+        notesInput.style.display = 'block';
+        button.innerHTML = '<i class="fas fa-sticky-note"></i> Tutup';
+        notesInput.querySelector('textarea').focus();
+    }
+}
 </script>
 
 <?= $this->endSection() ?>
+

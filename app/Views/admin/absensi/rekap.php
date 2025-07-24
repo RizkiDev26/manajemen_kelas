@@ -6,32 +6,24 @@
 <link rel="stylesheet" href="<?= base_url('css/rekap-absensi-clean.css') ?>?v=20250107-compact-layout">
 
 <style>
-/* Admin-specific header styling */
-.admin-header {
+/* Remove admin-specific header since we'll use standard layout */
+.professional-header {
     background: linear-gradient(135deg, #4472C4, #5a67d8);
     color: white;
-    padding: 25px;
-    border-radius: 15px;
-    margin-bottom: 25px;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
     text-align: center;
-    box-shadow: 0 8px 32px rgba(68, 114, 196, 0.3);
+    box-shadow: 0 4px 16px rgba(68, 114, 196, 0.2);
 }
 
-.admin-header h2 {
-    margin-bottom: 10px;
+.professional-header h2,
+.professional-header h3,
+.professional-header h4,
+.professional-header h5 {
+    margin-bottom: 8px;
     font-weight: bold;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.admin-header .school-info {
-    font-size: 18px;
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-.admin-header .class-info {
-    font-size: 16px;
-    opacity: 0.9;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 /* HBE Display Styles */
@@ -60,101 +52,130 @@
     font-size: 12px;
     opacity: 0.9;
 }
+
+/* Enhanced Filter Section */
+.filter-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+}
 </style>
 
-<div class="container-fluid">
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="text-center text-white">
-            <div class="loading-spinner"></div>
-            <p class="mt-3">Memproses data...</p>
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="text-center text-white">
+        <div class="loading-spinner"></div>
+        <p class="mt-3">Memproses data...</p>
+    </div>
+</div>
+
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                Rekap Absensi Siswa
+            </h1>
+            <p class="text-gray-600">
+                KELAS: <?= strtoupper($kelas ?? '5A') ?> | 
+                BULAN: <?= strtoupper($bulan_nama ?? 'JULI') ?> <?= $tahun ?? 2025 ?> |
+                TAHUN PELAJARAN: <?= ($tahun ?? 2025) ?>/<?= ($tahun ?? 2025) + 1 ?>
+            </p>
+        </div>
+        <div class="flex space-x-3">
+            <button type="button" id="downloadExcel" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                    <?= empty($attendanceData) || empty($attendanceData['students']) ? 'disabled' : '' ?>>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Download Excel</span>
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- Admin Header Section -->
-    <div class="admin-header">
-        <h2>📊 REKAP ABSENSI SISWA</h2>
-        <div class="school-info">SDN GROGOL UTARA 09</div>
-        <div class="class-info">
-            KELAS: <?= strtoupper($kelas ?? '5A') ?> | 
-            BULAN: <?= strtoupper($bulan_nama ?? 'JULI') ?> <?= $tahun ?? 2025 ?> |
-            TAHUN PELAJARAN: <?= ($tahun ?? 2025) ?>/<?= ($tahun ?? 2025) + 1 ?>
-        </div>
-    </div>
-
-    <!-- Enhanced Filter Section -->
-    <div class="filter-section">
-        <form id="filterForm" method="GET">
-            <div class="row g-3 align-items-end">
-                <div class="col-auto">
-                    <label for="kelas" class="form-label">
-                        <i class="fas fa-school me-2"></i>Kelas
-                    </label>
-                    <?php if ($userRole === 'admin'): ?>
-                    <select class="form-control" id="kelas" name="kelas" required style="min-width: 140px;">
-                        <option value="">Pilih Kelas</option>
-                        <?php foreach ($allKelas as $kelas): ?>
-                        <option value="<?= $kelas['kelas'] ?>" 
-                                <?= $filterKelas === $kelas['kelas'] ? 'selected' : '' ?>>
-                            Kelas <?= $kelas['kelas'] ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php else: ?>
-                    <input type="text" class="form-control" value="Kelas <?= $userKelas ?>" readonly style="min-width: 140px;">
-                    <input type="hidden" name="kelas" value="<?= $userKelas ?>">
-                    <?php endif; ?>
-                </div>
-                <div class="col-auto">
-                    <label for="bulan" class="form-label">
-                        <i class="fas fa-calendar-alt me-2"></i>Bulan & Tahun
-                    </label>
-                    <input type="month" class="form-control" id="bulan" name="bulan" 
-                           value="<?= $filterBulan ?>" required style="min-width: 160px;">
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-search me-2"></i>Tampilkan
-                    </button>
-                </div>
-                <div class="col-auto">
-                    <button type="button" id="downloadExcel" class="btn btn-success btn-lg" 
-                            <?= empty($attendanceData) || empty($attendanceData['students']) ? 'disabled' : '' ?>>
-                        <i class="fas fa-download me-2"></i>Excel
-                    </button>
-                </div>
-                <div class="col">
-                    <!-- Empty space on the right for better layout -->
-                </div>
+<!-- Enhanced Filter Section -->
+<div class="filter-section">
+    <form id="filterForm" method="GET">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+                <label for="kelas" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-school mr-2 text-blue-600"></i>Kelas
+                </label>
+                <?php if ($userRole === 'admin'): ?>
+                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        id="kelas" name="kelas" required>
+                    <option value="">Pilih Kelas</option>
+                    <?php foreach ($allKelas as $kelas): ?>
+                    <option value="<?= $kelas['kelas'] ?>" 
+                            <?= $filterKelas === $kelas['kelas'] ? 'selected' : '' ?>>
+                        Kelas <?= $kelas['kelas'] ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php else: ?>
+                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" 
+                       value="Kelas <?= $userKelas ?>" readonly>
+                <input type="hidden" name="kelas" value="<?= $userKelas ?>">
+                <?php endif; ?>
             </div>
-        </form>
-    </div>
+            
+            <div>
+                <label for="bulan" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>Bulan & Tahun
+                </label>
+                <input type="month" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                       id="bulan" name="bulan" value="<?= $filterBulan ?>" required>
+            </div>
+            
+            <div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2">
+                    <i class="fas fa-search"></i>
+                    <span>Tampilkan</span>
+                </button>
+            </div>
+            
+            <div>
+                <!-- Auto-reload toggle moved to header actions -->
+            </div>
+        </div>
+    </form>
+</div>
 
     <?php if (!empty($attendanceData) && !empty($attendanceData['students'])): ?>
 
     <!-- Professional Header Section -->
-    <div class="text-center mb-4 professional-header">
-        <h2 class="header-title">DAFTAR HADIR PESERTA DIDIK</h2>
-        <h3 class="school-name">SDN GROGOL UTARA 09</h3>
-        <h4 class="class-title">KELAS <?= strtoupper($attendanceData['kelas'] ?? 'KELAS 2 A') ?></h4>
-        <h5 class="academic-year">TAHUN PELAJARAN <?= date('Y') ?>/<?= (date('Y') + 1) ?></h5>
-        <h4 class="month-title">BULAN <?= strtoupper(date('F Y', mktime(0, 0, 0, (int)$attendanceData['month'], 1, (int)$attendanceData['year']))) ?></h4>
-        
-        <!-- HBE (Effective Days) Display in Red Box -->
-        <div class="hbe-display mt-3">
-            <div class="hbe-box">
-                <strong>HBE: <?= $attendanceData['effective_days'] ?? $attendanceData['total_days'] ?></strong>
-                <small class="d-block">Hari Efektif = <?= $attendanceData['total_days'] ?? count($attendanceData['days']) ?> hari - <?= count($attendanceData['holidays'] ?? []) ?> hari libur</small>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="text-center professional-header">
+            <h2 class="header-title">DAFTAR HADIR PESERTA DIDIK</h2>
+            <h3 class="school-name">SDN GROGOL UTARA 09</h3>
+            <h4 class="class-title">KELAS <?= strtoupper($attendanceData['kelas'] ?? 'KELAS 2 A') ?></h4>
+            <h5 class="academic-year">TAHUN PELAJARAN <?= date('Y') ?>/<?= (date('Y') + 1) ?></h5>
+            <h4 class="month-title">BULAN <?= strtoupper(date('F Y', mktime(0, 0, 0, (int)$attendanceData['month'], 1, (int)$attendanceData['year']))) ?></h4>
+            
+            <!-- HBE (Effective Days) Display in Red Box -->
+            <div class="hbe-display mt-3">
+                <div class="hbe-box">
+                    <strong>HBE: <?= $attendanceData['effective_days'] ?? $attendanceData['total_days'] ?></strong>
+                    <small class="d-block">Hari Efektif = <?= $attendanceData['total_days'] ?? count($attendanceData['days']) ?> hari - <?= count($attendanceData['holidays'] ?? []) ?> hari libur</small>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Rekap Table Card -->
-    <div class="card card-rekap">
-        <div class="card-body p-0">
-            
-            <div class="table-responsive">
-                <table class="excel-style-table">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Data Kehadiran Siswa</h2>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="excel-style-table min-w-full divide-y divide-gray-200">
                     <thead>
                         <tr>
                             <th style="width: 40px;">No</th>
@@ -313,13 +334,15 @@
 
     <?php else: ?>
     <!-- No Data Message -->
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
-            <h5 class="text-muted">Tidak Ada Data</h5>
-            <p class="text-muted">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+        <div class="text-center">
+            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Tidak Ada Data</h3>
+            <p class="text-gray-500">
                 <?php if (!$filterKelas): ?>
-                    Silakan pilih kelas terlebih dahulu.
+                    Silakan pilih kelas terlebih dahulu untuk menampilkan data absensi.
                 <?php else: ?>
                     Tidak ada data absensi untuk kelas <?= $filterKelas ?> pada bulan <?= isset($filterBulan) ? date('F Y', strtotime($filterBulan . '-01')) : date('F Y') ?>.
                 <?php endif; ?>
@@ -444,4 +467,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<?= $this->endSection() ?>
 <?= $this->endSection() ?>

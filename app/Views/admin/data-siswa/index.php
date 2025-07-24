@@ -1,9 +1,8 @@
 <?= $this->extend('admin/layout') ?>
 
 <?= $this->section('content') ?>
-<div class="p-6">
-    <!-- Page Header -->
-    <div class="mb-8">
+<!-- Page Header -->
+<div class="mb-8">
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">
@@ -335,8 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.disabled = false;
             }, 2000);
         });
-    }
-});
 </script>
 
 <?= $this->endSection() ?>

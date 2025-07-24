@@ -50,9 +50,8 @@
     }
 }
 </style>
-<div class="p-6">
-    <!-- Page Header -->
-    <div class="mb-8">
+<!-- Page Header -->
+<div class="mb-8">
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Naik Kelas Per Rombel</h1>

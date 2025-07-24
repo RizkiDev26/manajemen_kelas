@@ -12,6 +12,11 @@ $routes->get('/test-rekap', function() {
     return view('test-index');
 });
 
+// Test layout route
+$routes->get('/test-layout', function() {
+    return view('test-layout');
+});
+
 // Test route for holiday integration
 $routes->get('/test-holiday-integration', 'TestController::holidayIntegration');
 
@@ -117,6 +122,16 @@ $routes->group('admin', function($routes) {
     $routes->post('absensi/getDetailData', 'Admin\Absensi::getDetailData');
     $routes->get('absensi/getSummary', 'Admin\Absensi::getSummary');
     $routes->get('absensi/export', 'Admin\Absensi::export');
+    
+    // Data Guru Routes
+    $routes->get('guru', 'Admin\Guru::index');
+    $routes->get('guru/detail/(:num)', 'Admin\Guru::detail/$1');
+    $routes->get('guru/create', 'Admin\Guru::create');
+    $routes->post('guru/store', 'Admin\Guru::store');
+    $routes->get('guru/edit/(:num)', 'Admin\Guru::edit/$1');
+    $routes->post('guru/update/(:num)', 'Admin\Guru::update/$1');
+    $routes->get('guru/delete/(:num)', 'Admin\Guru::delete/$1');
+    $routes->get('guru/import', 'Admin\Guru::import');
 });
 
 // Logout Route (accessible from anywhere)

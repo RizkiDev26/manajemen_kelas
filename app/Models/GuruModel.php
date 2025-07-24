@@ -6,21 +6,61 @@ use CodeIgniter\Model;
 
 class GuruModel extends Model
 {
-    protected $table = 'tb_guru';
+    protected $table = 'guru';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
-        'nama_lengkap',
-        'gelar',
-        'nip',
+        'nama',
         'nuptk',
-        'jenis_kelamin',
+        'jk',
         'tempat_lahir',
         'tanggal_lahir',
-        'jabatan'
+        'nip',
+        'status_kepegawaian',
+        'jenis_ptk',
+        'agama',
+        'alamat_jalan',
+        'rt',
+        'rw',
+        'nama_dusun',
+        'desa_kelurahan',
+        'kecamatan',
+        'kode_pos',
+        'telepon',
+        'hp',
+        'email',
+        'tugas_tambahan',
+        'sk_cpns',
+        'tanggal_cpns',
+        'sk_pengangkatan',
+        'tmt_pengangkatan',
+        'lembaga_pengangkatan',
+        'pangkat_golongan',
+        'sumber_gaji',
+        'nama_ibu_kandung',
+        'status_perkawinan',
+        'nama_suami_istri',
+        'nip_suami_istri',
+        'pekerjaan_suami_istri',
+        'tmt_pns',
+        'sudah_lisensi_kepala_sekolah',
+        'pernah_diklat_kepengawasan',
+        'keahlian_braille',
+        'keahlian_bahasa_isyarat',
+        'npwp',
+        'nama_wajib_pajak',
+        'kewarganegaraan',
+        'bank',
+        'nomor_rekening_bank',
+        'rekening_atas_nama',
+        'nik',
+        'no_kk',
+        'karpeg',
+        'karis_karsu',
+        'tugas_mengajar'
     ];
 
     // Dates
@@ -32,29 +72,26 @@ class GuruModel extends Model
 
     // Validation
     protected $validationRules = [
-        'nama_lengkap' => 'required|min_length[3]|max_length[100]',
-        'nip' => 'required|min_length[10]|max_length[20]|is_unique[tb_guru.nip,id,{id}]',
-        'jenis_kelamin' => 'required|in_list[Laki-laki,Perempuan]',
+        'nama' => 'required|min_length[3]|max_length[100]',
+        'nuptk' => 'permit_empty|numeric|max_length[20]',
+        'jk' => 'required|in_list[L,P]',
         'tempat_lahir' => 'required|max_length[50]',
         'tanggal_lahir' => 'required|valid_date',
-        'jabatan' => 'required|max_length[100]'
+        'nip' => 'permit_empty|numeric|max_length[20]',
+        'email' => 'permit_empty|valid_email|max_length[100]',
+        'hp' => 'permit_empty|max_length[15]',
+        'nik' => 'permit_empty|numeric|max_length[20]',
     ];
 
     protected $validationMessages = [
-        'nama_lengkap' => [
-            'required' => 'Nama lengkap harus diisi',
-            'min_length' => 'Nama lengkap minimal 3 karakter',
-            'max_length' => 'Nama lengkap maksimal 100 karakter'
+        'nama' => [
+            'required' => 'Nama guru harus diisi',
+            'min_length' => 'Nama guru minimal 3 karakter',
+            'max_length' => 'Nama guru maksimal 100 karakter'
         ],
-        'nip' => [
-            'required' => 'NIP harus diisi',
-            'min_length' => 'NIP minimal 10 karakter',
-            'max_length' => 'NIP maksimal 20 karakter',
-            'is_unique' => 'NIP sudah terdaftar'
-        ],
-        'jenis_kelamin' => [
+        'jk' => [
             'required' => 'Jenis kelamin harus dipilih',
-            'in_list' => 'Jenis kelamin harus Laki-laki atau Perempuan'
+            'in_list' => 'Jenis kelamin harus L atau P'
         ],
         'tempat_lahir' => [
             'required' => 'Tempat lahir harus diisi',
@@ -64,9 +101,9 @@ class GuruModel extends Model
             'required' => 'Tanggal lahir harus diisi',
             'valid_date' => 'Format tanggal lahir tidak valid'
         ],
-        'jabatan' => [
-            'required' => 'Jabatan harus diisi',
-            'max_length' => 'Jabatan maksimal 100 karakter'
+        'email' => [
+            'valid_email' => 'Format email tidak valid',
+            'max_length' => 'Email maksimal 100 karakter'
         ]
     ];
 

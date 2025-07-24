@@ -97,7 +97,7 @@
                     <option value="">Semua Role</option>
                     <option value="admin">Admin</option>
                     <option value="guru">Guru</option>
-                    <option value="walikelas">Wali Kelas</option>
+                    <option value="wali_kelas">Wali Kelas</option>
                     <option value="siswa">Siswa</option>
                 </select>
                 <div class="absolute left-3 top-3.5 text-gray-400">
@@ -141,7 +141,7 @@
                 <div class="text-sm text-gray-600">Total User</div>
             </div>
             <div class="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
-                <div class="text-2xl font-bold text-green-600" id="activeUsers"><?= isset($users) ? count(array_filter($users, fn($u) => $u['is_active'] ?? false)) : 0 ?></div>
+                <div class="text-2xl font-bold text-green-600" id="activeUsers"><?= isset($users) ? count(array_filter($users, fn($u) => $u['is_active'])) : 0 ?></div>
                 <div class="text-sm text-gray-600">User Aktif</div>
             </div>
             <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
@@ -163,14 +163,14 @@
             <?php foreach ($users as $user): ?>
                 <div class="user-card bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1" 
                      data-role="<?= $user['role'] ?>" 
-                     data-status="<?= ($user['is_active'] ?? false) ? 'active' : 'inactive' ?>"
-                     data-name="<?= strtolower($user['nama'] ?? '') ?>"
+                     data-status="<?= $user['is_active'] ? 'active' : 'inactive' ?>"
+                     data-name="<?= strtolower($user['nama']) ?>"
                      data-email="<?= strtolower($user['email'] ?? '') ?>">
                     
                     <div class="relative">
                         <!-- Status Indicator -->
                         <div class="absolute top-4 right-4 flex items-center space-x-2">
-                            <?php if ($user['is_active'] ?? false): ?>
+                            <?php if ($user['is_active']): ?>
                                 <div class="flex items-center bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
                                     <div class="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
                                     Aktif
@@ -190,12 +190,12 @@
                                     <?php
                                     $avatarUrl = isset($user['avatar']) && !empty($user['avatar']) 
                                         ? base_url('uploads/avatars/' . $user['avatar']) 
-                                        : 'https://ui-avatars.com/api/?name=' . urlencode($user['nama'] ?? 'User') . '&background=random&size=100';
+                                        : 'https://ui-avatars.com/api/?name=' . urlencode($user['nama']) . '&background=random';
                                     ?>
                                     <img 
                                         src="<?= $avatarUrl ?>" 
                                         alt="Avatar"
-                                        class="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover <?= !($user['is_active'] ?? false) ? 'opacity-75' : '' ?>"
+                                        class="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover <?= !$user['is_active'] ? 'opacity-75' : '' ?>"
                                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik01MCA0NkM1OC4yODQzIDQ2IDY1IDM5LjI4NDMgNjUgMzFDNjUgMjIuNzE1NyA1OC4yODQzIDE2IDUwIDE2QzQxLjcxNTcgMTYgMzUgMjIuNzE1NyAzNSAzMUMzNSAzOS4yODQzIDQxLjcxNTcgNDYgNTAgNDZaTTUwIDUyQzM5LjUwNjYgNTIgMzEgNjAuNTA2NiAzMSA3MUM3NSA3MSA2OS40OTM0IDUyIDUwIDUyWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'">
                                     
                                     <!-- Role Badge -->
@@ -229,7 +229,7 @@
                     <!-- User Info -->
                     <div class="p-6 pt-4">
                         <div class="text-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-1"><?= esc($user['nama'] ?? 'Unknown User') ?></h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1"><?= esc($user['nama']) ?></h3>
                             <p class="text-sm text-gray-500 flex items-center justify-center">
                                 <i class="fas fa-envelope mr-1"></i>
                                 <?= esc($user['email'] ?? 'No email') ?>
@@ -240,7 +240,7 @@
                         <div class="space-y-2 mb-4">
                             <div class="flex items-center text-sm text-gray-600">
                                 <i class="fas fa-user w-4 text-gray-400 mr-2"></i>
-                                @<?= esc($user['username'] ?? 'no-username') ?>
+                                @<?= esc($user['username']) ?>
                             </div>
                             <?php if (isset($user['kelas']) && !empty($user['kelas'])): ?>
                                 <div class="flex items-center text-sm text-gray-600">
@@ -257,19 +257,19 @@
                         <!-- Action Buttons -->
                         <div class="flex space-x-2">
                             <button 
-                                onclick="editUser(<?= $user['id'] ?? 0 ?>)"
+                                onclick="editUser(<?= $user['id'] ?>)"
                                 class="flex-1 flex items-center justify-center px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 text-sm font-medium">
                                 <i class="fas fa-edit mr-1"></i>
                                 Edit
                             </button>
                             <button 
-                                onclick="toggleUserStatus(<?= $user['id'] ?? 0 ?>, '<?= ($user['is_active'] ?? false) ? 'active' : 'inactive' ?>')"
+                                onclick="toggleUserStatus(<?= $user['id'] ?>, '<?= $user['is_active'] ? 'active' : 'inactive' ?>')"
                                 class="flex items-center justify-center px-3 py-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 transition-all duration-200 text-sm">
-                                <i class="fas fa-toggle-<?= ($user['is_active'] ?? false) ? 'on' : 'off' ?>"></i>
+                                <i class="fas fa-toggle-<?= $user['is_active'] ? 'on' : 'off' ?>"></i>
                             </button>
-                            <?php if (($user['id'] ?? 0) != session('user_id')): ?>
+                            <?php if ($user['id'] != session('user_id')): ?>
                                 <button 
-                                    onclick="deleteUser(<?= $user['id'] ?? 0 ?>)"
+                                    onclick="deleteUser(<?= $user['id'] ?>)"
                                     class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-all duration-200 text-sm">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -520,6 +520,12 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1) !important;
 }
 
+/* Button hover effects */
+button {
+    position: relative;
+    overflow: hidden;
+}
+
 /* Grid responsiveness */
 @media (max-width: 768px) {
     .grid {
@@ -714,7 +720,7 @@ function closeAddUserModal() {
 // User actions
 function editUser(userId) {
     showNotification(`Mengedit user dengan ID: ${userId}`, 'info');
-    // In real implementation: window.location.href = `/admin/users/edit/${userId}`;
+    // window.location.href = base_url + '/admin/users/edit/' + userId;
 }
 
 function toggleUserStatus(userId, currentStatus) {

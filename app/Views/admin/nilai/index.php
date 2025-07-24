@@ -1,67 +1,61 @@
 <?= $this->extend('admin/layout'); ?>
 
 <?= $this->section('content'); ?>
-<div class="min-h-screen bg-gray-50">
-    <!-- Page Header with Breadcrumb -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <nav class="flex" aria-label="Breadcrumb">
-                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                            <li class="inline-flex items-center">
-                                <a href="<?= base_url('/admin') ?>" class="text-gray-500 hover:text-gray-700 transition-colors">
-                                    <i class="fas fa-home w-4 h-4"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <div class="flex items-center">
-                                    <i class="fas fa-chevron-right text-gray-400 w-4 h-4"></i>
-                                    <span class="ml-1 text-sm font-medium text-gray-700">Nilai Siswa</span>
-                                </div>
-                            </li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500">
-                        <i class="fas fa-calendar-alt mr-1"></i>
-                        <?= date('d F Y') ?>
-                    </span>
-                    <span class="text-sm text-gray-400">•</span>
-                    <span class="text-sm text-gray-500">
-                        <i class="fas fa-clock mr-1"></i>
-                        <?= date('H:i') ?> WIB
-                    </span>
-                </div>
-            </div>
+<!-- Page Header with Breadcrumb -->
+<div class="bg-white shadow-sm border border-gray-200 rounded-xl p-4 mb-8">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="<?= base_url('/admin') ?>" class="text-gray-500 hover:text-gray-700 transition-colors">
+                            <i class="fas fa-home w-4 h-4"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400 w-4 h-4"></i>
+                            <span class="ml-1 text-sm font-medium text-gray-700">Nilai Siswa</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">
+                <i class="fas fa-calendar-alt mr-1"></i>
+                <?= date('d F Y') ?>
+            </span>
+            <span class="text-sm text-gray-400">•</span>
+            <span class="text-sm text-gray-500">
+                <i class="fas fa-clock mr-1"></i>
+                <?= date('H:i') ?> WIB
+            </span>
         </div>
     </div>
+</div>
 
-    <!-- Main Content Container -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <!-- Page Title Section -->
-        <div class="mb-8">
-            <div class="md:flex md:items-center md:justify-between">
-                <div class="min-w-0 flex-1">
-                    <h1 class="text-3xl font-bold text-gray-900 sm:text-4xl">
-                        <i class="fas fa-chart-line text-blue-600 mr-3"></i>
-                        Manajemen Nilai Siswa
-                    </h1>
-                    <p class="mt-2 text-lg text-gray-600">
-                        Kelola dan monitor nilai siswa secara komprehensif
-                    </p>
-                </div>
-                <div class="mt-4 flex md:mt-0 md:ml-4">
-                    <a href="<?= base_url('/admin/nilai/create') ?>?kelas=<?= $selectedKelas ?>&mapel=<?= $selectedMapel ?>" 
-                       class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5">
-                        <i class="fas fa-plus mr-2"></i>
-                        Tambah Nilai Baru
-                    </a>
-                </div>
-            </div>
+<!-- Page Title Section -->
+<div class="mb-8">
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h1 class="text-3xl font-bold text-gray-900 sm:text-4xl">
+                <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                Manajemen Nilai Siswa
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Kelola dan monitor nilai siswa secara komprehensif
+            </p>
         </div>
+        <div class="mt-4 flex md:mt-0 md:ml-4">
+            <a href="<?= base_url('/admin/nilai/create') ?>?kelas=<?= $selectedKelas ?>&mapel=<?= $selectedMapel ?>" 
+               class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5">
+                <i class="fas fa-plus mr-2"></i>
+                Tambah Nilai Baru
+            </a>
+        </div>
+    </div>
+</div>
         <!-- Advanced Filter Panel -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
             <div class="px-6 py-4 border-b border-gray-200">

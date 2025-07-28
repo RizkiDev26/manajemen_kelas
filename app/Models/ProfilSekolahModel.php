@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use App\Libraries\CacheHelper;
 
 class ProfilSekolahModel extends Model
 {
@@ -67,20 +68,40 @@ class ProfilSekolahModel extends Model
     // Callbacks
     protected $allowCallbacks = true;
     protected $beforeInsert = [];
-    protected $afterInsert = [];
+    protected $afterInsert = ['clearCache'];
     protected $beforeUpdate = [];
-    protected $afterUpdate = [];
+    protected $afterUpdate = ['clearCache'];
     protected $beforeFind = [];
     protected $afterFind = [];
     protected $beforeDelete = [];
-    protected $afterDelete = [];
+    protected $afterDelete = ['clearCache'];
+
+    protected $cacheHelper;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->cacheHelper = new CacheHelper();
+    }
 
     /**
-     * Get profil sekolah (should only be one record)
+     * Get profil sekolah with caching (should only be one record)
      * 
      * @return array|null
      */
     public function getProfilSekolah()
+    {
+        return $this->cacheHelper->getProfilSekolah(function() {
+            return $this->first();
+        });
+    }
+
+    /**
+     * Get profil sekolah without cache (for admin operations)
+     * 
+     * @return array|null
+     */
+    public function getProfilSekolahDirect()
     {
         return $this->first();
     }
@@ -97,10 +118,29 @@ class ProfilSekolahModel extends Model
         
         if ($existing) {
             // Update existing record
-            return $this->update($existing['id'], $data);
+            $result = $this->update($existing['id'], $data);
         } else {
             // Insert new record
-            return $this->insert($data);
+            $result = $this->insert($data);
         }
+        
+        // Clear cache after save
+        if ($result) {
+            $this->cacheHelper->invalidateProfilSekolah();
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Callback to clear cache after database operations
+     * 
+     * @param array $data
+     * @return array
+     */
+    protected function clearCache(array $data)
+    {
+        $this->cacheHelper->invalidateProfilSekolah();
+        return $data;
     }
 }

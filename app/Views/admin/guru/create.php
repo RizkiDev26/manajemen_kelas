@@ -216,10 +216,29 @@
                         <!-- Tugas Mengajar -->
                         <div class="lg:col-span-2">
                             <label for="tugas_mengajar" class="block text-sm font-semibold text-gray-700 mb-2">Tugas Mengajar</label>
-                            <input type="text" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200" 
-                                   id="tugas_mengajar" name="tugas_mengajar" value="<?= old('tugas_mengajar'); ?>"
-                                   placeholder="Contoh: Matematika, IPA">
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200" 
+                                    id="tugas_mengajar" name="tugas_mengajar">
+                                <option value="">Pilih Kelas</option>
+                                <?php if (isset($allKelas) && !empty($allKelas)): ?>
+                                    <?php foreach ($allKelas as $kelas): ?>
+                                        <?php 
+                                        $isAssigned = in_array($kelas['kelas'], $assignedKelasNames ?? []);
+                                        $selectedValue = old('tugas_mengajar') == $kelas['kelas'] ? 'selected' : '';
+                                        ?>
+                                        <option value="<?= esc($kelas['kelas']) ?>" 
+                                                <?= $selectedValue ?> 
+                                                <?= $isAssigned ? 'disabled' : '' ?>
+                                                <?= $isAssigned ? 'class="text-gray-400 bg-gray-100"' : '' ?>>
+                                            <?= esc($kelas['kelas']) ?>
+                                            <?= $isAssigned ? ' - ' . esc($kelas['nama']) . ' (Tidak bisa dipilih)' : '' ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                            <p class="mt-2 text-sm text-gray-600">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Kelas yang sudah memiliki guru tidak dapat dipilih
+                            </p>
                         </div>
                     </div>
                 </div>

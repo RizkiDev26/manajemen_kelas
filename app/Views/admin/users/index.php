@@ -2,22 +2,41 @@
 
 <?= $this->section('content') ?>
 
-<!-- Page Header -->
-<div class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">
-            <i class="fas fa-users text-purple-600 mr-3"></i>Kelola User
-        </h1>
-        <p class="text-gray-600">Kelola pengguna sistem dengan mudah dan terorganisir</p>
+<!-- Page Header - Mobile Optimized -->
+<div class="mb-6 sm:mb-8 lg:mb-10 px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col gap-4 sm:gap-6">
+        <div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+                <i class="fas fa-users text-purple-600 mr-3 sm:mr-4 text-2xl sm:text-3xl lg:text-4xl"></i>Kelola User
+            </h1>
+            <p class="text-base sm:text-lg text-gray-600">Kelola pengguna sistem dengan mudah dan terorganisir</p>
+        </div>
+        
+        <!-- Action Buttons - Mobile Optimized -->
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <button 
+                onclick="openAddUserModal()"
+                class="group inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 focus:ring-4 focus:ring-purple-200 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-base sm:text-lg touch-manipulation">
+                <i class="fas fa-plus mr-3 group-hover:scale-110 transition-transform duration-300 text-lg sm:text-xl"></i>
+                <span>Tambah User Baru</span>
+            </button>
+            
+                        <div class="grid grid-cols-1 sm:flex sm:flex-row gap-3 sm:gap-4">
+                            <button 
+                                    onclick="generateWalikelas()"
+                                    class="group inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 focus:ring-4 focus:ring-green-200 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-base sm:text-lg touch-manipulation">
+                                    <i class="fas fa-user-tie mr-3 group-hover:scale-110 transition-transform duration-300 text-lg sm:text-xl"></i>
+                                    <span>Generate Walikelas</span>
+                            </button>
+                            <button 
+                                    onclick="generateSiswa()"
+                                    class="group inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-sky-600 to-blue-600 text-white rounded-xl hover:from-sky-700 hover:to-blue-700 focus:ring-4 focus:ring-sky-200 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-base sm:text-lg touch-manipulation">
+                                    <i class="fas fa-user-graduate mr-3 group-hover:scale-110 transition-transform duration-300 text-lg sm:text-xl"></i>
+                                    <span>Generate Siswa</span>
+                            </button>
+                        </div>
+        </div>
     </div>
-    
-    <!-- Add User Button -->
-    <button 
-        onclick="openAddUserModal()"
-        class="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 focus:ring-4 focus:ring-purple-200 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-        <i class="fas fa-plus mr-2 group-hover:scale-110 transition-transform duration-300"></i>
-        Tambah User Baru
-    </button>
 </div>
 
 <!-- Success/Error Messages -->
@@ -58,99 +77,117 @@
 <?php endif; ?>
 
 <!-- Filter and Search Section -->
-<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-    <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Search Bar -->
-        <div class="flex-1">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-                <i class="fas fa-search text-gray-400 mr-2"></i>
-                Pencarian
-            </label>
-            <div class="relative">
-                <input 
-                    type="text" 
-                    id="searchInput"
-                    placeholder="Cari berdasarkan nama atau email..."
-                    class="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-100 focus:border-purple-500 transition-all duration-300 text-gray-900 placeholder-gray-400">
-                <div class="absolute left-3 top-3.5 text-gray-400">
-                    <i class="fas fa-search"></i>
+<div class="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6 lg:mb-8">
+    <div class="flex flex-col gap-3 sm:gap-4 lg:gap-6">
+        <!-- Mobile Filter Toggle -->
+        <div class="flex items-center justify-between sm:hidden">
+            <h3 class="text-base font-semibold text-gray-800">Filter & Pencarian</h3>
+            <button 
+                id="mobileFilterToggle"
+                class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="fas fa-filter text-sm"></i>
+            </button>
+        </div>
+        
+        <!-- Filter Content -->
+        <div id="filterContent" class="hidden sm:block">
+            <div class="flex flex-col sm:flex-row lg:flex-row gap-3 sm:gap-4 lg:gap-6">
+                <!-- Search Bar -->
+                <div class="flex-1">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                        <i class="fas fa-search text-gray-400 mr-1 sm:mr-2 text-xs sm:text-sm"></i>
+                        <span class="hidden sm:inline">Pencarian</span>
+                        <span class="sm:hidden">Cari</span>
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Cari nama atau email..."
+                            class="w-full pl-8 sm:pl-11 pr-8 sm:pr-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-3 focus:ring-purple-100 focus:border-purple-500 transition-all duration-300 text-gray-900 placeholder-gray-400 text-sm sm:text-base">
+                        <div class="absolute left-2 sm:left-3 top-2 sm:top-3.5 text-gray-400">
+                            <i class="fas fa-search text-xs sm:text-sm"></i>
+                        </div>
+                        <button 
+                            onclick="clearSearch()"
+                            class="absolute right-2 sm:right-3 top-2 sm:top-3 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 hidden"
+                            id="clearSearchBtn">
+                            <i class="fas fa-times text-xs sm:text-sm"></i>
+                        </button>
+                    </div>
                 </div>
-                <button 
-                    onclick="clearSearch()"
-                    class="absolute right-3 top-3 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 hidden"
-                    id="clearSearchBtn">
-                    <i class="fas fa-times"></i>
-                </button>
+                
+                <!-- Role Filter -->
+                <div class="sm:w-40 lg:w-48">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                        <i class="fas fa-user-tag text-gray-400 mr-1 sm:mr-2 text-xs sm:text-sm"></i>
+                        <span class="hidden sm:inline">Filter Role</span>
+                        <span class="sm:hidden">Role</span>
+                    </label>
+                    <div class="relative">
+                        <select 
+                            id="roleFilter"
+                            class="w-full pl-8 sm:pl-11 pr-8 sm:pr-10 py-2 sm:py-3 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-3 focus:ring-purple-100 focus:border-purple-500 transition-all duration-300 text-gray-900 bg-white appearance-none text-sm sm:text-base">
+                            <option value="">Semua</option>
+                            <option value="admin">Admin</option>
+                            <option value="guru">Guru</option>
+                            <option value="walikelas">Wali Kelas</option>
+                            <option value="siswa">Siswa</option>
+                        </select>
+                        <div class="absolute left-2 sm:left-3 top-2 sm:top-3.5 text-gray-400">
+                            <i class="fas fa-user-cog text-xs sm:text-sm"></i>
+                        </div>
+                        <div class="absolute right-2 sm:right-3 top-2 sm:top-3.5 text-gray-400 pointer-events-none">
+                            <i class="fas fa-chevron-down text-xs sm:text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="sm:w-40 lg:w-48">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                        <i class="fas fa-toggle-on text-gray-400 mr-1 sm:mr-2 text-xs sm:text-sm"></i>
+                        <span class="hidden sm:inline">Filter Status</span>
+                        <span class="sm:hidden">Status</span>
+                    </label>
+                    <div class="relative">
+                        <select 
+                            id="statusFilter"
+                            class="w-full pl-8 sm:pl-11 pr-8 sm:pr-10 py-2 sm:py-3 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-3 focus:ring-purple-100 focus:border-purple-500 transition-all duration-300 text-gray-900 bg-white appearance-none text-sm sm:text-base">
+                            <option value="">Semua</option>
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Tidak Aktif</option>
+                        </select>
+                        <div class="absolute left-2 sm:left-3 top-2 sm:top-3.5 text-gray-400">
+                            <i class="fas fa-circle text-xs sm:text-sm"></i>
+                        </div>
+                        <div class="absolute right-2 sm:right-3 top-2 sm:top-3.5 text-gray-400 pointer-events-none">
+                            <i class="fas fa-chevron-down text-xs sm:text-sm"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <!-- Role Filter -->
-        <div class="lg:w-48">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-                <i class="fas fa-user-tag text-gray-400 mr-2"></i>
-                Filter Role
-            </label>
-            <div class="relative">
-                <select 
-                    id="roleFilter"
-                    class="w-full pl-11 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-100 focus:border-purple-500 transition-all duration-300 text-gray-900 bg-white appearance-none">
-                    <option value="">Semua Role</option>
-                    <option value="admin">Admin</option>
-                    <option value="guru">Guru</option>
-                    <option value="walikelas">Wali Kelas</option>
-                    <option value="siswa">Siswa</option>
-                </select>
-                <div class="absolute left-3 top-3.5 text-gray-400">
-                    <i class="fas fa-user-cog"></i>
+        <!-- Quick Stats -->
+        <div class="mt-3 sm:mt-4 lg:mt-6 pt-3 sm:pt-4 lg:pt-6 border-t border-gray-200">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+                <div class="text-center p-2 sm:p-3 lg:p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
+                    <div class="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600" id="totalUsers"><?= isset($users) ? count($users) : 0 ?></div>
+                    <div class="text-xs sm:text-sm text-gray-600">Total User</div>
                 </div>
-                <div class="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
-                    <i class="fas fa-chevron-down"></i>
+                <div class="text-center p-2 sm:p-3 lg:p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                    <div class="text-lg sm:text-xl lg:text-2xl font-bold text-green-600" id="activeUsers"><?= isset($users) ? count(array_filter($users, fn($u) => $u['is_active'] ?? false)) : 0 ?></div>
+                    <div class="text-xs sm:text-sm text-gray-600">User Aktif</div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Status Filter -->
-        <div class="lg:w-48">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-                <i class="fas fa-toggle-on text-gray-400 mr-2"></i>
-                Filter Status
-            </label>
-            <div class="relative">
-                <select 
-                    id="statusFilter"
-                    class="w-full pl-11 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-100 focus:border-purple-500 transition-all duration-300 text-gray-900 bg-white appearance-none">
-                    <option value="">Semua Status</option>
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Tidak Aktif</option>
-                </select>
-                <div class="absolute left-3 top-3.5 text-gray-400">
-                    <i class="fas fa-circle"></i>
+                <div class="text-center p-2 sm:p-3 lg:p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                    <div class="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600" id="adminUsers"><?= isset($users) ? count(array_filter($users, fn($u) => $u['role'] === 'admin')) : 0 ?></div>
+                    <div class="text-xs sm:text-sm text-gray-600">Admin</div>
                 </div>
-                <div class="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
-                    <i class="fas fa-chevron-down"></i>
+                <div class="text-center p-2 sm:p-3 lg:p-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg">
+                    <div class="text-lg sm:text-xl lg:text-2xl font-bold text-orange-600" id="teacherUsers"><?= isset($users) ? count(array_filter($users, fn($u) => in_array($u['role'], ['guru', 'walikelas']))) : 0 ?></div>
+                    <div class="text-xs sm:text-sm text-gray-600">Guru</div>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Quick Stats -->
-    <div class="mt-6 pt-6 border-t border-gray-200">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-                <div class="text-2xl font-bold text-blue-600" id="totalUsers"><?= isset($users) ? count($users) : 0 ?></div>
-                <div class="text-sm text-gray-600">Total User</div>
-            </div>
-            <div class="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
-                <div class="text-2xl font-bold text-green-600" id="activeUsers"><?= isset($users) ? count(array_filter($users, fn($u) => $u['is_active'] ?? false)) : 0 ?></div>
-                <div class="text-sm text-gray-600">User Aktif</div>
-            </div>
-            <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
-                <div class="text-2xl font-bold text-purple-600" id="adminUsers"><?= isset($users) ? count(array_filter($users, fn($u) => $u['role'] === 'admin')) : 0 ?></div>
-                <div class="text-sm text-gray-600">Admin</div>
-            </div>
-            <div class="text-center p-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg">
-                <div class="text-2xl font-bold text-orange-600" id="teacherUsers"><?= isset($users) ? count(array_filter($users, fn($u) => in_array($u['role'], ['guru', 'walikelas']))) : 0 ?></div>
-                <div class="text-sm text-gray-600">Guru</div>
             </div>
         </div>
     </div>
@@ -261,6 +298,12 @@
                                 class="flex-1 flex items-center justify-center px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 text-sm font-medium">
                                 <i class="fas fa-edit mr-1"></i>
                                 Edit
+                            </button>
+                            <button 
+                                onclick="resetUserPassword(<?= $user['id'] ?? 0 ?>, '<?= esc($user['nama'] ?? 'Unknown User') ?>')"
+                                class="flex items-center justify-center px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 text-sm"
+                                title="Reset Password">
+                                <i class="fas fa-key"></i>
                             </button>
                             <button 
                                 onclick="toggleUserStatus(<?= $user['id'] ?? 0 ?>, '<?= ($user['is_active'] ?? false) ? 'active' : 'inactive' ?>')"
@@ -745,6 +788,28 @@ function toggleUserStatus(userId, currentStatus) {
     }
 }
 
+function resetUserPassword(userId, userName) {
+    if (confirm(`Apakah Anda yakin ingin mereset password user "${userName}" ke password default (guru123456)?`)) {
+        // Show loading notification
+        showNotification('Sedang mereset password...', 'info');
+        
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `<?= base_url('admin/users/reset-password/') ?>${userId}`;
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '<?= csrf_token() ?>';
+        csrfInput.value = '<?= csrf_hash() ?>';
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
 function deleteUser(userId) {
     if (confirm('Apakah Anda yakin ingin menghapus user ini? Tindakan ini tidak dapat dibatalkan.')) {
         showNotification('User berhasil dihapus', 'success');
@@ -838,6 +903,57 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }, 300);
     }, 5000);
+}
+
+// Generate Accounts function
+function postTo(url){
+    // Create and submit a small form with CSRF
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '<?= csrf_token() ?>';
+    csrfInput.value = '<?= csrf_hash() ?>';
+    form.appendChild(csrfInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function generateWalikelas() {
+    if (confirm('Generate akun untuk semua wali kelas dari data guru bertugas?')) {
+        showNotification('Memproses generate akun walikelas...', 'info');
+        postTo('<?= base_url('admin/users/generate-walikelas') ?>');
+    }
+}
+
+function generateSiswa() {
+    if (confirm('Generate akun siswa berdasarkan data NISN di tb_siswa? Username=NISN, password default="siswa123".')) {
+        showNotification('Memproses generate akun siswa...', 'info');
+        postTo('<?= base_url('admin/users/generate-siswa') ?>');
+    }
+}
+
+// Mobile filter toggle
+const mobileFilterToggle = document.getElementById('mobileFilterToggle');
+const filterContent = document.getElementById('filterContent');
+
+if (mobileFilterToggle && filterContent) {
+    mobileFilterToggle.addEventListener('click', function() {
+        const isHidden = filterContent.classList.contains('hidden');
+        
+        if (isHidden) {
+            filterContent.classList.remove('hidden');
+            filterContent.classList.add('block');
+            this.querySelector('i').classList.remove('fa-filter');
+            this.querySelector('i').classList.add('fa-times');
+        } else {
+            filterContent.classList.add('hidden');
+            filterContent.classList.remove('block');
+            this.querySelector('i').classList.remove('fa-times');
+            this.querySelector('i').classList.add('fa-filter');
+        }
+    });
 }
 
 // Keyboard shortcuts

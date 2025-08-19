@@ -4,15 +4,18 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\GuruModel;
+use App\Models\WalikelasModel;
 
 class Guru extends BaseController
 {
     protected $guruModel;
+    protected $walikelasModel;
     protected $validation;
 
     public function __construct()
     {
         $this->guruModel = new GuruModel();
+        $this->walikelasModel = new WalikelasModel();
         $this->validation = \Config\Services::validation();
     }
 
@@ -20,22 +23,62 @@ class Guru extends BaseController
     {
         $keyword = $this->request->getVar('keyword');
         $currentPage = $this->request->getVar('page') ? (int) $this->request->getVar('page') : 1;
+        $perPage = $this->request->getVar('perPage') ? (int) $this->request->getVar('perPage') : 10;
         
+        // Check for AJAX request (for auto-search)
+        $isAjax = $this->request->isAJAX();
+        
+        // Create a fresh model instance for each query to avoid conflicts
+        $guruModel = new GuruModel();
+        
+        // Build query with proper grouping to avoid duplicates
         if ($keyword) {
-            $query = $this->guruModel->like('nama', $keyword)
-                                   ->orLike('nip', $keyword)
-                                   ->orLike('nuptk', $keyword);
-        } else {
-            $query = $this->guruModel;
+            $guruModel->groupStart()
+                     ->like('nama', $keyword)
+                     ->orLike('nip', $keyword)
+                     ->orLike('nuptk', $keyword)
+                     ->orLike('tugas_mengajar', $keyword)
+                     ->groupEnd();
         }
+        
+        // Add DISTINCT to avoid duplicates and order by name
+        $guruModel->distinct();
+        $guruModel->orderBy('nama', 'ASC');
+        
+        // Get paginated results
+        $guru = $guruModel->paginate($perPage, 'default');
+        $pager = $guruModel->pager;
+        
+        // Get total count for display using a separate query
+        $countModel = new GuruModel();
+        if ($keyword) {
+            $countModel->groupStart()
+                      ->like('nama', $keyword)
+                      ->orLike('nip', $keyword)
+                      ->orLike('nuptk', $keyword)
+                      ->orLike('tugas_mengajar', $keyword)
+                      ->groupEnd();
+        }
+        $totalRecords = $countModel->distinct()->countAllResults();
 
         $data = [
             'title' => 'Data Guru',
-            'guru' => $query->paginate(10, 'guru'),
-            'pager' => $query->pager,
+            'guru' => $guru,
+            'pager' => $pager,
             'currentPage' => $currentPage,
-            'keyword' => $keyword
+            'keyword' => $keyword,
+            'totalRecords' => $totalRecords,
+            'perPage' => $perPage
         ];
+
+        // Return JSON for AJAX requests
+        if ($isAjax) {
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $data,
+                'html' => view('admin/guru/table_content', $data)
+            ]);
+        }
 
         return view('admin/guru/index', $data);
     }
@@ -58,9 +101,37 @@ class Guru extends BaseController
 
     public function create()
     {
+        // Get all unique classes from siswa table
+        $siswaModel = new \App\Models\SiswaModel();
+        $allKelasData = $siswaModel->select('kelas')
+                                  ->distinct()
+                                  ->where('kelas IS NOT NULL')
+                                  ->where('kelas !=', '')
+                                  ->orderBy('kelas', 'ASC')
+                                  ->findAll();
+        
+        // Format the data to match expected structure
+        $allKelas = [];
+        foreach ($allKelasData as $kelasData) {
+            $allKelas[] = [
+                'kelas' => $kelasData['kelas'],
+                'nama' => '' // We don't have teacher name from siswa table
+            ];
+        }
+        
+        // Get classes that are already assigned to other teachers
+        $assignedKelas = $this->guruModel->select('tugas_mengajar')
+                                        ->where('tugas_mengajar IS NOT NULL')
+                                        ->where('tugas_mengajar !=', '')
+                                        ->findAll();
+        
+        $assignedKelasNames = array_column($assignedKelas, 'tugas_mengajar');
+        
         $data = [
             'title' => 'Tambah Data Guru',
-            'validation' => $this->validation
+            'validation' => $this->validation,
+            'allKelas' => $allKelas,
+            'assignedKelasNames' => $assignedKelasNames
         ];
 
         return view('admin/guru/create', $data);
@@ -148,10 +219,39 @@ class Guru extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Data guru tidak ditemukan');
         }
 
+        // Get all unique classes from siswa table
+        $siswaModel = new \App\Models\SiswaModel();
+        $allKelasData = $siswaModel->select('kelas')
+                                  ->distinct()
+                                  ->where('kelas IS NOT NULL')
+                                  ->where('kelas !=', '')
+                                  ->orderBy('kelas', 'ASC')
+                                  ->findAll();
+        
+        // Format the data to match expected structure
+        $allKelas = [];
+        foreach ($allKelasData as $kelasData) {
+            $allKelas[] = [
+                'kelas' => $kelasData['kelas'],
+                'nama' => '' // We don't have teacher name from siswa table
+            ];
+        }
+        
+        // Get classes that are already assigned to other teachers (excluding current teacher)
+        $assignedKelas = $this->guruModel->select('tugas_mengajar')
+                                        ->where('tugas_mengajar IS NOT NULL')
+                                        ->where('tugas_mengajar !=', '')
+                                        ->where('id !=', $id)
+                                        ->findAll();
+        
+        $assignedKelasNames = array_column($assignedKelas, 'tugas_mengajar');
+
         $data = [
             'title' => 'Edit Data Guru',
             'guru' => $guru,
-            'validation' => $this->validation
+            'validation' => $this->validation,
+            'allKelas' => $allKelas,
+            'assignedKelasNames' => $assignedKelasNames
         ];
 
         return view('admin/guru/edit', $data);
@@ -349,6 +449,90 @@ class Guru extends BaseController
             session()->setFlashdata('pesan', "Berhasil mengimpor {$imported} data guru." . ($errors > 0 ? " {$errors} data gagal diimpor." : ""));
         } else {
             session()->setFlashdata('error', "Gagal mengimpor data. {$errors} data bermasalah.");
+        }
+        
+        return redirect()->to('/admin/guru');
+    }
+
+    public function checkDuplicates()
+    {
+        // Check for duplicate entries based on nama, nip, or nuptk
+        $db = \Config\Database::connect();
+        
+        // Find duplicates by nama
+        $duplicatesByName = $db->query("
+            SELECT nama, COUNT(*) as count 
+            FROM guru 
+            WHERE nama IS NOT NULL AND nama != '' 
+            GROUP BY nama 
+            HAVING COUNT(*) > 1
+        ")->getResultArray();
+        
+        // Find duplicates by nip
+        $duplicatesByNip = $db->query("
+            SELECT nip, COUNT(*) as count 
+            FROM guru 
+            WHERE nip IS NOT NULL AND nip != '' 
+            GROUP BY nip 
+            HAVING COUNT(*) > 1
+        ")->getResultArray();
+        
+        // Find duplicates by nuptk
+        $duplicatesByNuptk = $db->query("
+            SELECT nuptk, COUNT(*) as count 
+            FROM guru 
+            WHERE nuptk IS NOT NULL AND nuptk != '' 
+            GROUP BY nuptk 
+            HAVING COUNT(*) > 1
+        ")->getResultArray();
+        
+        $data = [
+            'title' => 'Cek Duplikasi Data Guru',
+            'duplicatesByName' => $duplicatesByName,
+            'duplicatesByNip' => $duplicatesByNip,
+            'duplicatesByNuptk' => $duplicatesByNuptk
+        ];
+        
+        return view('admin/guru/duplicates', $data);
+    }
+    
+    public function cleanDuplicates()
+    {
+        $db = \Config\Database::connect();
+        $cleaned = 0;
+        
+        try {
+            $db->transStart();
+            
+            // Clean duplicates by keeping the first record (oldest ID)
+            $duplicates = $db->query("
+                SELECT nama, MIN(id) as keep_id, COUNT(*) as count
+                FROM guru 
+                WHERE nama IS NOT NULL AND nama != ''
+                GROUP BY nama 
+                HAVING COUNT(*) > 1
+            ")->getResultArray();
+            
+            foreach ($duplicates as $duplicate) {
+                // Delete all records except the one with minimum ID
+                $deleted = $db->query("
+                    DELETE FROM guru 
+                    WHERE nama = ? AND id != ?
+                ", [$duplicate['nama'], $duplicate['keep_id']]);
+                
+                $cleaned += ($duplicate['count'] - 1);
+            }
+            
+            $db->transComplete();
+            
+            if ($db->transStatus() === false) {
+                session()->setFlashdata('error', 'Gagal membersihkan duplikasi data.');
+            } else {
+                session()->setFlashdata('pesan', "Berhasil membersihkan {$cleaned} data duplikat.");
+            }
+            
+        } catch (\Exception $e) {
+            session()->setFlashdata('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
         
         return redirect()->to('/admin/guru');

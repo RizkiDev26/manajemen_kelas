@@ -178,15 +178,37 @@ class NilaiModel extends Model
      */
     public function getMataPelajaranList()
     {
+        // Legacy mapping kept for pages that expect a map (key => label)
         return [
-            'IPAS' => 'Ilmu Pengetahuan Alam dan Sosial',
+            'Pendidikan Agama' => 'Pendidikan Agama',
+            'Pendidikan Pancasila' => 'Pendidikan Pancasila',
             'Bahasa Indonesia' => 'Bahasa Indonesia',
             'Matematika' => 'Matematika',
+            'IPAS' => 'IPAS',
+            'Seni Rupa' => 'Seni Rupa',
+            'Pendidikan Jasmani Olahraga dan Kesehatan' => 'Pendidikan Jasmani Olahraga dan Kesehatan',
+            'Pendidikan Lingkungan dan Budaya Jakarta' => 'Pendidikan Lingkungan dan Budaya Jakarta',
             'Bahasa Inggris' => 'Bahasa Inggris',
-            'Pendidikan Agama' => 'Pendidikan Agama',
-            'PJOK' => 'Pendidikan Jasmani, Olahraga, dan Kesehatan',
-            'Seni Budaya' => 'Seni Budaya',
-            'Bahasa Jawa' => 'Bahasa Jawa'
+            'Coding' => 'Coding',
+        ];
+    }
+
+    /**
+     * Ordered subject list as requested by product (use as dropdown source)
+     */
+    public function getOrderedMapelList(): array
+    {
+        return [
+            'Pendidikan Agama',
+            'Pendidikan Pancasila',
+            'Bahasa Indonesia',
+            'Matematika',
+            'IPAS',
+            'Seni Rupa',
+            'Pendidikan Jasmani Olahraga dan Kesehatan',
+            'Pendidikan Lingkungan dan Budaya Jakarta',
+            'Bahasa Inggris',
+            'Coding',
         ];
     }
 
@@ -199,6 +221,118 @@ class NilaiModel extends Model
             'harian' => 'Nilai Harian',
             'pts' => 'Nilai PTS (Penilaian Tengah Semester)',
             'pas' => 'Nilai PAS (Penilaian Akhir Semester)'
+        ];
+    }
+
+    /**
+     * Return possible aliases for a mapel name to handle legacy/inconsistent naming
+     */
+    private function mapelAliases(string $mapel): array
+    {
+        $m = trim($mapel);
+        $aliases = [
+            // Science
+            'IPA' => ['IPA', 'IPAS'],
+            'IPAS' => ['IPAS', 'IPA'],
+            // Physical education
+            'Olahraga' => ['Olahraga', 'PJOK', 'Pendidikan Jasmani Olahraga dan Kesehatan'],
+            'PJOK' => ['PJOK', 'Olahraga', 'Pendidikan Jasmani Olahraga dan Kesehatan'],
+            'Pendidikan Jasmani Olahraga dan Kesehatan' => ['Pendidikan Jasmani Olahraga dan Kesehatan', 'PJOK', 'Olahraga'],
+            // Religion
+            'Agama' => ['Agama', 'Pendidikan Agama'],
+            'Pendidikan Agama' => ['Pendidikan Agama', 'Agama'],
+            // Civics
+            'PKn' => ['PKn', 'PPKn', 'Pendidikan Pancasila'],
+            'PPKn' => ['PPKn', 'PKn', 'Pendidikan Pancasila'],
+            'Pendidikan Pancasila' => ['Pendidikan Pancasila', 'PKn', 'PPKn'],
+            // Arts
+            'Seni Budaya' => ['Seni Budaya', 'Seni Rupa'],
+            'Seni Rupa' => ['Seni Rupa', 'Seni Budaya'],
+            // Local subject
+            'Pendidikan Lingkungan dan Budaya Jakarta' => ['Pendidikan Lingkungan dan Budaya Jakarta', 'PLBJ'],
+            'PLBJ' => ['PLBJ', 'Pendidikan Lingkungan dan Budaya Jakarta'],
+            // Languages
+            'Bahasa Indonesia' => ['Bahasa Indonesia', 'B. Indonesia'],
+            'Bahasa Inggris' => ['Bahasa Inggris', 'B. Inggris'],
+            // Coding / ICT
+            'Coding' => ['Coding', 'TIK', 'Informatika'],
+        ];
+        return $aliases[$m] ?? [$m];
+    }
+
+    /**
+     * Build matrix of nilai harian by assessment instance (PH-1, PH-2, ...)
+     * Returns headers, students, and values mapping.
+     */
+    public function getNilaiHarianMatrix(string $kelas, string $mataPelajaran)
+    {
+        $db = \Config\Database::connect();
+        $mapels = $this->mapelAliases($mataPelajaran);
+
+        // Students in class (active)
+        $students = $db->table('tb_siswa')
+            ->select('id, nama, nisn')
+            ->where('kelas', $kelas)
+            ->where('deleted_at IS NULL', null, false)
+            ->orderBy('nama', 'ASC')
+            ->get()->getResultArray();
+
+        // Distinct assessment instances for harian by date + tp_materi (use builder for IN array)
+        $instBuilder = $db->table('nilai n');
+        $instBuilder->select("CAST(n.tanggal AS DATE) AS tgl, COALESCE(n.tp_materi, '') AS tp, MIN(n.id) AS min_id", false)
+            ->where('n.kelas', $kelas)
+            ->whereIn('n.mata_pelajaran', $mapels)
+            ->where("n.deleted_at IS NULL", null, false)
+            ->where("LOWER(n.jenis_nilai) = 'harian'", null, false)
+            ->groupBy("CAST(n.tanggal AS DATE), COALESCE(n.tp_materi, '')", false)
+            ->orderBy('tgl', 'ASC')
+            ->orderBy('min_id', 'ASC');
+        $instances = $instBuilder->get()->getResultArray();
+
+        // Map instance key to index
+        $headers = [];
+        $instanceIndex = [];
+        foreach ($instances as $i => $inst) {
+            $idx = $i + 1;
+            $key = $inst['tgl'] . '|' . $inst['tp'];
+            $instanceIndex[$key] = $idx;
+            $headers[] = [
+                'label' => 'PH-' . $idx,
+                'date' => $inst['tgl'],
+                'tp' => $inst['tp']
+            ];
+        }
+
+        // Values per student per instance
+        $values = [];
+        foreach ($students as $s) {
+            $values[$s['id']] = [];
+        }
+
+        if (!empty($headers)) {
+            $nilaiBuilder = $db->table('nilai n');
+            $nilaiBuilder->select("n.siswa_id, n.nilai, CAST(n.tanggal AS DATE) AS tgl, COALESCE(n.tp_materi, '') AS tp", false)
+                ->where('n.kelas', $kelas)
+                ->whereIn('n.mata_pelajaran', $mapels)
+                ->where("n.deleted_at IS NULL", null, false)
+                ->where("LOWER(n.jenis_nilai) = 'harian'", null, false)
+                ->orderBy('n.tanggal', 'ASC')
+                ->orderBy('n.id', 'ASC');
+            $rows = $nilaiBuilder->get()->getResultArray();
+            foreach ($rows as $row) {
+                $key = $row['tgl'] . '|' . $row['tp'];
+                if (isset($instanceIndex[$key])) {
+                    $col = $instanceIndex[$key];
+                    $sid = (int)$row['siswa_id'];
+                    $values[$sid][$col] = $row['nilai'];
+                }
+            }
+        }
+
+        return [
+            'headers' => $headers, // array of {label, date, tp}
+            'students' => $students, // array of {id, nama, nisn}
+            'values' => $values // map: student_id => [colIndex => nilai]
         ];
     }
 }

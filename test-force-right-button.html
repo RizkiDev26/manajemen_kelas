@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Floating Button - FORCE RIGHT POSITION</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            min-height: 200vh;
+        }
+        
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* ULTIMATE FORCE - Use highest CSS specificity */
+        html body div button#saveAll.floating-save-btn,
+        html body div button#saveAll,
+        button#saveAll {
+            position: fixed !important;
+            bottom: 24px !important;
+            right: 24px !important;
+            left: auto !important;
+            top: auto !important;
+            z-index: 999999 !important;
+            transform: none !important;
+            margin: 0 !important;
+            width: 64px !important;
+            height: 64px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 50% !important;
+            background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%) !important;
+            color: white !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            border: 2px solid rgba(255, 255, 255, 0.2) !important;
+            cursor: pointer !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Mobile version with high specificity */
+        @media (max-width: 768px) {
+            html body div button#saveAll.floating-save-btn,
+            html body div button#saveAll,
+            button#saveAll {
+                bottom: 16px !important;
+                right: 16px !important;
+                width: 56px !important;
+                height: 56px !important;
+            }
+        }
+        
+        /* Test conflicting styles */
+        .test-conflict {
+            position: relative !important;
+            left: 50px !important;
+            right: auto !important;
+            background: red !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>🚀 Test Floating Button - FORCE RIGHT POSITION</h1>
+        <p>✅ <strong>Perbaikan yang telah diterapkan:</strong></p>
+        
+        <h2>📋 Checklist Perbaikan:</h2>
+        <ul>
+            <li>✅ HTML inline styles: <code>left: auto !important</code></li>
+            <li>✅ CSS dengan specificity tinggi</li>
+            <li>✅ JavaScript <code>setProperty()</code> dengan <code>important</code></li>
+            <li>✅ MutationObserver untuk detect perubahan style</li>
+            <li>✅ setInterval setiap 100ms untuk force positioning</li>
+            <li>✅ Container parent juga dipaksa ke posisi kanan</li>
+        </ul>
+        
+        <h2>🎯 Posisi yang Diharapkan:</h2>
+        <p>🖥️ <strong>Desktop:</strong> <code>bottom: 24px, right: 24px</code> (64px size)</p>
+        <p>📱 <strong>Mobile:</strong> <code>bottom: 16px, right: 16px</code> (56px size)</p>
+        
+        <h2>⚡ Test Konflik CSS:</h2>
+        <p>Tombol akan tetap di kanan meskipun ada CSS yang mencoba memindahkannya ke kiri.</p>
+        
+        <button onclick="testConflict()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            🧪 Test Konflik CSS (Coba Pindah ke Kiri)
+        </button>
+        
+        <br><br>
+        <p>Scroll kebawah untuk test posisi tetap di kanan bawah...</p>
+        
+        <div style="height: 100vh; background: linear-gradient(45deg, #f0f0f0, #e0e0e0); display: flex; align-items: center; justify-content: center;">
+            <h2>Area untuk test scroll</h2>
+        </div>
+        
+        <div style="height: 100vh; background: linear-gradient(45deg, #e0e0e0, #d0d0d0); display: flex; align-items: center; justify-content: center;">
+            <h2>Area untuk test scroll lagi</h2>
+        </div>
+    </div>
+    
+    <!-- Test Floating Button with ULTRA FORCE -->
+    <div style="position: fixed; bottom: 24px; right: 24px; left: auto; z-index: 999999;">
+        <button id="saveAll" class="floating-save-btn" title="Kirim Daftar Hadir">
+            ✈️
+        </button>
+    </div>
+    
+    <script>
+        // ULTRA AGGRESSIVE FORCE POSITIONING
+        function forceButtonPosition() {
+            const btn = document.getElementById('saveAll');
+            if (btn) {
+                const isMobile = window.innerWidth <= 768;
+                const bottomPos = isMobile ? '16px' : '24px';
+                const rightPos = isMobile ? '16px' : '24px';
+                const size = isMobile ? '56px' : '64px';
+                
+                // Force with setProperty
+                btn.style.setProperty('position', 'fixed', 'important');
+                btn.style.setProperty('bottom', bottomPos, 'important');
+                btn.style.setProperty('right', rightPos, 'important');
+                btn.style.setProperty('left', 'auto', 'important');
+                btn.style.setProperty('top', 'auto', 'important');
+                btn.style.setProperty('z-index', '999999', 'important');
+                btn.style.setProperty('width', size, 'important');
+                btn.style.setProperty('height', size, 'important');
+                
+                // Force container too
+                const container = btn.parentElement;
+                if (container) {
+                    container.style.setProperty('position', 'fixed', 'important');
+                    container.style.setProperty('bottom', bottomPos, 'important');
+                    container.style.setProperty('right', rightPos, 'important');
+                    container.style.setProperty('left', 'auto', 'important');
+                    container.style.setProperty('z-index', '999999', 'important');
+                }
+            }
+        }
+        
+        // Force on load
+        document.addEventListener('DOMContentLoaded', forceButtonPosition);
+        
+        // Force every 100ms
+        setInterval(forceButtonPosition, 100);
+        
+        // Force on resize
+        window.addEventListener('resize', forceButtonPosition);
+        
+        // Test conflict function
+        function testConflict() {
+            const btn = document.getElementById('saveAll');
+            if (btn) {
+                console.log('🧪 TESTING CONFLICT - Trying to move button to left...');
+                // Try to move to left (this should be overridden)
+                btn.style.cssText = 'position: relative !important; left: 50px !important; right: auto !important; background: red !important;';
+                btn.classList.add('test-conflict');
+                
+                // The force mechanism should move it back to right within 100ms
+                setTimeout(() => {
+                    console.log('✅ Conflict test complete - button should be back to right position');
+                }, 200);
+            }
+        }
+        
+        // MutationObserver to detect changes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.target.id === 'saveAll') {
+                    console.log('🔄 Button style changed - forcing back to right position');
+                    setTimeout(forceButtonPosition, 10);
+                }
+            });
+        });
+        
+        // Start observing
+        const btn = document.getElementById('saveAll');
+        if (btn) {
+            observer.observe(btn, {
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+        }
+        
+        // Scroll to top function
+        document.getElementById('saveAll').addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    </script>
+</body>
+</html>

@@ -37,6 +37,11 @@ class Absensi extends BaseController
             return redirect()->to('/admin')->with('error', 'Anda tidak memiliki akses ke halaman ini');
         }
 
+        // If this is a POST request with attendance data, redirect to save_all
+        if ($this->request->getMethod() === 'post' && $this->request->getPost('attendance_data')) {
+            return $this->save_all();
+        }
+
         // Get user's class if wali kelas
         $userKelas = null;
         if ($userRole === 'wali_kelas' || $userRole === 'walikelas') {

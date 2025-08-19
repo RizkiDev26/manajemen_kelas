@@ -35,7 +35,7 @@ class UserModel extends Model
         'password' => 'required|min_length[6]',
         'nama' => 'required|min_length[3]|max_length[100]',
         'email' => 'permit_empty|valid_email|is_unique[users.email,id,{id}]',
-        'role' => 'required|in_list[admin,walikelas,guru]',
+    'role' => 'required|in_list[admin,walikelas,guru,siswa]',
         'is_active' => 'in_list[0,1]'
     ];
 

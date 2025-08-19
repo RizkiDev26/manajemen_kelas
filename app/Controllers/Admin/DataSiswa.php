@@ -166,6 +166,19 @@ class DataSiswa extends BaseController
 
     public function create()
     {
+        $session = session();
+        
+        // Check if user is logged in and has permission
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+
+        // Only admin can create new students
+        $userRole = $session->get('role');
+        if ($userRole === 'walikelas') {
+            return redirect()->to('/admin/data-siswa')->with('error', 'Anda tidak memiliki izin untuk menambah data siswa');
+        }
+
         $data = [
             'title' => 'Tambah Siswa Baru'
         ];
@@ -175,30 +188,83 @@ class DataSiswa extends BaseController
 
     public function store()
     {
+        $session = session();
+        
+        // Check if user is logged in and has permission
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+
+        // Only admin can create new students
+        $userRole = $session->get('role');
+        if ($userRole === 'walikelas') {
+            return redirect()->to('/admin/data-siswa')->with('error', 'Anda tidak memiliki izin untuk menambah data siswa');
+        }
+
         // Validation rules
         $validation = \Config\Services::validation();
         $validation->setRules([
             'nama' => 'required|min_length[3]|max_length[100]',
-            'nisn' => 'required|numeric|is_unique[siswa.nisn]',
-            'kelas' => 'required',
-            'email' => 'valid_email|is_unique[siswa.email]',
-            'telepon' => 'required|numeric'
+            'nisn' => 'required|numeric|is_unique[tb_siswa.nisn]',
+            'jk' => 'required|in_list[L,P]',
+            'kelas' => 'required|max_length[20]',
+            'email' => 'permit_empty|valid_email|is_unique[tb_siswa.email]',
+            'hp' => 'required|numeric|min_length[10]|max_length[15]',
+            'tanggal_lahir' => 'permit_empty|valid_date'
         ]);
 
         if (!$validation->withRequest($this->request)->run()) {
             return redirect()->back()->withInput()->with('validation', $validation);
         }
 
-        // Store student data logic here
-        // For now, just redirect with success message
-        return redirect()->to('/admin/data-siswa')->with('success', 'Data siswa berhasil ditambahkan');
+        // Prepare data for insertion
+        $data = [
+            'nama' => $this->request->getPost('nama'),
+            'nisn' => $this->request->getPost('nisn'),
+            'nipd' => $this->request->getPost('nipd'),
+            'jk' => $this->request->getPost('jk'),
+            'kelas' => $this->request->getPost('kelas'),
+            'tempat_lahir' => $this->request->getPost('tempat_lahir'),
+            'tanggal_lahir' => $this->request->getPost('tanggal_lahir'),
+            'nik' => $this->request->getPost('nik'),
+            'agama' => $this->request->getPost('agama'),
+            'alamat' => $this->request->getPost('alamat'),
+            'email' => $this->request->getPost('email'),
+            'hp' => $this->request->getPost('hp')
+        ];
+
+        // Insert data
+        if ($this->siswaModel->insert($data)) {
+            return redirect()->to('/admin/data-siswa')->with('success', 'Data siswa berhasil ditambahkan');
+        } else {
+            return redirect()->back()->withInput()->with('error', 'Gagal menambahkan data siswa');
+        }
     }
 
     public function edit($id)
     {
+        $session = session();
+        
+        // Check if user is logged in and has permission
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+
+        // Only admin can edit students
+        $userRole = $session->get('role');
+        if ($userRole === 'walikelas') {
+            return redirect()->to('/admin/data-siswa')->with('error', 'Anda tidak memiliki izin untuk mengedit data siswa');
+        }
+
+        $siswa = $this->siswaModel->find($id);
+        
+        if (!$siswa) {
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Siswa tidak ditemukan');
+        }
+
         $data = [
-            'title' => 'Edit Data Siswa',
-            'id' => $id
+            'title' => 'Edit Data Siswa - ' . $siswa['nama'],
+            'siswa' => $siswa
         ];
         
         return view('admin/data-siswa/edit', $data);
@@ -206,14 +272,92 @@ class DataSiswa extends BaseController
 
     public function update($id)
     {
-        // Update student data logic here
-        return redirect()->to('/admin/data-siswa')->with('success', 'Data siswa berhasil diperbarui');
+        $session = session();
+        
+        // Check if user is logged in and has permission
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+
+        // Only admin can update students
+        $userRole = $session->get('role');
+        if ($userRole === 'walikelas') {
+            return redirect()->to('/admin/data-siswa')->with('error', 'Anda tidak memiliki izin untuk mengedit data siswa');
+        }
+
+        $siswa = $this->siswaModel->find($id);
+        
+        if (!$siswa) {
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Siswa tidak ditemukan');
+        }
+
+        // Validation rules (with exceptions for current record)
+        $validation = \Config\Services::validation();
+        $validation->setRules([
+            'nama' => 'required|min_length[3]|max_length[100]',
+            'nisn' => "required|numeric|is_unique[tb_siswa.nisn,id,{$id}]",
+            'jk' => 'required|in_list[L,P]',
+            'kelas' => 'required|max_length[20]',
+            'email' => "permit_empty|valid_email|is_unique[tb_siswa.email,id,{$id}]",
+            'hp' => 'required|numeric|min_length[10]|max_length[15]',
+            'tanggal_lahir' => 'permit_empty|valid_date'
+        ]);
+
+        if (!$validation->withRequest($this->request)->run()) {
+            return redirect()->back()->withInput()->with('validation', $validation);
+        }
+
+        // Prepare data for update
+        $data = [
+            'nama' => $this->request->getPost('nama'),
+            'nisn' => $this->request->getPost('nisn'),
+            'nipd' => $this->request->getPost('nipd'),
+            'jk' => $this->request->getPost('jk'),
+            'kelas' => $this->request->getPost('kelas'),
+            'tempat_lahir' => $this->request->getPost('tempat_lahir'),
+            'tanggal_lahir' => $this->request->getPost('tanggal_lahir'),
+            'nik' => $this->request->getPost('nik'),
+            'agama' => $this->request->getPost('agama'),
+            'alamat' => $this->request->getPost('alamat'),
+            'email' => $this->request->getPost('email'),
+            'hp' => $this->request->getPost('hp')
+        ];
+
+        // Update data
+        if ($this->siswaModel->update($id, $data)) {
+            return redirect()->to('/admin/data-siswa')->with('success', 'Data siswa berhasil diperbarui');
+        } else {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data siswa');
+        }
     }
 
     public function delete($id)
     {
-        // Delete student data logic here
-        return redirect()->to('/admin/data-siswa')->with('success', 'Data siswa berhasil dihapus');
+        $session = session();
+        
+        // Check if user is logged in and has permission
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+
+        // Only admin can delete students
+        $userRole = $session->get('role');
+        if ($userRole === 'walikelas') {
+            return redirect()->to('/admin/data-siswa')->with('error', 'Anda tidak memiliki izin untuk menghapus data siswa');
+        }
+
+        $siswa = $this->siswaModel->find($id);
+        
+        if (!$siswa) {
+            return redirect()->to('/admin/data-siswa')->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        // Delete student data
+        if ($this->siswaModel->delete($id)) {
+            return redirect()->to('/admin/data-siswa')->with('success', 'Data siswa berhasil dihapus');
+        } else {
+            return redirect()->to('/admin/data-siswa')->with('error', 'Gagal menghapus data siswa');
+        }
     }
 
     public function detail($id)

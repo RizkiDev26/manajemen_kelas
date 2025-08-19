@@ -1,8 +1,83 @@
 <?= $this->extend('admin/layout'); ?>
 
 <?= $this->section('content'); ?>
+<!-- Mobile Viewport Meta Tag -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- Mobile-specific styles -->
+<style>
+@media (max-width: 768px) {
+    /* Remove any default margins and padding */
+    * {
+        box-sizing: border-box;
+    }
+    
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden;
+        background: transparent !important; /* Ensure no background overlay */
+    }
+    
+    /* Ensure no fixed overlays interfere */
+    .content-area,
+    .content-wrapper,
+    main {
+        background: transparent !important;
+        z-index: auto !important;
+        position: relative !important;
+    }
+    
+    /* Remove any problematic background overlays */
+    .content-area::before,
+    .content-area::after,
+    .content-wrapper::before,
+    .content-wrapper::after {
+        display: none !important;
+    }
+    
+    /* Ensure full width on mobile */
+    .container, .max-w-7xl, .mx-auto {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Remove any unwanted spacing */
+    .mb-8, .mb-6, .mb-4 {
+        margin-bottom: 16px !important;
+    }
+    
+    .p-4, .p-6, .p-8, .p-12 {
+        padding: 16px !important;
+    }
+    
+    /* Ensure cards take full width */
+    .student-card {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    /* Optimize for mobile performance */
+    .student-card {
+        will-change: transform;
+        backface-visibility: hidden;
+    }
+    
+    /* Ensure no white overlay blocks content */
+    body::before,
+    body::after,
+    html::before,
+    html::after {
+        display: none !important;
+    }
+}
+</style>
+
 <!-- Page Header with Breadcrumb -->
-<div class="bg-white shadow-sm border border-gray-200 rounded-xl p-4 mb-8">
+<div class="bg-white shadow-sm border border-gray-200 rounded-xl p-4 mb-4 md:mb-8">
     <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
             <nav class="flex" aria-label="Breadcrumb">
@@ -56,8 +131,8 @@
         </div>
     </div>
 </div>
-        <!-- Advanced Filter Panel -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
+        <!-- Desktop Filter Panel -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8 hidden md:block">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900 flex items-center">
                     <i class="fas fa-filter text-blue-600 mr-2"></i>
@@ -153,10 +228,161 @@
                 </form>
             </div>
         </div>
++        <!-- Mobile Filter Panel -->
++        <div class="mobile-filter md:hidden">
++            <div class="filter-header" onclick="toggleMobileFilter()">
++                <div class="filter-title">
++                    <i class="fas fa-filter mr-2"></i>
++                    Filter & Pencarian Data
++                </div>
++                <i class="fas fa-chevron-down filter-toggle" id="filterToggle"></i>
++            </div>
++            <div class="filter-content" id="filterContent">
++                <!-- Mobile Search -->
++                <div class="mobile-search">
++                    <input type="text" class="search-input" placeholder="Cari nama siswa..." id="mobileSearchInput" onkeyup="filterMobileCards()">
++                    <i class="fas fa-search search-icon"></i>
++                </div>
++
++                <!-- Mobile Stats -->
++                <div class="mobile-stats">
++                    <div class="stats-grid">
++                        <div class="stat-item">
++                            <div class="stat-value"><?= count($nilaiRekap ?? []) ?></div>
++                            <div class="stat-label">Total Siswa</div>
++                        </div>
++                        <div class="stat-item">
++                            <div class="stat-value"><?= count(array_filter($nilaiRekap ?? [], function($s) { return isset($s['nilai_akhir']) && $s['nilai_akhir'] !== null; })) ?></div>
++                            <div class="stat-label">Sudah Dinilai</div>
++                        </div>
++                    </div>
++                </div>
++
++                <form method="GET" action="<?= base_url('/admin/nilai') ?>" id="mobileFilterForm">
++                    <!-- Mata Pelajaran -->
++                    <select name="mapel" class="mobile-select" onchange="this.form.submit()">
++                        <?php foreach ($mataPelajaranList as $code => $name): ?>
++                            <option value="<?= $code ?>" <?= $selectedMapel === $code ? 'selected' : '' ?>>
++                                <?= $name ?>
++                            </option>
++                        <?php endforeach; ?>
++                    </select>
++
++                    <!-- Kelas (Admin Only) -->
++                    <?php if ($userRole === 'admin'): ?>
++                    <select name="kelas" class="mobile-select" onchange="this.form.submit()">
++                        <option value="">Semua Kelas</option>
++                        <?php foreach ($allKelas as $kelas): ?>
++                            <option value="<?= $kelas ?>" <?= $selectedKelas === $kelas ? 'selected' : '' ?>>
++                                Kelas <?= $kelas ?>
++                            </option>
++                        <?php endforeach; ?>
++                    </select>
++                    <?php endif; ?>
++
++                    <button type="button" onclick="resetMobileFilters()" class="mobile-btn-secondary">
++                        <i class="fas fa-undo"></i>
++                        Reset Filter
++                    </button>
++                </form>
++            </div>
++        </div>
++
++        <!-- Mobile Card Layout -->
++        <div class="mobile-cards md:hidden">
++            <?php if ($selectedKelas && !empty($nilaiRekap)): ?>
++                <?php $no = 1; ?>
++                <?php foreach ($nilaiRekap as $siswa): ?>
++                    <div class="student-card" data-name="<?= strtolower($siswa['nama'] ?? '') ?>">
++                        <div class="card-header">
++                            <div class="student-name"><?= $siswa['nama'] ?? 'Nama tidak tersedia' ?></div>
++                            <div class="student-id">NIPD: <?= $siswa['nipd'] ?? '-' ?></div>
++                            <div class="student-number"><?= $no++ ?></div>
++                        </div>
++                        <div class="card-body">
++                            <div class="grade-grid">
++                                <div class="grade-item">
++                                    <div class="grade-label">Harian</div>
++                                    <div class="grade-value"><?= isset($siswa['nilai_harian']) && $siswa['nilai_harian'] !== null ? number_format($siswa['nilai_harian'], 1) : '-' ?></div>
++                                    <div class="grade-count"><?= isset($siswa['jumlah_harian']) ? $siswa['jumlah_harian'] : 0 ?> nilai</div>
++                                </div>
++                                <div class="grade-item">
++                                    <div class="grade-label">PTS</div>
++                                    <div class="grade-value"><?= isset($siswa['nilai_pts']) && $siswa['nilai_pts'] !== null ? number_format($siswa['nilai_pts'], 1) : '-' ?></div>
++                                </div>
++                                <div class="grade-item">
++                                    <div class="grade-label">PAS</div>
++                                    <div class="grade-value"><?= isset($siswa['nilai_pas']) && $siswa['nilai_pas'] !== null ? number_format($siswa['nilai_pas'], 1) : '-' ?></div>
++                                </div>
+                                <div class="grade-item final-grade
+                                    <?php 
+                                        if (isset($siswa['nilai_akhir']) && $siswa['nilai_akhir'] !== null) {
+                                            $nilai = $siswa['nilai_akhir'];
+                                            if ($nilai >= 85) {
+                                                echo ' grade-excellent';
+                                            } elseif ($nilai >= 75) {
+                                                echo ' grade-good';
+                                            } elseif ($nilai >= 65) {
+                                                echo ' grade-fair';
+                                            } else {
+                                                echo ' grade-poor';
+                                            }
+                                        } else {
+                                            echo ' bg-gray-100 text-gray-800';
+                                        }
+                                    ?>">
+                                    <div class="grade-label">Akhir</div>
+                                    <div class="grade-value"><?= isset($siswa['nilai_akhir']) && $siswa['nilai_akhir'] !== null ? number_format($siswa['nilai_akhir'], 1) : '-' ?></div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <?php if(isset($siswa['id'])): ?>
+                                    <a href="<?= base_url('/admin/nilai/detail/' . $siswa['id']) ?>?mapel=<?= $selectedMapel ?>" class="action-btn action-btn-primary" title="Lihat Detail">
+                                        <i class="fas fa-eye"></i> Detail
+                                    </a>
+                                    <a href="<?= base_url('/admin/nilai/create') ?>?kelas=<?= $selectedKelas ?>&mapel=<?= $selectedMapel ?>&siswa_id=<?= $siswa['id'] ?>" class="action-btn action-btn-secondary" title="Tambah/Edit Nilai">
+                                        <i class="fas fa-plus"></i> Edit
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-gray-400">-</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php elseif ($selectedKelas && empty($nilaiRekap)): ?>
+                <div class="mobile-empty">
+                    <div class="empty-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="empty-title">Belum Ada Data Nilai</div>
+                    <div class="empty-description">
+                        Belum ada nilai yang tercatat untuk kelas <strong><?= $selectedKelas ?></strong> pada mata pelajaran <strong><?= $mataPelajaranList[$selectedMapel] ?></strong>.
+                    </div>
+                    <a href="<?= base_url('/admin/nilai/create') ?>?kelas=<?= $selectedKelas ?>&mapel=<?= $selectedMapel ?>" class="mobile-btn mobile-btn-primary">
+                        <i class="fas fa-plus mr-2"></i> Mulai Input Nilai
+                    </a>
+                </div>
+            <?php else: ?>
+                <div class="mobile-empty">
+                    <div class="empty-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="empty-title">Pilih Filter untuk Memulai</div>
+                    <div class="empty-description">
+                        Silakan pilih mata pelajaran dan kelas untuk melihat data nilai siswa.
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
 
-        <!-- Data Table Section -->
+
+
+        <!-- Data Section -->
         <?php if ($selectedKelas && !empty($nilaiRekap)): ?>
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        
+        <!-- Desktop Table -->
+        <div class="desktop-table bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             
             <!-- Table Header -->
             <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
@@ -189,7 +415,7 @@
                 </div>
             </div>
 
-            <!-- Responsive Table -->
+            <!-- Desktop Table -->
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -276,36 +502,41 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <div class="inline-flex items-center px-4 py-2 rounded-lg font-bold text-lg
+                                <span class="text-lg font-bold 
                                     <?php 
-                                    if (isset($siswa['nilai_akhir']) && $siswa['nilai_akhir'] !== null) {
-                                        $nilai = $siswa['nilai_akhir'];
-                                        if ($nilai >= 85) echo 'bg-green-100 text-green-800';
-                                        elseif ($nilai >= 75) echo 'bg-blue-100 text-blue-800';
-                                        elseif ($nilai >= 65) echo 'bg-yellow-100 text-yellow-800';
-                                        else echo 'bg-red-100 text-red-800';
-                                    } else {
-                                        echo 'bg-gray-100 text-gray-800';
-                                    }
+                                        if (isset($siswa['nilai_akhir']) && $siswa['nilai_akhir'] !== null) {
+                                            $nilai = $siswa['nilai_akhir'];
+                                            if ($nilai >= 85) {
+                                                echo 'text-green-600';
+                                            } elseif ($nilai >= 75) {
+                                                echo 'text-blue-600';
+                                            } elseif ($nilai >= 65) {
+                                                echo 'text-yellow-600';
+                                            } else {
+                                                echo 'text-red-600';
+                                            }
+                                        } else {
+                                            echo 'text-gray-400';
+                                        }
                                     ?>">
                                     <?= isset($siswa['nilai_akhir']) && $siswa['nilai_akhir'] !== null ? number_format($siswa['nilai_akhir'], 1) : '-' ?>
-                                </div>
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <div class="flex items-center justify-center space-x-2">
                                     <?php if(isset($siswa['id'])): ?>
-                                    <a href="<?= base_url('/admin/nilai/detail/' . $siswa['id']) ?>?mapel=<?= $selectedMapel ?>" 
-                                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-                                       title="Lihat Detail">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="<?= base_url('/admin/nilai/create') ?>?kelas=<?= $selectedKelas ?>&mapel=<?= $selectedMapel ?>&siswa_id=<?= $siswa['id'] ?>" 
-                                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
-                                       title="Tambah/Edit Nilai">
-                                        <i class="fas fa-plus"></i>
-                                    </a>
+                                        <a href="<?= base_url('/admin/nilai/detail/' . $siswa['id']) ?>?mapel=<?= $selectedMapel ?>" 
+                                           class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors" title="Lihat Detail">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            Detail
+                                        </a>
+                                        <a href="<?= base_url('/admin/nilai/create') ?>?kelas=<?= $selectedKelas ?>&mapel=<?= $selectedMapel ?>&siswa_id=<?= $siswa['id'] ?>" 
+                                           class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 transition-colors" title="Tambah/Edit Nilai">
+                                            <i class="fas fa-edit mr-1"></i>
+                                            Edit
+                                        </a>
                                     <?php else: ?>
-                                    <span class="text-gray-400">-</span>
+                                        <span class="text-gray-400">-</span>
                                     <?php endif; ?>
                                 </div>
                             </td>
@@ -671,6 +902,354 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('filterForm').submit();
         });
     }
+});
+
+// Mobile filter functions
+function toggleMobileFilter() {
+    const filterContent = document.getElementById('filterContent');
+    const filterToggle = document.getElementById('filterToggle');
+    
+    if (filterContent.style.display === 'none' || filterContent.style.display === '') {
+        filterContent.style.display = 'block';
+        filterToggle.classList.remove('fa-chevron-down');
+        filterToggle.classList.add('fa-chevron-up');
+        
+        // Add smooth animation
+        filterContent.style.opacity = '0';
+        filterContent.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            filterContent.style.transition = 'all 0.3s ease';
+            filterContent.style.opacity = '1';
+            filterContent.style.transform = 'translateY(0)';
+        }, 10);
+    } else {
+        filterContent.style.transition = 'all 0.3s ease';
+        filterContent.style.opacity = '0';
+        filterContent.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            filterContent.style.display = 'none';
+        }, 300);
+        filterToggle.classList.remove('fa-chevron-up');
+        filterToggle.classList.add('fa-chevron-down');
+    }
+}
+
+function filterMobileCards() {
+    const searchInput = document.getElementById('mobileSearchInput');
+    const searchTerm = searchInput.value.toLowerCase();
+    const cards = document.querySelectorAll('.student-card');
+    let visibleCount = 0;
+    
+    cards.forEach(card => {
+        const studentName = card.getAttribute('data-name');
+        if (studentName.includes(searchTerm)) {
+            card.style.display = 'block';
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, visibleCount * 50);
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Show no results message if needed
+    const noResultsMsg = document.getElementById('no-results-message');
+    if (visibleCount === 0 && searchTerm.length > 0) {
+        if (!noResultsMsg) {
+            const msg = document.createElement('div');
+            msg.id = 'no-results-message';
+            msg.className = 'mobile-empty';
+            msg.innerHTML = `
+                <div class="empty-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="empty-title">Tidak Ada Hasil</div>
+                <div class="empty-description">
+                    Tidak ditemukan siswa dengan nama "${searchTerm}"
+                </div>
+            `;
+            document.querySelector('.mobile-cards').appendChild(msg);
+        }
+    } else if (noResultsMsg) {
+        noResultsMsg.remove();
+    }
+}
+
+function resetMobileFilters() {
+    const mobileFilterForm = document.getElementById('mobileFilterForm');
+    const selects = mobileFilterForm.querySelectorAll('select');
+    
+    selects.forEach(select => {
+        if (select.name === 'mapel') {
+            select.value = 'IPAS';
+        } else if (select.name === 'kelas') {
+            select.value = '';
+        }
+    });
+    
+    // Clear search input
+    const searchInput = document.getElementById('mobileSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        filterMobileCards();
+    }
+    
+    mobileFilterForm.submit();
+}
+
+// Enhanced mobile experience
+document.addEventListener('DOMContentLoaded', function() {
+    // Add pull-to-refresh functionality
+    let startY = 0;
+    let currentY = 0;
+    let pullDistance = 0;
+    const pullThreshold = 80;
+    
+    document.addEventListener('touchstart', function(e) {
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+        }
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (window.scrollY === 0 && startY > 0) {
+            currentY = e.touches[0].clientY;
+            pullDistance = currentY - startY;
+            
+            if (pullDistance > 0 && pullDistance < pullThreshold) {
+                document.body.style.transform = `translateY(${pullDistance * 0.5}px)`;
+            }
+        }
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        if (pullDistance > pullThreshold) {
+            // Trigger refresh
+            location.reload();
+        }
+        
+        // Reset
+        document.body.style.transform = '';
+        startY = 0;
+        currentY = 0;
+        pullDistance = 0;
+    });
+    
+    // Add haptic feedback for mobile
+    if ('vibrate' in navigator) {
+        const buttons = document.querySelectorAll('.action-btn, .mobile-btn, .filter-header');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                navigator.vibrate(10);
+            });
+        });
+    }
+    
+    // Optimize for mobile performance
+    const cards = document.querySelectorAll('.student-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('fade-in');
+    });
+});
+
+// Add CSS animation for fade-in effect
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .fade-in {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+    
+    @media (max-width: 768px) {
+        .student-card {
+            opacity: 0;
+        }
+        
+        .student-card.fade-in {
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+<!-- Floating Action Button for Mobile - FIXED TO RIGHT -->
+<div class="fab-mobile md:hidden" onclick="scrollToTop()" style="position: fixed !important; bottom: 20px !important; right: 20px !important; z-index: 999999 !important;">
+    <i class="fas fa-arrow-up"></i>
+</div>
+
+<style>
+/* Floating Action Button - FORCE RIGHT POSITION */
+.fab-mobile {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 999999 !important;
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    left: auto !important; /* Force override any left positioning */
+}
+
+.fab-mobile:active {
+    transform: scale(0.9) !important;
+}
+
+/* Force mobile FAB positioning override */
+@media (max-width: 768px) {
+    .fab-mobile {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        left: auto !important;
+        top: auto !important;
+        z-index: 999999 !important;
+    }
+}
+
+/* Show FAB when scrolling */
+@media (max-width: 768px) {
+    .fab-mobile {
+        animation: slideIn 0.3s ease forwards;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+</style>
+
+<script>
+// Show/hide FAB based on scroll position - FORCE RIGHT POSITION
+window.addEventListener('scroll', function() {
+    const fab = document.querySelector('.fab-mobile');
+    
+    if (fab) {
+        // Always force correct positioning
+        fab.style.position = 'fixed';
+        fab.style.bottom = '20px';
+        fab.style.right = '20px';
+        fab.style.left = 'auto';
+        fab.style.top = 'auto';
+        fab.style.zIndex = '999999';
+        
+        if (window.scrollY > 200) {
+            fab.style.opacity = '1';
+            fab.style.transform = 'scale(1)';
+        } else {
+            fab.style.opacity = '1'; // Always show
+            fab.style.transform = 'scale(1)';
+        }
+    }
+});
+
+// Scroll to top function
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+// Refresh data function
+function refreshData() {
+    location.reload();
+}
+
+// Print data function
+function printData() {
+    window.print();
+}
+
+// Enhanced mobile experience
+document.addEventListener('DOMContentLoaded', function() {
+    // Force FAB positioning on mobile
+    const fab = document.querySelector('.fab-mobile');
+    if (fab) {
+        // Force correct positioning
+        fab.style.position = 'fixed';
+        fab.style.bottom = '20px';
+        fab.style.right = '20px';
+        fab.style.left = 'auto';
+        fab.style.top = 'auto';
+        fab.style.zIndex = '999999';
+        fab.style.opacity = '1';
+        fab.style.transform = 'scale(1)';
+    }
+    
+    // Add swipe gestures for mobile
+    let startX = 0;
+    let startY = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+        
+        // Swipe left to refresh
+        if (diffX > 50 && Math.abs(diffY) < 50) {
+            location.reload();
+        }
+        
+        // Swipe right to go back
+        if (diffX < -50 && Math.abs(diffY) < 50) {
+            history.back();
+        }
+    });
+    
+    // Add loading states for better UX
+    const actionButtons = document.querySelectorAll('.action-btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            this.style.opacity = '0.7';
+            this.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                this.style.opacity = '1';
+                this.style.pointerEvents = 'auto';
+            }, 1000);
+        });
+    });
 });
 </script>
 

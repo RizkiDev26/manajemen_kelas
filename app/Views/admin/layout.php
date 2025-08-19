@@ -2,609 +2,171 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        :root {
+            --sidebar-width-expanded: 220px;
+            --sidebar-width-collapsed: 100px;
+            --content-padding-expanded: 0;
+            --content-padding-collapsed: 0;
         }
         
-        /* Fixed Layout Styles - Enhanced for Better Separation */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        
+        /* Disable all transitions globally */
+        *, *::before, *::after {
+            transition: none !important;
+            animation: none !important;
+        }
+        
+        /* Re-enable specific smooth transitions for sidebar and menu items */
+        .sidebar { transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
+        .sidebar nav a, .sidebar nav div { transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
+        .content-wrapper, .fixed-header { transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
+        .sidebar nav .submenu { transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
+        .sidebar nav .submenu-chevron { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
+        .sidebar-text, .menu-text, .menu-label { transition: opacity 0.3s ease, visibility 0.3s ease !important; }
+        
+        /* Submenu functionality */
+        .menu-item-with-submenu .submenu { max-height: 0; opacity: 0; overflow: hidden; }
+        .menu-item-with-submenu.open .submenu { max-height: 200px; opacity: 1; }
+        .menu-item-with-submenu.open .submenu-chevron { transform: rotate(180deg); }
+        
+        /* Enhanced menu item styles */
+        .sidebar nav a:hover, .sidebar nav div:hover { transform: translateX(4px); box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1); }
+        
+        /* Badge animations */
+        .sidebar nav .bg-blue-400\/30,
+        .sidebar nav .bg-green-400\/30,
+        .sidebar nav .bg-orange-400\/30 { transition: all 0.3s ease !important; }
+        .sidebar nav a:hover .bg-blue-400\/30,
+        .sidebar nav a:hover .bg-green-400\/30,
+        .sidebar nav a:hover .bg-orange-400\/30 { transform: scale(1.1); box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2); }
+        
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); }
+        
+        /* Fixed Layout Styles */
         .main-container {
             display: flex;
             min-height: 100vh;
-            background-color: #f8fafc;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             position: relative;
-            overflow: hidden; /* Prevent body scroll */
+            overflow-x: hidden;
+            overflow-y: visible;
         }
         
         .sidebar {
-            width: 288px;
+            width: var(--sidebar-width-expanded);
             flex-shrink: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s ease;
-            /* Fixed sidebar - doesn't scroll with content */
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            z-index: 30;
-            overflow-y: auto;
-            /* Ensure sidebar content is scrollable */
-            display: flex;
-            flex-direction: column;
+            position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+            overflow-y: auto; display: flex; flex-direction: column;
+            box-shadow: 8px 0 32px rgba(102, 126, 234, 0.25); backdrop-filter: blur(15px);
         }
-        
-        /* Collapsed sidebar styles */
-        .sidebar.collapsed {
-            width: 80px;
-        }
-        
-        /* Prevent any layout shifts during collapse */
-        .sidebar.collapsed * {
-            transition: all 0.3s ease;
-        }
-        
-        /* Maintain navigation structure when collapsed */
-        .sidebar.collapsed nav ul {
-            margin: 0;
-            padding: 0;
-        }
-        
-        .sidebar.collapsed nav ul .space-y-2 {
-            gap: 0.5rem;
-        }
-        
-        /* Hide only text elements when collapsed */
-        .sidebar.collapsed .sidebar-text {
-            opacity: 0;
-            transform: translateX(-20px);
-            pointer-events: none;
-            width: 0;
-            overflow: hidden;
-            /* Prevent layout shift */
-            position: absolute;
-            visibility: hidden;
-        }
-        
-        .sidebar.collapsed .menu-text {
-            opacity: 0;
-            transform: translateX(-20px);
-            pointer-events: none;
-            width: 0;
-            overflow: hidden;
-            /* Prevent layout shift */
-            position: absolute;
-            visibility: hidden;
-        }
-        
-        .sidebar.collapsed .menu-label {
-            opacity: 0;
-            transform: translateX(-20px);
-            pointer-events: none;
-            width: 0;
-            overflow: hidden;
-            /* Prevent layout shift */
-            position: absolute;
-            visibility: hidden;
-        }
-        
-        /* Logo section adjustments when collapsed */
-        .sidebar.collapsed .p-6 {
-            padding: 1.5rem 1rem;
-            /* Maintain consistent height */
-            min-height: 88px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .sidebar.collapsed .flex.items-center.justify-between {
-            justify-content: center;
-            width: 100%;
-        }
-        
-        .sidebar.collapsed .flex.items-center.space-x-3 {
-            space-x: 0;
-        }
-        
-        /* Ensure icons remain visible when collapsed */
-        .sidebar.collapsed nav ul li a {
-            justify-content: center;
-            padding: 0.75rem;
-            /* Maintain consistent height and positioning */
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .sidebar.collapsed nav ul li a svg {
-            margin: 0;
-            opacity: 1;
-            display: block;
-            /* Prevent icon movement */
-            position: static;
-            transform: none;
-        }
-        
-        /* Hide active state indicators when collapsed */
-        .sidebar.collapsed nav ul li a.bg-white\/10 {
-            background: transparent !important;
-            border-left: none !important;
-        }
-        
-        .sidebar.collapsed nav ul li div.bg-white\/10 {
-            background: transparent !important;
-            border-left: none !important;
-        }
-        
-        /* Reset all active state styling when collapsed */
-        .sidebar.collapsed nav ul li a[class*="bg-white"],
-        .sidebar.collapsed nav ul li div[class*="bg-white"] {
-            background: transparent !important;
-            border-left: none !important;
-            border: none !important;
-        }
-        
-        /* Specifically target active menu classes with border */
-        .sidebar.collapsed nav ul li a[class*="border-l-4"],
-        .sidebar.collapsed nav ul li div[class*="border-l-4"] {
-            border-left: none !important;
-            background: transparent !important;
-        }
-        
-        /* Target text-white class to reset color */
-        .sidebar.collapsed nav ul li a.text-white,
-        .sidebar.collapsed nav ul li div.text-white {
-            color: rgba(255, 255, 255, 0.8) !important;
-        }
-        
-        /* Hide submenu completely when collapsed */
-        .sidebar.collapsed nav .ml-8 {
-            display: none;
-        }
-        
-        /* Adjust link spacing for collapsed state */
-        .sidebar.collapsed nav ul li a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            position: relative;
-            /* Prevent layout shifts */
-            min-height: 48px;
-            margin: 0;
-            box-sizing: border-box;
-        }
-        
-        .sidebar.collapsed nav ul li div {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            position: relative;
-            /* Prevent layout shifts */
-            min-height: 48px;
-            margin: 0;
-            box-sizing: border-box;
-        }
-        
-        /* Ensure consistent spacing for list items */
-        .sidebar.collapsed nav ul li {
-            margin: 0;
-            padding: 0;
-        }
-        
-        /* Maintain consistent navigation padding */
-        .sidebar.collapsed nav {
-            padding: 0 1rem;
-        }
-        
-        /* Fix specific menu spacing issues */
-        .sidebar.collapsed nav .mb-8 {
-            margin-bottom: 1rem;
-        }
-        
-        .sidebar.collapsed nav ul.space-y-2 > li {
-            margin-top: 0;
-            margin-bottom: 0.5rem;
-        }
-        
-        .sidebar.collapsed nav ul.space-y-2 > li:first-child {
-            margin-top: 0;
-        }
-        
-        /* Ensure divider doesn't cause layout shifts */
-        .sidebar.collapsed .pt-4 {
-            padding-top: 0;
-        }
-        
-        /* Hide divider sections when collapsed */
-        .sidebar.collapsed .border-t.border-white\/20 {
-            display: none;
-        }
-        
-        /* Sidebar toggle button */
-        .sidebar-toggle-btn {
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: white;
-            font-size: 14px;
-            backdrop-filter: blur(10px);
-            /* Prevent affecting layout */
-            flex-shrink: 0;
-            position: relative;
-        }
-        
-        .sidebar-toggle-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.4);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        .sidebar-toggle-btn i {
-            transition: transform 0.3s ease;
-        }
-        
-        .sidebar.collapsed .sidebar-toggle-btn i {
-            transform: rotate(180deg);
-        }
-        
-        /* Sidebar show button in header */
-        #sidebarShow {
-            animation: fadeIn 0.3s ease-out;
-        }
-        
-        @keyframes fadeIn {
-            from { 
-                opacity: 0; 
-                transform: translateX(-10px); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateX(0); 
-            }
-        }
-        
-        /* Text transitions */
-        .sidebar-text, .menu-text, .menu-label {
-            transition: all 0.3s ease;
-        }
-        
-        /* Tooltip for collapsed sidebar */
-        .sidebar.collapsed [title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            left: calc(100% + 10px);
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 1000;
-            pointer-events: none;
-            animation: fadeIn 0.2s ease-out;
-        }
-        
-        /* Enhanced hover effects for collapsed sidebar */
-        .sidebar.collapsed nav ul li a:hover {
-            background: rgba(255, 255, 255, 0.15) !important;
-            transform: scale(1.05);
-            border-left: none !important;
-            border-radius: 8px;
-            /* Prevent movement during hover */
-            margin: 0;
-        }
-        
-        .sidebar.collapsed nav ul li div:hover {
-            background: rgba(255, 255, 255, 0.15) !important;
-            transform: scale(1.05);
-            border-left: none !important;
-            border-radius: 8px;
-            /* Prevent movement during hover */
-            margin: 0;
-        }
-        
-        .sidebar.collapsed nav ul li a:hover svg {
-            color: #ffffff;
-            transform: scale(1.1);
-        }
-        
-        .sidebar.collapsed nav ul li div:hover svg {
-            color: #ffffff;
-            transform: scale(1.1);
-        }
-        
-        /* Remove any text color inheritance when collapsed */
-        .sidebar.collapsed nav ul li a,
-        .sidebar.collapsed nav ul li div {
-            color: rgba(255, 255, 255, 0.8) !important;
-        }
-        
-        /* Optional: Subtle indicator for active menu when collapsed (tiny dot) */
-        .sidebar.collapsed nav ul li a[class*="bg-white"]::before,
-        .sidebar.collapsed nav ul li div[class*="bg-white"]::before {
-            content: '';
-            position: absolute;
-            left: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            z-index: 1;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-50%) translateX(-5px); }
-            to { opacity: 1; transform: translateY(-50%) translateX(0); }
-        }
+        .sidebar.collapsed { width: var(--sidebar-width-collapsed); }
+        .sidebar.collapsed .sidebar-text, .sidebar.collapsed .menu-text, .sidebar.collapsed .menu-label { opacity: 0; pointer-events: none; width: 0; overflow: hidden; position: absolute; visibility: hidden; }
+        .sidebar .p-6 { background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(10px); }
+        .sidebar.collapsed nav ul li a { justify-content: center; padding: 0.5rem; min-height: 40px; display: flex; align-items: center; }
+        .sidebar.collapsed nav ul li a svg { margin: 0; opacity: 1; }
         
         .content-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            /* Add left margin to compensate for fixed sidebar */
-            margin-left: 288px;
-            min-height: 100vh;
-            transition: margin-left 0.3s ease;
-            background-color: #f8fafc;
-            /* Ensure content wrapper takes full height */
-            height: 100vh;
+            flex: 1; display: flex; flex-direction: column; overflow-x: hidden;
+            margin-left: var(--sidebar-width-expanded);
+            min-height: 100vh; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            height: 100vh; padding-left: 0;
         }
-        
-        .content-wrapper.sidebar-collapsed {
-            margin-left: 80px;
-        }
+    .content-wrapper.sidebar-collapsed { margin-left: var(--sidebar-width-collapsed); padding-left: var(--content-padding-collapsed); }
         
         .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 288px;
-            right: 0;
-            z-index: 50;
-            width: calc(100% - 288px);
-            height: 72px;
-            transition: all 0.3s ease;
-            background-color: white;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            position: fixed; top: 0; left: var(--sidebar-width-expanded); right: 0; z-index: 50;
+            width: calc(100% - var(--sidebar-width-expanded)); height: 60px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
         }
-        
-        .fixed-header.sidebar-collapsed {
-            left: 80px;
-            width: calc(100% - 80px);
-        }
+        .fixed-header.sidebar-collapsed { left: var(--sidebar-width-collapsed); width: calc(100% - var(--sidebar-width-collapsed)); }
         
         .content-area {
             flex: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
-            margin-top: 72px;
-            min-height: calc(100vh - 72px);
-            background-color: #f8fafc;
-            /* Ensure proper scrolling behavior */
-            height: calc(100vh - 72px);
-            /* Custom scrollbar for better appearance */
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 transparent;
+            overflow: visible;
+            padding: 2rem; margin-top: 60px;
+            min-height: calc(100vh - 60px);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            height: auto;
+            scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+            margin-left: 20px;
         }
-
-        /* Custom scrollbar styles for webkit browsers */
-        .content-area::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .content-area::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .content-area::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-
-        .content-area::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
+        .content-area::-webkit-scrollbar { width: 6px; }
+        .content-area::-webkit-scrollbar-track { background: transparent; }
+        .content-area::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 3px; }
+        .content-area::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%); }
+        
         /* Ensure sidebar content doesn't overflow */
-        .sidebar nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0;
-            /* Custom scrollbar for sidebar */
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-        }
-
-        /* Custom scrollbar for sidebar webkit browsers */
-        .sidebar nav::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .sidebar nav::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .sidebar nav::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-        }
-
-        .sidebar nav::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
+        .sidebar nav { flex: 1; overflow-y: auto; padding: 0; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.3) transparent; }
+        .sidebar nav::-webkit-scrollbar { width: 4px; }
+        .sidebar nav::-webkit-scrollbar-track { background: transparent; }
+        .sidebar nav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 2px; }
+        .sidebar nav::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+        
         @media (max-width: 1023px) {
-            .sidebar {
-                transform: translateX(-100%);
-                z-index: 50;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .content-wrapper {
-                margin-left: 0;
-                width: 100%;
-                height: 100vh;
-            }
-            
-            .fixed-header {
-                left: 0;
-                width: 100%;
-            }
-            
-            .content-area {
-                height: calc(100vh - 72px);
-            }
-        }
-                transform: translateX(-100%);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .content-wrapper {
-                margin-left: 0;
-                width: 100%;
-            }
+            .sidebar { position: fixed !important; top: 0 !important; left: 0 !important; width: 320px !important; height: 100vh !important; z-index: 1000 !important; transform: translateX(-100%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; backdrop-filter: blur(10px); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15); overflow-y: auto; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar .p-4 { padding: 1.5rem !important; }
+            .sidebar nav { padding: 1rem !important; }
+            .sidebar .menu-text { font-size: 1.4rem !important; font-weight: 500 !important; }
+            .sidebar .menu-label { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
+            .content-area { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 1rem !important; box-sizing: border-box; overflow-x: hidden; }
+            .fixed-header { left: 0 !important; width: 100% !important; height: 60px !important; background: rgba(255, 255, 255, 0.95) !important; backdrop-filter: blur(15px) !important; }
+            .content-wrapper { margin-left: 0 !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; box-sizing: border-box; }
+            .content-area .container, .content-area .max-w-7xl, .content-area .mx-auto { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 1rem !important; box-sizing: border-box; }
         }
         
-        /* Responsive Grid Utilities */
-        .responsive-grid-1 { grid-template-columns: repeat(1, 1fr); }
-        .responsive-grid-2 { grid-template-columns: repeat(2, 1fr); }
-        .responsive-grid-3 { grid-template-columns: repeat(3, 1fr); }
-        .responsive-grid-4 { grid-template-columns: repeat(4, 1fr); }
-        .responsive-grid-5 { grid-template-columns: repeat(5, 1fr); }
-        
-        @media (min-width: 640px) {
-            .sm\:responsive-grid-2 { grid-template-columns: repeat(2, 1fr); }
-            .sm\:responsive-grid-3 { grid-template-columns: repeat(3, 1fr); }
-        }
-        
-        @media (min-width: 768px) {
-            .md\:responsive-grid-2 { grid-template-columns: repeat(2, 1fr); }
-            .md\:responsive-grid-3 { grid-template-columns: repeat(3, 1fr); }
-            .md\:responsive-grid-4 { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 768px) {
+            .content-area { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0.75rem !important; box-sizing: border-box; overflow-x: hidden; }
+            .sidebar { width: 280px !important; }
+            .fixed-header { padding: 0.5rem 1rem !important; }
+            .fixed-header .text-xs { font-size: 1rem !important; }
+            .fixed-header .text-sm { font-size: 1.1rem !important; }
+            .fixed-header input { font-size: 1.1rem !important; }
+            .fixed-header button { font-size: 1.1rem !important; }
+            .content-wrapper { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box; }
+            .content-area > * { width: 100% !important; max-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; box-sizing: border-box; }
+            .content-area .container, .content-area .max-w-7xl, .content-area .mx-auto { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0.75rem !important; box-sizing: border-box; }
         }
         
         @media (min-width: 1024px) {
-            .lg\:responsive-grid-3 { grid-template-columns: repeat(3, 1fr); }
-            .lg\:responsive-grid-4 { grid-template-columns: repeat(4, 1fr); }
-            .lg\:responsive-grid-5 { grid-template-columns: repeat(5, 1fr); }
+            .content-area { margin-left: 0; padding: 0.5rem; max-width: none; overflow: visible !important; height: auto !important; }
+            .content-wrapper:not(.sidebar-collapsed) { margin-left: 0 !important; }
+            .content-wrapper.sidebar-collapsed { margin-left: 0 !important; }
+            .fixed-header:not(.sidebar-collapsed) { left: var(--sidebar-width-expanded) !important; width: calc(100% - var(--sidebar-width-expanded)) !important; }
+            .fixed-header.sidebar-collapsed { left: var(--sidebar-width-collapsed) !important; width: calc(100% - var(--sidebar-width-collapsed)) !important; }
         }
         
-        @media (min-width: 1280px) {
-            .xl\:responsive-grid-4 { grid-template-columns: repeat(4, 1fr); }
-            .xl\:responsive-grid-5 { grid-template-columns: repeat(5, 1fr); }
-            .xl\:responsive-grid-6 { grid-template-columns: repeat(6, 1fr); }
+        @media (max-width: 1023px) {
+            .sidebar { transform: translateX(-100%); z-index: 50; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
+            .sidebar.open { transform: translateX(0); }
+            .content-wrapper { margin-left: 0 !important; transition: none !important; }
+            .fixed-header { left: 0 !important; width: 100% !important; transition: none !important; }
         }
         
-        @media (min-width: 1536px) {
-            .\32xl\:responsive-grid-5 { grid-template-columns: repeat(5, 1fr); }
-            .\32xl\:responsive-grid-6 { grid-template-columns: repeat(6, 1fr); }
-            .\32xl\:responsive-grid-7 { grid-template-columns: repeat(7, 1fr); }
-        }
+        /* Enhanced hover and focus states */
+        .sidebar nav a:focus, .sidebar nav div:focus { outline: none; transform: translateX(4px); box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15); }
         
-        /* Card responsive spacing */
-        .card-grid {
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: 1fr;
-        }
-        
-        @media (min-width: 640px) {
-            .card-grid { 
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1.25rem;
-            }
-        }
-        
-        @media (min-width: 768px) {
-            .card-grid { 
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1.5rem;
-            }
-        }
-        
-        @media (min-width: 1024px) {
-            .card-grid { 
-                grid-template-columns: repeat(4, 1fr);
-                gap: 1.5rem;
-            }
-        }
-        
-        @media (min-width: 1280px) {
-            .card-grid { 
-                grid-template-columns: repeat(5, 1fr);
-                gap: 1.75rem;
-            }
-        }
-        
-        @media (min-width: 1536px) {
-            .card-grid { 
-                grid-template-columns: repeat(6, 1fr);
-                gap: 2rem;
-            }
-        }
-        
-        /* Mobile Sidebar - Remove duplicate rules */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-                z-index: 50;
-            }
-            
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .content-wrapper {
-                margin-left: 0;
-                height: 100vh;
-            }
-            
-            .content-area {
-                height: calc(100vh - 72px);
-            }
-        }
-
-        /* Overlay for mobile sidebar */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-            display: none;
-        }
-
-        .sidebar-overlay.show {
-            display: block;
+        /* Global accessible focus outline helper */
+        .a11y-focus:focus, .a11y-focus:focus-visible {
+            outline: 3px solid #6366f1 !important; /* indigo-500 */
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+            border-color: #4f46e5 !important; /* indigo-600 */
         }
     </style>
 </head>
@@ -612,159 +174,378 @@
     <!-- Sidebar -->
     <aside class="sidebar gradient-bg shadow-xl flex flex-col relative">
         <!-- Logo Section -->
-        <div class="p-6 border-b border-white/20 relative">
+        <div class="p-6 border-b border-white/20 relative bg-gradient-to-r from-white/5 to-transparent">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14-4v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2zM9 11h6" />
-                        </svg>
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-lg">
+                        <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
                     <div class="sidebar-text">
-                        <h1 class="text-white text-xl font-bold">SDN GU 09</h1>
-                        <p class="text-white/70 text-sm">Aplikasi Pengelolaan Sekolah</p>
+                        <h1 class="text-white text-xl font-bold tracking-tight">SDN GU 09</h1>
+                        <p class="text-white/80 text-sm font-medium">Aplikasi Pengelolaan Sekolah</p>
+                        <div class="flex items-center mt-1">
+                            <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                            <span class="text-white/60 text-xs">Online</span>
+                        </div>
                     </div>
                 </div>
                 <!-- Sidebar Toggle Button -->
-                <button id="sidebarCollapse" class="sidebar-toggle-btn hidden lg:flex" title="Tutup/Buka Sidebar">
-                    <i class="fas fa-chevron-left"></i>
+                <button id="sidebarCollapse" class="sidebar-toggle-btn hidden lg:flex w-10 h-10 bg-white/10 rounded-xl items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-105 border border-white/20" title="Tutup/Buka Sidebar">
+                    <i class="fas fa-chevron-left text-white text-sm"></i>
                 </button>
             </div>
         </div>
 
         <!-- Menu Section -->
-        <nav class="flex-1 overflow-y-auto px-6 py-4">
+        <nav class="flex-1 overflow-y-auto px-4 py-4">
+            <?php 
+            $userRole = session()->get('role');
+            // Base URL: walikelas and siswa use root routes, admin uses /admin
+            $baseUrl = (in_array($userRole, ['walikelas','siswa'])) ? '' : '/admin';
+            ?>
+            
+            <!-- Main Navigation -->
             <div class="mb-8">
-                <p class="menu-label text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">MENU</p>
+                <div class="flex items-center justify-between mb-4 py-2 px-2">
+                    <h3 class="menu-label text-white/70 text-xs font-bold uppercase tracking-wider">Menu Utama</h3>
+                    <div class="w-8 h-px bg-white/20"></div>
+                </div>
+                
+                <ul class="space-y-2">
+                    <?php if ($userRole !== 'siswa'): ?>
+                    <!-- Dashboard -->
+                    <li>
+                        <a href="<?= $baseUrl ?>/dashboard" title="Dashboard" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/dashboard' || uri_string() === 'dashboard' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-chart-pie text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Dashboard</span>
+                            </div>
+                            <?php if(uri_string() === 'admin/dashboard' || uri_string() === 'dashboard'): ?>
+                                <div class="w-1 h-8 bg-white rounded-full"></div>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    
+                    <!-- Data Siswa -->
+                    <li>
+                        <a href="<?= $baseUrl ?>/data-siswa" title="Data Siswa" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'data-siswa') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-graduation-cap text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Data Siswa</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <!-- Absensi & Kehadiran / Daftar Hadir -->
+                    <li class="menu-item-with-submenu">
+                        <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'absensi') !== false || strpos(uri_string(), 'daftar-hadir') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 cursor-pointer submenu-toggle">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-clipboard-check text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">
+                                    <?= ($userRole === 'walikelas') ? 'Daftar Hadir' : 'Absensi & Kehadiran' ?>
+                                </span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-300 submenu-chevron"></i>
+                        </div>
+                        
+                        <!-- Submenu -->
+                        <div class="submenu pl-4 mt-2 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
+                            <a href="<?= $baseUrl ?>/absensi/input" title="Input Harian" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'absensi/input') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Input Harian</span>
+                                </div>
+                            </a>
+                            
+                            <a href="/admin/absensi/rekap" title="Rekap Absensi" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'admin/absensi/rekap') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-chart-bar text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Rekap Absensi</span>
+                                </div>
+                            </a>
+                        </div>
+                    </li>
+
+                    <!-- Nilai Siswa / Data Nilai Murid -->
+                    <?php $userRole = session()->get('role'); ?>
+                    <?php if ($userRole !== 'walikelas' && $userRole !== 'siswa'): ?>
+                    <li class="menu-item-with-submenu">
+                        <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'nilai') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 cursor-pointer submenu-toggle">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-star text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Data Nilai Murid</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-300 submenu-chevron"></i>
+                        </div>
+                        
+                        <!-- Submenu -->
+                        <div class="submenu pl-4 mt-2 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
+                            <a href="<?= $baseUrl ?>/nilai/input" title="Penilaian Harian" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'nilai/input') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-clipboard-check text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Penilaian Harian</span>
+                                </div>
+                            </a>
+                            <a href="<?= $baseUrl ?>/nilai/pts" title="PTS" class="group flex items-center space-x-3 py-2 px-4 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">PTS</span>
+                                </div>
+                            </a>
+                            <a href="<?= $baseUrl ?>/nilai/pas" title="PAS" class="group flex items-center space-x-3 py-2 px-4 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-file-signature text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">PAS</span>
+                                </div>
+                            </a>
+                            <a href="<?= $baseUrl ?>/nilai/cetak" title="Cetak" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'nilai/cetak') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-print text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Cetak</span>
+                                </div>
+                            </a>
+                        </div>
+                    </li>
+                    <?php endif; ?>
+
+                    <!-- Buku Kasus -->
+                    <?php if ($userRole !== 'walikelas' && $userRole !== 'siswa'): ?>
+                    <li>
+                        <a href="/buku-kasus" title="Buku Kasus" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'buku-kasus') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-book text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Buku Kasus</span>
+                                <span class="text-xs text-white/70">Catatan Masalah Siswa</span>
+                            </div>
+                            <?php if(strpos(uri_string(), 'buku-kasus') !== false): ?>
+                                <div class="w-1 h-8 bg-white rounded-full"></div>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <?php endif; // end if not siswa ?>
+
+                    <!-- Kebiasaan (7 Kebiasaan) -->
+                    <li class="menu-item-with-submenu">
+                        <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'guru/dashboard') !== false || strpos(uri_string(), 'guru/logs') !== false || uri_string() === 'siswa' || strpos(uri_string(), 'siswa/') === 0 ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 cursor-pointer submenu-toggle">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-heart text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Kebiasaan</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-300 submenu-chevron"></i>
+                        </div>
+                        <div class="submenu pl-4 mt-2 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
+                            <?php if ($userRole === 'siswa'): ?>
+                            <a href="/siswa" title="Input Harian" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= uri_string() === 'siswa' || strpos(uri_string(), 'siswa/') === 0 ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Input Harian</span>
+                                </div>
+                            </a>
+                            <?php else: ?>
+                            <a href="/guru/dashboard" title="Dashboard Kebiasaan" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'guru/dashboard') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Dashboard</span>
+                                </div>
+                            </a>
+                            <a href="/guru/logs" title="Data Kebiasaan" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'guru/logs') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-table text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Data</span>
+                                </div>
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Menu khusus Admin -->
+            <?php 
+            $userRole = session()->get('role');
+            if (!isset($userRole) || ($userRole !== 'walikelas' && $userRole !== 'siswa')): 
+            ?>
+            <!-- Data Guru -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4 py-2 px-2">
+                    <h3 class="menu-label text-white/70 text-xs font-bold uppercase tracking-wider">Data</h3>
+                    <div class="w-8 h-px bg-white/20"></div>
+                </div>
+                
                 <ul class="space-y-2">
                     <li>
-                        <a href="/admin/dashboard" title="Dashboard" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= uri_string() === 'admin/dashboard' ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
-                            </svg>
-                            <span class="menu-text font-medium">Dashboard</span>
+                        <a href="/admin/guru" title="Data Guru" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/guru' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-chalkboard-teacher text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Data Guru</span>
+                            </div>
                         </a>
                     </li>
+                </ul>
+            </div>
+
+            <!-- Academic Section -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4 py-2 px-2">
+                    <h3 class="menu-label text-white/70 text-xs font-bold uppercase tracking-wider">Akademik</h3>
+                    <div class="w-8 h-px bg-white/20"></div>
+                </div>
+                
+                <ul class="space-y-2">
+                    <!-- Kalender Akademik -->
                     <li>
-                        <a href="/admin/data-siswa" title="Data Siswa" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= uri_string() === 'admin/data-siswa' ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                            </svg>
-                            <span class="menu-text font-medium">Data Siswa</span>
+                        <a href="/admin/kalender-akademik" title="Kalender Akademik" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/kalender-akademik' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-calendar-alt text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Kalender Akademik</span>
+                            </div>
                         </a>
                     </li>
+
+                    <!-- Naik Kelas -->
                     <li>
-                        <a href="/admin/guru" title="Data Guru" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= strpos(uri_string(), 'admin/guru') !== false ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            <span class="menu-text font-medium">Data Guru</span>
+                        <a href="/admin/naik-kelas" title="Naik Kelas" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/naik-kelas' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-level-up-alt text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Naik Kelas</span>
+                            </div>
                         </a>
                     </li>
+                </ul>
+            </div>
+
+            <!-- School Management -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4 py-2 px-2">
+                    <h3 class="menu-label text-white/70 text-xs font-bold uppercase tracking-wider">Sekolah</h3>
+                    <div class="w-8 h-px bg-white/20"></div>
+                </div>
+                
+                <ul class="space-y-2">
+                    <!-- Profil Sekolah -->
                     <li>
-                        <a href="/admin/profil-sekolah" title="Profil Sekolah" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= uri_string() === 'admin/profil-sekolah' ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                            <span class="menu-text font-medium">Profil Sekolah</span>
+                        <a href="/admin/profil-sekolah" title="Profil Sekolah" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/profil-sekolah' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-school text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Profil Sekolah</span>
+                            </div>
                         </a>
                     </li>
+
+                    <!-- Kelola User -->
                     <li>
-                        <a href="/admin/users" title="Kelola User" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= uri_string() === 'admin/users' ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                            </svg>
-                            <span class="menu-text font-medium">Kelola User</span>
+                        <a href="/admin/users" title="Kelola User" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/users' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-users-cog text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Kelola User</span>
+                            </div>
                         </a>
                     </li>
-                    <li>
-                        <a href="/admin/naik-kelas" title="Naik Kelas" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= uri_string() === 'admin/naik-kelas' ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
-                            <span class="menu-text font-medium">Naik Kelas</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/kalender-akademik" title="Kalender Akademik" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= strpos(uri_string(), 'admin/kalender-akademik') !== false ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span class="menu-text font-medium">Kalender Akademik</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/nilai" title="Nilai Siswa" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= strpos(uri_string(), 'admin/nilai') !== false ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80 hover:bg-white/5 hover:text-white' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span class="menu-text font-medium">Nilai Siswa</span>
-                        </a>
-                    </li>
-                    <li>
-                        <div class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 <?= strpos(uri_string(), 'admin/absensi') !== false ? 'bg-white/10 text-white border-l-4 border-white' : 'text-white/80' ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                            </svg>
-                            <span class="menu-text font-medium">Absensi Siswa</span>
-                        </div>
-                        <!-- Submenu -->
-                        <ul class="ml-8 mt-2 space-y-1">
-                            <li>
-                                <a href="/admin/absensi/input" title="Input Harian" class="flex items-center space-x-2 py-2 px-3 rounded-lg transition-all duration-200 <?= strpos(uri_string(), 'admin/absensi/input') !== false ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white' ?>">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                    <span class="menu-text text-sm">Input Harian</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="/admin/absensi/rekap" title="Rekap Absensi" class="flex items-center space-x-2 py-2 px-3 rounded-lg transition-all duration-200 <?= strpos(uri_string(), 'admin/absensi/rekap') !== false ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white' ?>">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                    <span class="menu-text text-sm">Rekap Absensi</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <!-- Divider -->
-                    <li class="pt-4 border-t border-white/20">
-                        <div class="mb-3">
-                            <p class="menu-label text-white/40 text-xs font-semibold uppercase tracking-wider">ACCOUNT</p>
-                        </div>
-                    </li>
-                    
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- System Settings -->
+            <div class="mt-auto pt-6 border-t border-white/20">
+                <div class="flex items-center justify-between mb-4 py-2 px-2">
+                    <h3 class="menu-label text-white/70 text-xs font-bold uppercase tracking-wider">Sistem</h3>
+                    <div class="w-8 h-px bg-white/20"></div>
+                </div>
+                
+                <ul class="space-y-2">
                     <!-- Profile -->
                     <li>
-                        <a href="/admin/profile" title="Profile" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 text-white/80 hover:bg-white/5 hover:text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            <span class="menu-text font-medium">Profile</span>
+                        <?php 
+                        // Build profile URL per role
+                        $profileUrl = '/admin/profile';
+                        if ($userRole === 'walikelas') {
+                            $profileUrl = '/profile';
+                        } elseif ($userRole === 'siswa') {
+                            $profileUrl = '/siswa/profile';
+                        }
+                        ?>
+                        <a href="<?= $profileUrl ?>" title="Profile" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'profile') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-user-circle text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">
+                                    <?php 
+                                    $userRole = session()->get('role');
+                                    echo ($userRole === 'walikelas') ? 'Profil Guru' : 'Profile';
+                                    ?>
+                                </span>
+                            </div>
                         </a>
                     </li>
-                    
-                    <!-- Settings -->
+
+                    <!-- Settings - Only for Admin -->
+                    <?php 
+                    $userRole = session()->get('role');
+                    if (isset($userRole) && $userRole === 'admin'): 
+                    ?>
                     <li>
-                        <a href="/admin/settings" title="Settings" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 text-white/80 hover:bg-white/5 hover:text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <span class="menu-text font-medium">Settings</span>
+                        <a href="/admin/settings" title="Settings" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/settings' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-cog text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Settings</span>
+                            </div>
                         </a>
                     </li>
-                    
+                    <?php endif; ?>
+
                     <!-- Logout -->
-                    <li>
-                        <a href="/logout" title="Logout" class="flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 text-red-300 hover:bg-red-500/10 hover:text-red-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            <span class="menu-text font-medium">Logout</span>
+                    <li class="pt-2 border-t border-white/10">
+                        <a href="/logout" title="Logout" class="group flex items-center space-x-3 py-3 px-4 rounded-xl text-red-200 hover:bg-red-500/20 hover:text-red-100 transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center group-hover:bg-red-500/30 transition-all duration-300">
+                                <i class="fas fa-sign-out-alt text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Logout</span>
+                            </div>
                         </a>
                     </li>
                 </ul>
@@ -772,158 +553,180 @@
         </nav>
     </aside>
 
-    <!-- Main content -->
+    <!-- Main Content -->
     <div class="content-wrapper">
-        <!-- Top bar -->
-        <header class="bg-white shadow-sm border-b border-gray-200 fixed-header">
-            <div class="flex items-center justify-between px-6 py-4">
-                <div class="flex items-center space-x-4">
-                    <!-- Mobile Sidebar Toggle -->
-                    <button id="sidebarToggle" class="text-gray-600 focus:outline-none lg:hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
+        <!-- Fixed Header -->
+        <header class="fixed-header">
+            <div class="flex items-center justify-between h-full px-4">
+                <!-- Left side - Menu Toggle -->
+                <div class="flex items-center space-x-2">
+                    <!-- Mobile Menu Toggle -->
+                    <button id="mobileMenuToggle" class="lg:hidden w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200">
+                        <i class="fas fa-bars text-xs"></i>
                     </button>
-                    
-                    <!-- Desktop Sidebar Show Button (shows when sidebar is collapsed) -->
-                    <button id="sidebarShow" class="text-gray-600 hover:text-gray-800 hover:bg-gray-100 p-2 rounded-lg transition-colors focus:outline-none hidden lg:flex" style="display: none;" title="Tampilkan Sidebar">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                    
-                    <div class="relative">
-                        <input type="text" placeholder="Type to search..." class="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50" />
-                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <!-- Settings Icon -->
-                    <button class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </button>
-                    
+
+                <!-- Right side - Notifications and User -->
+                <div class="flex items-center space-x-2">
                     <!-- Notifications -->
-                    <button class="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span class="absolute -top-1 -right-1 inline-block w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    <button class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200 relative">
+                        <i class="fas fa-bell text-xs"></i>
+                        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full text-xs flex items-center justify-center text-white text-xs">3</span>
                     </button>
 
                     <!-- Messages -->
-                    <button class="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <span class="absolute -top-1 -right-1 inline-block w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                    <button class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200 relative">
+                        <i class="fas fa-envelope text-xs"></i>
+                        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full text-xs flex items-center justify-center text-white text-xs">5</span>
                     </button>
 
                     <!-- User Profile -->
-                    <div class="flex items-center space-x-3 cursor-pointer group">
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-700"><?= isset($currentUser) ? esc($currentUser['nama']) : session('nama') ?></p>
-                            <p class="text-xs text-gray-500 capitalize"><?= isset($currentUser) ? esc($currentUser['role']) : session('role') ?><?= isset($currentUser) && !empty($currentUser['kelas']) ? ' - ' . esc($currentUser['kelas']) : '' ?></p>
+                    <?php 
+                        $session = session();
+                        $displayName = $session->get('nama') ?: 'Pengguna';
+                        $roleKey = $session->get('role') ?: '';
+                        $roleMap = [
+                            'admin' => 'Administrator',
+                            'walikelas' => 'Wali Kelas',
+                            'guru' => 'Guru',
+                            'siswa' => 'Siswa'
+                        ];
+                        $displayRole = $roleMap[$roleKey] ?? 'Pengguna';
+                        $initial = strtoupper(mb_substr(trim($displayName), 0, 1, 'UTF-8')) ?: 'U';
+                    ?>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm text-xs">
+                            <?= esc($initial) ?>
                         </div>
-                        <img src="https://i.pravatar.cc/40?img=1" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-colors" />
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
+                        <div class="hidden md:block">
+                            <p class="text-sm font-medium text-gray-900"><?= esc($displayName) ?></p>
+                            <p class="text-xs text-gray-500"><?= esc($displayRole) ?></p>
+                        </div>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Content area -->
-        <main class="content-area bg-gray-50">
+        <!-- Content Area -->
+        <main class="content-area">
             <?= $this->renderSection('content') ?>
         </main>
     </div>
 
     <script>
-        // Enhanced sidebar toggle for mobile with overlay
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.querySelector('aside');
-        
-        // Create overlay element
-        const overlay = document.createElement('div');
-        overlay.className = 'sidebar-overlay';
-        document.body.appendChild(overlay);
-        
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                overlay.classList.toggle('show');
-            });
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const contentWrapper = document.querySelector('.content-wrapper');
+            const fixedHeader = document.querySelector('.fixed-header');
+            const sidebarCollapseBtn = document.getElementById('sidebarCollapse');
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 
-        // Close sidebar when clicking overlay
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('show');
-        });
-
-        // Close sidebar on window resize if it's large screen
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 1024) {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('show');
+        // Desktop sidebar toggle
+            if (sidebarCollapseBtn) {
+                sidebarCollapseBtn.addEventListener('click', function() {
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            contentWrapper.classList.toggle('sidebar-collapsed', isCollapsed);
+            fixedHeader.classList.toggle('sidebar-collapsed', isCollapsed);
+                });
             }
-        });
 
-        // Sidebar collapse functionality for desktop
-        const sidebarCollapse = document.getElementById('sidebarCollapse');
-        const sidebarShow = document.getElementById('sidebarShow');
-        const contentWrapper = document.querySelector('.content-wrapper');
-        const fixedHeader = document.querySelector('.fixed-header');
-        
-        function updateSidebarState(isCollapsed) {
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                contentWrapper.classList.add('sidebar-collapsed');
-                if (fixedHeader) {
-                    fixedHeader.classList.add('sidebar-collapsed');
-                }
-                // Show the sidebar show button
-                sidebarShow.style.display = 'flex';
-            } else {
-                sidebar.classList.remove('collapsed');
-                contentWrapper.classList.remove('sidebar-collapsed');
-                if (fixedHeader) {
-                    fixedHeader.classList.remove('sidebar-collapsed');
-                }
-                // Hide the sidebar show button
-                sidebarShow.style.display = 'none';
+            // Mobile menu toggle
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                });
             }
-        }
-        
-        if (sidebarCollapse) {
-            sidebarCollapse.addEventListener('click', () => {
-                const isCollapsed = !sidebar.classList.contains('collapsed');
-                updateSidebarState(isCollapsed);
-                
-                // Save state to localStorage
-                localStorage.setItem('sidebar-collapsed', isCollapsed);
-            });
-        }
-        
-        if (sidebarShow) {
-            sidebarShow.addEventListener('click', () => {
-                updateSidebarState(false);
-                localStorage.setItem('sidebar-collapsed', false);
-            });
-        }
 
-        // Restore sidebar state from localStorage
-        const savedState = localStorage.getItem('sidebar-collapsed');
-        if (savedState === 'true') {
-            updateSidebarState(true);
-        }
+            // Submenu toggle functionality
+            const submenuToggles = document.querySelectorAll('.submenu-toggle');
+            submenuToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const menuItem = this.closest('.menu-item-with-submenu');
+                    const isOpen = menuItem.classList.contains('open');
+                    
+                    // Close all other submenus
+                    document.querySelectorAll('.menu-item-with-submenu').forEach(item => {
+                        item.classList.remove('open');
+                    });
+                    
+                    // Toggle current submenu
+                    if (!isOpen) {
+                        menuItem.classList.add('open');
+                    }
+                });
+            });
+
+            // Auto-open submenu if current page is a submenu item
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/admin/absensi/')) {
+                const absensiMenu = document.querySelector('.menu-item-with-submenu');
+                if (absensiMenu) {
+                    absensiMenu.classList.add('open');
+                }
+            }
+            
+            if (currentPath.includes('/admin/nilai/')) {
+                const nilaiMenus = document.querySelectorAll('.menu-item-with-submenu');
+                nilaiMenus.forEach(menu => {
+                    const nilaiSubmenu = menu.querySelector('a[href*="/admin/nilai/"]');
+                    if (nilaiSubmenu) {
+                        menu.classList.add('open');
+                    }
+                });
+            }
+
+            // Auto-open Kebiasaan submenu for /guru/* and /siswa pages
+            if (currentPath.startsWith('/guru/')) {
+                document.querySelectorAll('.menu-item-with-submenu').forEach(menu => {
+                    const kebiasaanLink = menu.querySelector('a[href^="/guru/"]');
+                    if (kebiasaanLink) {
+                        menu.classList.add('open');
+                    }
+                });
+            }
+            if (currentPath === '/siswa' || currentPath.startsWith('/siswa/')) {
+                document.querySelectorAll('.menu-item-with-submenu').forEach(menu => {
+                    const siswaLink = menu.querySelector('a[href^="/siswa"]');
+                    if (siswaLink) {
+                        menu.classList.add('open');
+                    }
+                });
+            }
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 1023) {
+                    if (!sidebar.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+                        sidebar.classList.remove('open');
+                    }
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1023) sidebar.classList.remove('open');
+            });
+
+            // Ensure correct alignment on initial load (desktop)
+            if (window.innerWidth > 1023) {
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                contentWrapper.classList.toggle('sidebar-collapsed', isCollapsed);
+                fixedHeader.classList.toggle('sidebar-collapsed', isCollapsed);
+            }
+
+            // Add smooth scrolling for sidebar when menu item is clicked
+            const menuLinks = document.querySelectorAll('.sidebar nav a');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    // Add a subtle click animation
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+        });
     </script>
 </body>
 </html>

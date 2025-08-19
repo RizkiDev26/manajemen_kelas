@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Floating Button Position</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            min-height: 200vh; /* For scrolling test */
+        }
+        
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Floating Action Button - FORCE RIGHT POSITION */
+        .fab-mobile {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 999999 !important;
+            opacity: 1 !important;
+            transform: scale(1) !important;
+            left: auto !important; /* Force override any left positioning */
+            border: none;
+        }
+
+        .fab-mobile:active {
+            transform: scale(0.9) !important;
+        }
+
+        /* Force mobile FAB positioning override */
+        @media (max-width: 768px) {
+            .fab-mobile {
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 20px !important;
+                left: auto !important;
+                top: auto !important;
+                z-index: 999999 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Test Floating Button Position</h1>
+        <p>Ini adalah test page untuk memverifikasi posisi floating button.</p>
+        <p>Tombol floating seharusnya muncul di pojok kanan bawah, BUKAN di pojok kiri bawah.</p>
+        
+        <h2>Perubahan yang telah dilakukan:</h2>
+        <ul>
+            <li>✅ Hapus mobile-nilai.css dan semua referensinya</li>
+            <li>✅ Tambah CSS force positioning untuk floating button</li>
+            <li>✅ Tambah JavaScript force positioning</li>
+            <li>✅ Hapus background overlay yang menutupi konten</li>
+            <li>✅ Set z-index 999999 untuk floating button</li>
+        </ul>
+        
+        <p>Scroll kebawah untuk test posisi tombol tetap di kanan bawah...</p>
+        
+        <div style="height: 100vh; background: linear-gradient(45deg, #f0f0f0, #e0e0e0); display: flex; align-items: center; justify-content: center;">
+            <h2>Area untuk test scroll</h2>
+        </div>
+        
+        <div style="height: 100vh; background: linear-gradient(45deg, #e0e0e0, #d0d0d0); display: flex; align-items: center; justify-content: center;">
+            <h2>Area untuk test scroll lagi</h2>
+        </div>
+    </div>
+    
+    <!-- Floating Action Button Test -->
+    <button class="fab-mobile" onclick="scrollToTop()" title="Scroll ke atas">
+        ↑
+    </button>
+    
+    <script>
+        // Force FAB positioning
+        document.addEventListener('DOMContentLoaded', function() {
+            const fab = document.querySelector('.fab-mobile');
+            if (fab) {
+                // Force correct positioning
+                fab.style.position = 'fixed';
+                fab.style.bottom = '20px';
+                fab.style.right = '20px';
+                fab.style.left = 'auto';
+                fab.style.top = 'auto';
+                fab.style.zIndex = '999999';
+                fab.style.opacity = '1';
+                fab.style.transform = 'scale(1)';
+            }
+        });
+        
+        // Scroll to top function
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Force position on scroll
+        window.addEventListener('scroll', function() {
+            const fab = document.querySelector('.fab-mobile');
+            if (fab) {
+                fab.style.position = 'fixed';
+                fab.style.bottom = '20px';
+                fab.style.right = '20px';
+                fab.style.left = 'auto';
+                fab.style.top = 'auto';
+                fab.style.zIndex = '999999';
+            }
+        });
+    </script>
+</body>
+</html>

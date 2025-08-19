@@ -1,224 +1,431 @@
 <?= $this->extend('admin/layout'); ?>
 <?= $this->section('content'); ?>
 
-<div class="px-4 py-6">
+<div class="p-2 sm:p-4 lg:p-6">
     <div class="max-w-7xl mx-auto">
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4 flex justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold flex items-center gap-2">
-                        <i class="fas fa-users"></i> Data Guru
-                    </h2>
-                    <p class="text-sm opacity-75">Kelola data guru sekolah</p>
-                </div>
-                <div class="space-x-2">
-                    <a href="<?= base_url('admin/guru/create'); ?>" class="bg-white text-indigo-600 hover:bg-indigo-100 font-semibold px-4 py-2 rounded shadow">
-                        <i class="fas fa-plus me-1"></i>Tambah Guru
-                    </a>
-                    <a href="<?= base_url('admin/guru/import'); ?>" onclick="return confirm('Apakah Anda yakin ingin mengimpor data dari file JSON?')"
-                       class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded shadow font-semibold">
-                        <i class="fas fa-download me-1"></i>Import Data
-                    </a>
+        <div class="bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden">
+            <!-- Mobile-optimized header -->
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-3 sm:p-4 lg:px-6 lg:py-4">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+                            <i class="fas fa-users text-sm sm:text-base"></i> 
+                            <span class="truncate">Data Guru</span>
+                        </h2>
+                        <p class="text-xs sm:text-sm opacity-75 mt-1">Kelola data guru sekolah</p>
+                    </div>
+                    
+                    <!-- Mobile action buttons -->
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-2">
+                        <a href="<?= base_url('admin/guru/create'); ?>" 
+                           class="bg-white text-indigo-600 hover:bg-indigo-100 font-semibold px-3 sm:px-4 py-2 rounded shadow transition-colors duration-200 text-center text-sm sm:text-base">
+                            <i class="fas fa-plus text-xs sm:text-sm me-1"></i>
+                            <span class="hidden xs:inline">Tambah Guru</span>
+                            <span class="xs:hidden">Tambah</span>
+                        </a>
+                        
+                        <!-- Mobile dropdown for secondary actions -->
+                        <div class="relative sm:contents">
+                            <button id="mobileActionsToggle" 
+                                    class="sm:hidden bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded shadow transition-colors duration-200 text-sm flex items-center justify-center gap-2">
+                                <i class="fas fa-ellipsis-v"></i>
+                                <span>Lainnya</span>
+                            </button>
+                            
+                            <div id="mobileActionsMenu" 
+                                 class="hidden sm:flex absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border z-10 min-w-48 sm:static sm:bg-transparent sm:shadow-none sm:border-none sm:gap-2">
+                                <a href="<?= base_url('admin/guru/import'); ?>" 
+                                   onclick="return confirm('Apakah Anda yakin ingin mengimpor data dari file JSON?')"
+                                   class="block sm:inline-block bg-yellow-500 hover:bg-yellow-600 text-white px-3 sm:px-4 py-2 sm:rounded shadow font-semibold transition-colors duration-200 text-sm">
+                                    <i class="fas fa-download text-xs sm:text-sm me-1"></i>
+                                    <span class="sm:hidden">Import Data</span>
+                                    <span class="hidden sm:inline">Import</span>
+                                </a>
+                                <a href="<?= base_url('admin/guru/check-duplicates'); ?>" 
+                                   class="block sm:inline-block bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 sm:rounded shadow font-semibold transition-colors duration-200 text-sm">
+                                    <i class="fas fa-search text-xs sm:text-sm me-1"></i>
+                                    <span class="sm:hidden">Cek Duplikasi</span>
+                                    <span class="hidden sm:inline">Duplikasi</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="px-6 py-4">
+            <div class="p-3 sm:p-4 lg:px-6 lg:py-4">
                 <?php if (session()->getFlashdata('pesan')): ?>
-                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded">
+                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded animate-fade-in">
                         <i class="fas fa-check-circle me-2"></i> <?= session()->getFlashdata('pesan'); ?>
                     </div>
                 <?php endif; ?>
                 <?php if (session()->getFlashdata('error')): ?>
-                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded animate-fade-in">
                         <i class="fas fa-exclamation-circle me-2"></i> <?= session()->getFlashdata('error'); ?>
                     </div>
                 <?php endif; ?>
 
-                <!-- Search Form -->
-                <form method="get" class="mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                        <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-600 mb-1">Pencarian</label>
+                <!-- Enhanced Search Form -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-lg border">
+                    <div class="flex flex-col md:flex-row gap-4 items-end">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-search text-gray-400 mr-1"></i>
+                                Pencarian Otomatis
+                            </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3">
                                     <i class="fas fa-search text-gray-400"></i>
                                 </div>
-                                <input type="text" name="keyword" placeholder="Cari nama, NIP, atau NUPTK..."
+                                <input type="text" 
+                                       id="searchInput" 
+                                       placeholder="Ketik nama, NIP, NUPTK, atau tugas mengajar..."
                                        value="<?= esc($keyword ?? '') ?>"
-                                       class="pl-10 pr-4 py-2 w-full border rounded focus:outline-none focus:ring focus:border-indigo-400">
+                                       class="pl-10 pr-10 py-3 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <div id="searchSpinner" class="hidden">
+                                        <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                                    </div>
+                                    <button type="button" id="clearSearch" class="text-gray-400 hover:text-gray-600 <?= empty($keyword) ? 'hidden' : '' ?>">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <button type="submit"
-                                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded">
-                                <i class="fas fa-search me-1"></i>Cari
-                            </button>
-                        </div>
-                        <?php if ($keyword): ?>
-                            <div>
-                                <a href="<?= base_url('admin/guru'); ?>"
-                                   class="w-full inline-block bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded text-center">
-                                    <i class="fas fa-times me-1"></i>Reset
-                                </a>
+                            <div class="mt-1 text-xs text-gray-500">
+                                Hasil pencarian akan muncul otomatis saat Anda mengetik
                             </div>
-                        <?php endif; ?>
-                    </div>
-                </form>
-
-                <!-- Data Table -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white border border-gray-200 rounded text-sm text-gray-700">
-                        <thead class="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
-                            <tr>
-                                <th class="px-4 py-3 text-center w-12">No</th>
-                                <th class="px-4 py-3">Nama</th>
-                                <th class="px-4 py-3">NIP</th>
-                                <th class="px-4 py-3">NUPTK</th>
-                                <th class="px-4 py-3 text-center">JK</th>
-                                <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3">Tugas Mengajar</th>
-                                <th class="px-4 py-3 text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($guru)): ?>
-                                <tr>
-                                    <td colspan="8" class="text-center py-8 text-gray-500">
-                                        <i class="fas fa-users fa-2x mb-2"></i><br>
-                                        Data guru tidak ditemukan.
-                                    </td>
-                                </tr>
-                            <?php else: ?>
-                                <?php
-                                $currentPageNum = $pager ? $pager->getCurrentPage() : 1;
-                                $nomor = 1 + (10 * ($currentPageNum - 1));
-                                foreach ($guru as $g): ?>
-                                    <tr class="border-t">
-                                        <td class="text-center px-4 py-2 font-semibold"><?= $nomor++; ?></td>
-                                        <td class="px-4 py-2">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
-                                                    <i class="fas fa-user"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="font-semibold"><?= esc($g['nama']); ?></div>
-                                                    <div class="text-xs text-gray-500"><?= esc($g['jenis_ptk'] ?? '-'); ?></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-2"><?= esc($g['nip']) ?: '-'; ?></td>
-                                        <td class="px-4 py-2"><?= esc($g['nuptk']) ?: '-'; ?></td>
-                                        <td class="px-4 py-2 text-center">
-                                            <?php if ($g['jk'] == 'L'): ?>
-                                                <span class="inline-block bg-blue-600 text-white rounded px-2 py-1 text-xs">L</span>
-                                            <?php elseif ($g['jk'] == 'P'): ?>
-                                                <span class="inline-block bg-pink-500 text-white rounded px-2 py-1 text-xs">P</span>
-                                            <?php else: ?>
-                                                <span class="text-gray-400">-</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            <?= $g['status_kepegawaian'] ? '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">'.$g['status_kepegawaian'].'</span>' : '-' ?>
-                                        </td>
-                                        <td class="px-4 py-2 truncate max-w-xs" title="<?= esc($g['tugas_mengajar']); ?>">
-                                            <?= esc($g['tugas_mengajar']) ?: '-'; ?>
-                                        </td>
-                                        <td class="px-4 py-2 text-center">
-                                            <div class="flex justify-center gap-2">
-                                                <a href="<?= base_url('admin/guru/detail/' . $g['id']); ?>"
-                                                   class="text-blue-600 hover:text-blue-800" title="Detail">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="<?= base_url('admin/guru/edit/' . $g['id']); ?>"
-                                                   class="text-yellow-500 hover:text-yellow-600" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="<?= base_url('admin/guru/delete/' . $g['id']); ?>"
-                                                   onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')"
-                                                   class="text-red-600 hover:text-red-700" title="Hapus">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <div class="mt-6 text-center">
-                    <?php if (isset($pager) && $pager->getPageCount() > 1): ?>
-                        <div class="flex justify-center items-center space-x-1">
-                            <?php if ($pager->getCurrentPage() > 1): ?>
-                                <a href="?page=<?= $pager->getCurrentPage() - 1 ?><?= isset($keyword) && $keyword ? '&keyword=' . urlencode($keyword) : '' ?>" 
-                                   class="px-3 py-2 text-sm text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                                    Previous
-                                </a>
-                            <?php endif ?>
-
-                            <?php
-                            $currentPage = $pager->getCurrentPage();
-                            $totalPages = $pager->getPageCount();
-                            $start = max(1, $currentPage - 2);
-                            $end = min($totalPages, $currentPage + 2);
-                            ?>
-
-                            <?php if ($start > 1): ?>
-                                <a href="?page=1<?= isset($keyword) && $keyword ? '&keyword=' . urlencode($keyword) : '' ?>" 
-                                   class="px-3 py-2 text-sm text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">1</a>
-                                <?php if ($start > 2): ?>
-                                    <span class="px-3 py-2 text-sm text-gray-500">...</span>
-                                <?php endif ?>
-                            <?php endif ?>
-
-                            <?php for ($i = $start; $i <= $end; $i++): ?>
-                                <?php if ($i == $currentPage): ?>
-                                    <span class="px-3 py-2 text-sm text-white bg-indigo-600 border border-indigo-600 rounded-md"><?= $i ?></span>
-                                <?php else: ?>
-                                    <a href="?page=<?= $i ?><?= isset($keyword) && $keyword ? '&keyword=' . urlencode($keyword) : '' ?>" 
-                                       class="px-3 py-2 text-sm text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"><?= $i ?></a>
-                                <?php endif ?>
-                            <?php endfor ?>
-
-                            <?php if ($end < $totalPages): ?>
-                                <?php if ($end < $totalPages - 1): ?>
-                                    <span class="px-3 py-2 text-sm text-gray-500">...</span>
-                                <?php endif ?>
-                                <a href="?page=<?= $totalPages ?><?= isset($keyword) && $keyword ? '&keyword=' . urlencode($keyword) : '' ?>" 
-                                   class="px-3 py-2 text-sm text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"><?= $totalPages ?></a>
-                            <?php endif ?>
-
-                            <?php if ($pager->getCurrentPage() < $pager->getPageCount()): ?>
-                                <a href="?page=<?= $pager->getCurrentPage() + 1 ?><?= isset($keyword) && $keyword ? '&keyword=' . urlencode($keyword) : '' ?>" 
-                                   class="px-3 py-2 text-sm text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                                    Next
-                                </a>
-                            <?php endif ?>
                         </div>
                         
-                        <!-- Page Info -->
-                        <div class="mt-3 text-sm text-gray-600">
-                            Halaman <?= $pager->getCurrentPage() ?> dari <?= $pager->getPageCount() ?>
-                            <?php 
-                            // Get total count safely
-                            $db = \Config\Database::connect();
-                            $builder = $db->table('guru');
-                            if (isset($keyword) && $keyword) {
-                                $builder->like('nama', $keyword)
-                                       ->orLike('nip', $keyword)
-                                       ->orLike('nuptk', $keyword);
-                            }
-                            $totalRecords = $builder->countAllResults();
-                            ?>
-                            (Total: <?= $totalRecords ?> data)
+                        <!-- Quick Stats -->
+                        <div class="flex items-center space-x-4 text-sm">
+                            <div class="bg-white px-3 py-2 rounded border">
+                                <span class="text-gray-600">Total:</span>
+                                <span class="font-semibold text-indigo-600" id="totalCount"><?= $totalRecords ?? 0 ?></span>
+                            </div>
+                            <?php if (!empty($keyword)): ?>
+                            <div class="bg-blue-50 px-3 py-2 rounded border border-blue-200">
+                                <span class="text-blue-600">Pencarian:</span>
+                                <span class="font-semibold text-blue-800">"<?= esc($keyword) ?>"</span>
+                            </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif ?>
+                    </div>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div id="loadingOverlay" class="hidden absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-3xl text-indigo-500 mb-2"></i>
+                        <p class="text-gray-600">Memuat data...</p>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div id="tableContainer" class="relative">
+                    <?= view('admin/guru/table_content', [
+                        'guru' => $guru,
+                        'pager' => $pager,
+                        'keyword' => $keyword,
+                        'totalRecords' => $totalRecords,
+                        'perPage' => $perPage
+                    ]); ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+}
+
+.table-row-enter {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading state */
+.loading-state {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Smooth transitions */
+.transition-all {
+    transition: all 0.2s ease-in-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    const searchSpinner = document.getElementById('searchSpinner');
+    const tableContainer = document.getElementById('tableContainer');
+    const totalCount = document.getElementById('totalCount');
+    let searchTimeout;
+
+    // Auto search functionality
+    searchInput.addEventListener('input', function() {
+        const keyword = this.value.trim();
+        
+        // Show/hide clear button
+        if (keyword) {
+            clearSearch.classList.remove('hidden');
+        } else {
+            clearSearch.classList.add('hidden');
+        }
+
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        // Set new timeout for search
+        searchTimeout = setTimeout(() => {
+            performSearch(keyword);
+        }, 500); // Wait 500ms after user stops typing
+    });
+
+    // Clear search functionality
+    clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        clearSearch.classList.add('hidden');
+        performSearch('');
+    });
+
+    // Perform AJAX search
+    function performSearch(keyword) {
+        // Show loading spinner
+        searchSpinner.classList.remove('hidden');
+        tableContainer.classList.add('loading-state');
+
+        // Prepare URL
+        const url = new URL(window.location.href);
+        if (keyword) {
+            url.searchParams.set('keyword', keyword);
+        } else {
+            url.searchParams.delete('keyword');
+        }
+        url.searchParams.delete('page'); // Reset to first page
+
+        // Make AJAX request
+        fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update table content
+                tableContainer.innerHTML = data.html;
+                
+                // Update total count
+                totalCount.textContent = data.data.totalRecords;
+                
+                // Update URL without page reload
+                window.history.replaceState({}, '', url.toString());
+                
+                // Add animation to new rows
+                const rows = tableContainer.querySelectorAll('tbody tr');
+                rows.forEach((row, index) => {
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateY(10px)';
+                    setTimeout(() => {
+                        row.style.transition = 'all 0.3s ease-out';
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateY(0)';
+                    }, index * 50);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            showNotification('Terjadi kesalahan saat mencari data', 'error');
+        })
+        .finally(() => {
+            // Hide loading spinner
+            searchSpinner.classList.add('hidden');
+            tableContainer.classList.remove('loading-state');
+        });
+    }
+
+    // Handle pagination clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('a[href*="page="]')) {
+            e.preventDefault();
+            const link = e.target.closest('a');
+            const url = new URL(link.href);
+            
+            // Show loading
+            tableContainer.classList.add('loading-state');
+            
+            // Make AJAX request for pagination
+            fetch(url.toString(), {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    tableContainer.innerHTML = data.html;
+                    window.history.replaceState({}, '', url.toString());
+                    
+                    // Re-bind perPage event listener
+                    bindPerPageSelector();
+                    
+                    // Scroll to top of table
+                    tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            })
+            .catch(error => {
+                console.error('Pagination error:', error);
+                // Fallback to normal navigation
+                window.location.href = link.href;
+            })
+            .finally(() => {
+                tableContainer.classList.remove('loading-state');
+            });
+        }
+    });
+
+    // Handle perPage selector change
+    function bindPerPageSelector() {
+        const perPageSelect = document.getElementById('perPageSelect');
+        if (perPageSelect) {
+            // Remove existing event listeners
+            perPageSelect.replaceWith(perPageSelect.cloneNode(true));
+            const newPerPageSelect = document.getElementById('perPageSelect');
+            
+            newPerPageSelect.addEventListener('change', function() {
+                const perPage = this.value;
+                const keyword = searchInput.value.trim();
+                
+                // Show loading
+                tableContainer.classList.add('loading-state');
+                
+                // Prepare URL
+                const url = new URL(window.location.href);
+                url.searchParams.set('perPage', perPage);
+                url.searchParams.set('page', '1'); // Reset to first page
+                if (keyword) {
+                    url.searchParams.set('keyword', keyword);
+                } else {
+                    url.searchParams.delete('keyword');
+                }
+                
+                // Make AJAX request
+                fetch(url.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        tableContainer.innerHTML = data.html;
+                        totalCount.textContent = data.data.totalRecords;
+                        window.history.replaceState({}, '', url.toString());
+                        
+                        // Re-bind perPage event listener
+                        bindPerPageSelector();
+                    }
+                })
+                .catch(error => {
+                    console.error('PerPage error:', error);
+                    showNotification('Terjadi kesalahan saat mengubah jumlah data per halaman', 'error');
+                })
+                .finally(() => {
+                    tableContainer.classList.remove('loading-state');
+                });
+            });
+        }
+    }
+
+    // Initial binding
+    bindPerPageSelector();
+
+    // Notification function
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full max-w-sm`;
+        
+        const colors = {
+            success: 'bg-green-500 text-white',
+            error: 'bg-red-500 text-white',
+            info: 'bg-blue-500 text-white',
+            warning: 'bg-yellow-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type]}`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <span class="text-sm font-medium">${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+
+    // Auto-hide flash messages
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.animate-fade-in');
+        alerts.forEach(alert => {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-10px)';
+            setTimeout(() => alert.remove(), 300);
+        });
+    }, 5000);
+
+    // Mobile actions dropdown
+    const mobileActionsToggle = document.getElementById('mobileActionsToggle');
+    const mobileActionsMenu = document.getElementById('mobileActionsMenu');
+    
+    if (mobileActionsToggle && mobileActionsMenu) {
+        mobileActionsToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            mobileActionsMenu.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!mobileActionsToggle.contains(e.target) && !mobileActionsMenu.contains(e.target)) {
+                mobileActionsMenu.classList.add('hidden');
+            }
+        });
+    }
+});
+</script>
 
 <?= $this->endSection(); ?>

@@ -2,1076 +2,751 @@
 
 <?= $this->section('content') ?>
 
-<!-- Enhanced Attendance System with Modern Design -->
-<div class="attendance-container">
-
-<!-- Debug Info (remove later) -->
-<?php if (ENVIRONMENT === 'development'): ?>
-<div class="debug-info">
-    <strong>Debug:</strong> 
-    Kelas: <?= $selectedKelas ? $selectedKelas : 'NULL' ?> | 
-    Siswa: <?= count($students) ?> | 
-    Role: <?= $userRole ?>
-</div>
-<?php endif; ?>
-
-<?php 
-// Define Indonesian day names
-$dayNames = [
-    'Monday' => 'Senin',
-    'Tuesday' => 'Selasa', 
-    'Wednesday' => 'Rabu',
-    'Thursday' => 'Kamis',
-    'Friday' => 'Jumat',
-    'Saturday' => 'Sabtu',
-    'Sunday' => 'Minggu'
-];
-$englishDay = date('l', strtotime($selectedDate ?? date('Y-m-d')));
-$indonesianDay = $dayNames[$englishDay] ?? $englishDay;
-$formattedDate = date('d M Y', strtotime($selectedDate ?? date('Y-m-d')));
-?>
-
-<?php if ($selectedKelas && !empty($students)): ?>
-<!-- Enhanced Header Section -->
-<div class="page-header">
-    <div class="header-content">
-        <div class="header-info">
-            <div class="header-icon">
-                <i class="fas fa-clipboard-list"></i>
-            </div>
-            <div class="header-text">
-                <h1>Absensi Kelas <?= $selectedKelas ?></h1>
-                <p class="date-info"><?= $indonesianDay ?>, <?= $formattedDate ?></p>
-            </div>
-        </div>
-        
-        <!-- Quick Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number"><?= count($students) ?></div>
-                <div class="stat-label">Total Siswa</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="attendedCount">0</div>
-                <div class="stat-label">Sudah Absen</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="pendingCount"><?= count($students) ?></div>
-                <div class="stat-label">Belum Absen</div>
-            </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <button type="button" id="markAllPresent" class="btn btn-success">
-                <i class="fas fa-check-circle"></i>
-                Hadir Semua
-            </button>
-            <button type="button" id="exportData" class="btn btn-secondary">
-                <i class="fas fa-download"></i>
-                Export
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Enhanced Filter Controls -->
-<div class="filter-section">
-    <div class="filter-header">
-        <h3><i class="fas fa-filter"></i> Filter & Navigasi</h3>
-        <button type="button" class="filter-toggle" id="filterToggle" title="Tampilkan/Sembunyikan Menu Filter">
-            <i class="fas fa-chevron-up"></i>
-            <span class="toggle-text">Sembunyikan Menu</span>
-        </button>
-    </div>
-    
-    <form id="filterForm" method="GET" class="filter-form">
-        <div class="filter-grid">
-            <!-- Date Navigation -->
-            <div class="date-navigation">
-                <button type="button" class="btn-nav" id="prevDay" title="Hari sebelumnya">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                
-                <div class="date-input-group">
-                    <label for="tanggal">Tanggal</label>
-                    <input type="date" class="form-control" id="tanggal" name="tanggal" 
-                           value="<?= $selectedDate ?>" required>
+<!-- Simple and Clean Attendance Input -->
+<div class="container-fluid py-4" style="padding-top: 6rem;">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Card -->
+            <div class="bg-white rounded-xl shadow-lg mb-6 border-0 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 md:p-6">
+                    <!-- Mobile Layout -->
+                    <div class="block md:hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center flex-1 min-w-0">
+                                <i class="fas fa-clipboard-list mr-2 text-lg flex-shrink-0"></i>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-lg font-bold truncate">Input Absensi</h4>
+                                </div>
+                            </div>
+                            <button type="button" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 ml-2 flex-shrink-0" id="markAllPresentMobile">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <span>Hadir Semua</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <small class="text-white/90 flex items-center flex-1 min-w-0">
+                                <i class="fas fa-calendar-alt mr-2 flex-shrink-0"></i>
+                                <span class="truncate">
+                                    <?php
+                                    $dayNames = [
+                                        'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu',
+                                        'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu'
+                                    ];
+                                    $englishDay = date('l', strtotime($selectedDate ?? date('Y-m-d')));
+                                    $indonesianDay = $dayNames[$englishDay] ?? $englishDay;
+                                    $formattedDate = date('d M Y', strtotime($selectedDate ?? date('Y-m-d')));
+                                    echo $indonesianDay . ', ' . $formattedDate;
+                                    ?>
+                                </span>
+                            </small>
+                            <?php if ($selectedKelas): ?>
+                                <span class="ml-2 px-2 py-1 bg-white/20 text-white text-xs font-medium rounded-full flex-shrink-0">
+                                    Kelas <?= $selectedKelas ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Desktop Layout -->
+                    <div class="hidden md:flex justify-between items-center">
+                        <div>
+                            <h4 class="text-xl font-bold mb-1 flex items-center">
+                                <i class="fas fa-clipboard-list mr-3"></i>
+                                Input Absensi
+                                <?php if ($selectedKelas): ?>
+                                    <span class="ml-3 px-3 py-1 bg-white/20 text-white text-sm font-medium rounded-full">Kelas <?= $selectedKelas ?></span>
+                                <?php endif; ?>
+                            </h4>
+                            <small class="text-white/90 flex items-center mt-2">
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                <?php
+                                $dayNames = [
+                                    'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu',
+                                    'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu'
+                                ];
+                                $englishDay = date('l', strtotime($selectedDate ?? date('Y-m-d')));
+                                $indonesianDay = $dayNames[$englishDay] ?? $englishDay;
+                                $formattedDate = date('d M Y', strtotime($selectedDate ?? date('Y-m-d')));
+                                echo $indonesianDay . ', ' . $formattedDate;
+                                ?>
+                            </small>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5" id="markAllPresent">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <span>Hadir Semua</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                
-                <button type="button" class="btn-nav" id="nextDay" title="Hari selanjutnya">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
             </div>
-            
-            <!-- Class Selection -->
-            <?php if ($userRole === 'admin'): ?>
-            <div class="input-group">
-                <label for="kelas">Kelas</label>
-                <select class="form-control" id="kelas" name="kelas" required>
-                    <option value="">Pilih Kelas</option>
-                    <?php foreach ($allKelas as $kelas): ?>
-                    <option value="<?= $kelas['kelas'] ?>" 
-                            <?= $selectedKelas === $kelas['kelas'] ? 'selected' : '' ?>>
-                        <?= $kelas['kelas'] ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
+
+            <!-- Filter Card -->
+            <div class="bg-white rounded-xl shadow-lg mb-6 border-0 overflow-hidden">
+                <div class="p-6 pb-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h5 class="text-lg font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-filter text-blue-600 mr-3"></i>Filter & Pencarian
+                        </h5>
+                        <button type="button" class="px-3 py-1 text-sm border border-gray-300 hover:border-gray-400 text-gray-600 hover:text-gray-700 rounded-lg transition-colors duration-200" onclick="clearFilters()">
+                            <i class="fas fa-times mr-1"></i> Clear
+                        </button>
+                    </div>
+                    
+                    <form id="filterForm" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Date Selection -->
+                        <div>
+                            <label for="tanggal" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-calendar text-blue-600 mr-2"></i>Tanggal
+                            </label>
+                            <div class="flex rounded-lg shadow-sm border border-blue-300 overflow-hidden">
+                                <button type="button" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 border-r border-blue-300 text-blue-600 transition-colors duration-200" id="prevDay" title="Hari Sebelumnya">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <input type="date" class="flex-1 px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="tanggal" name="tanggal" 
+                                       value="<?= $selectedDate ?>" required>
+                                <button type="button" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 border-l border-blue-300 text-blue-600 transition-colors duration-200" id="nextDay" title="Hari Berikutnya">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Class Selection -->
+                        <?php if ($userRole === 'admin'): ?>
+                        <div>
+                            <label for="kelas" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-school text-blue-600 mr-2"></i>Kelas
+                            </label>
+                            <select class="w-full px-3 py-2 border border-blue-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="kelas" name="kelas" required>
+                                <option value="">Pilih Kelas</option>
+                                <?php foreach ($allKelas as $kelas): ?>
+                                <option value="<?= $kelas['kelas'] ?>" <?= $selectedKelas === $kelas['kelas'] ? 'selected' : '' ?>>
+                                    <?= $kelas['kelas'] ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php else: ?>
+                        <input type="hidden" name="kelas" value="<?= $userKelas ?>">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-school text-blue-600 mr-2"></i>Kelas
+                            </label>
+                            <div class="px-3 py-2 bg-blue-50 border border-blue-300 rounded-lg font-bold text-blue-700"><?= $userKelas ?></div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Student Search -->
+                        <div>
+                            <label for="studentSearch" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-search text-blue-600 mr-2"></i>Cari Siswa
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-blue-400"></i>
+                                </div>
+                                <input type="text" class="w-full pl-10 pr-3 py-2 border border-blue-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="studentSearch" 
+                                       placeholder="Nama atau NISN...">
+                            </div>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div>
+                            <label for="filterStatus" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-funnel-dollar text-blue-600 mr-2"></i>Filter Status
+                            </label>
+                            <select class="w-full px-3 py-2 border border-blue-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="filterStatus">
+                                <option value="all">🔍 Semua Status</option>
+                                <option value="hadir">✅ Hadir</option>
+                                <option value="sakit">🤒 Sakit</option>
+                                <option value="izin">✋ Izin</option>
+                                <option value="alpha">❌ Alpha</option>
+                                <option value="belum">⏳ Belum Diisi</option>
+                            </select>
+                        </div>
+                    </form>
+                    
+                    <!-- Search Results Info -->
+                    <div id="searchResults" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        <span id="searchResultsText"></span>
+                    </div>
+                </div>
             </div>
+
+            <!-- Students Grid -->
+            <?php if ($selectedKelas && !empty($students)): ?>
+            <div class="bg-white rounded-xl shadow-lg border-0 overflow-hidden absensi-page-last">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h5 class="text-lg font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-users text-blue-600 mr-3"></i>
+                            Daftar Siswa 
+                            <span class="ml-3 px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full"><?= count($students) ?> siswa</span>
+                        </h5>
+                        <div class="flex items-center">
+                            <span class="text-gray-500 text-sm flex items-center">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Klik status untuk mengisi absensi
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 pb-0">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="studentsGrid">
+                        <?php foreach ($students as $student): ?>
+                        <div class="student-card transition-all duration-300 hover:transform hover:-translate-y-1" 
+                             data-siswa-id="<?= $student['siswa_id'] ?>"
+                             data-student-name="<?= strtolower($student['nama']) ?>"
+                             data-student-nisn="<?= strtolower($student['nisn']) ?>">
+                            <div class="bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 student-item h-full">
+                                <div class="p-4">
+                                    <!-- Student Info -->
+                                    <div class="flex items-center mb-4 md:flex-row flex-col md:text-left text-center">
+                                        <div class="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center font-black text-base shadow-md avatar-circle md:mr-3 mb-2 md:mb-0">
+                                            <?= strtoupper(substr($student['nama'], 0, 2)) ?>
+                                        </div>
+                                        <div class="flex-1 min-w-0 md:pr-2" style="display: block !important;">
+                                            <h6 class="font-bold text-gray-800 student-name text-sm leading-tight" style="display: block !important; visibility: visible !important; color: #1f2937 !important; font-size: 14px !important; font-weight: 700 !important; line-height: 1.2 !important;"><?= $student['nama'] ?></h6>
+                                            <small class="text-gray-500 flex items-center text-xs md:justify-start justify-center" style="display: flex !important; visibility: visible !important; color: #6b7280 !important; font-size: 12px !important;">
+                                                <i class="fas fa-id-card mr-1"></i>
+                                                <?= $student['nisn'] ?>
+                                            </small>
+                                        </div>
+                                        <div class="attendance-status-indicator md:ml-2 md:block hidden">
+                                            <i class="fas fa-circle text-gray-400 text-xs" title="Belum diisi"></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Attendance Buttons -->
+                                    <div class="grid grid-cols-4 gap-1 mb-4 attendance-buttons" role="group">
+                                        <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
+                                               id="hadir_<?= $student['siswa_id'] ?>" value="hadir"
+                                               <?= isset($student['status']) && $student['status'] === 'hadir' ? 'checked' : '' ?>>
+                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-green-300 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-green-400 text-xs font-semibold attendance-btn" for="hadir_<?= $student['siswa_id'] ?>" 
+                                               title="Tandai Hadir">
+                                            <i class="fas fa-check mb-1"></i> 
+                                            <span class="hidden sm:block">Hadir</span>
+                                        </label>
+
+                                        <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
+                                               id="sakit_<?= $student['siswa_id'] ?>" value="sakit"
+                                               <?= isset($student['status']) && $student['status'] === 'sakit' ? 'checked' : '' ?>>
+                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-yellow-300 text-yellow-600 hover:bg-yellow-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-yellow-400 text-xs font-semibold attendance-btn" for="sakit_<?= $student['siswa_id'] ?>"
+                                               title="Tandai Sakit">
+                                            <i class="fas fa-thermometer-half mb-1"></i> 
+                                            <span class="hidden sm:block">Sakit</span>
+                                        </label>
+
+                                        <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
+                                               id="izin_<?= $student['siswa_id'] ?>" value="izin"
+                                               <?= isset($student['status']) && $student['status'] === 'izin' ? 'checked' : '' ?>>
+                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-blue-300 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-blue-400 text-xs font-semibold attendance-btn" for="izin_<?= $student['siswa_id'] ?>"
+                                               title="Tandai Izin">
+                                            <i class="fas fa-hand-paper mb-1"></i> 
+                                            <span class="hidden sm:block">Izin</span>
+                                        </label>
+
+                                        <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
+                                               id="alpha_<?= $student['siswa_id'] ?>" value="alpha"
+                                               <?= isset($student['status']) && $student['status'] === 'alpha' ? 'checked' : '' ?>>
+                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-red-300 text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-red-400 text-xs font-semibold attendance-btn" for="alpha_<?= $student['siswa_id'] ?>"
+                                               title="Tandai Alpha">
+                                            <i class="fas fa-times mb-1"></i> 
+                                            <span class="hidden sm:block">Alpha</span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Notes -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">
+                                            <i class="fas fa-sticky-note mr-1"></i>Keterangan:
+                                        </label>
+                                        <textarea class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 student-keterangan" 
+                                                  rows="2" placeholder="Keterangan opsional..." 
+                                                  data-siswa-id="<?= $student['siswa_id'] ?>"><?= $student['keterangan'] ?? '' ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <!-- Pagination removed: showing all students -->
+                </div>
+            </div>
+
+            <?php elseif ($selectedKelas): ?>
+            <!-- No Students Message -->
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="text-center py-12">
+                    <i class="fas fa-user-slash text-6xl text-gray-400 mb-4"></i>
+                    <h5 class="text-xl font-bold text-gray-700 mb-2">Tidak Ada Siswa</h5>
+                    <p class="text-gray-500">Kelas <?= $selectedKelas ?> belum memiliki siswa yang terdaftar.</p>
+                </div>
+            </div>
+
             <?php else: ?>
-            <input type="hidden" name="kelas" value="<?= $userKelas ?>">
+            <!-- Initial State -->
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="text-center py-12">
+                    <i class="fas fa-clipboard-list text-6xl text-gray-400 mb-4"></i>
+                    <h5 class="text-xl font-bold text-gray-700 mb-2">Pilih Kelas dan Tanggal</h5>
+                    <p class="text-gray-500">Silakan pilih kelas dan tanggal untuk memulai input absensi.</p>
+                </div>
+            </div>
             <?php endif; ?>
-            
-            <!-- Filter Status -->
-            <div class="input-group">
-                <label for="filterStatus">Filter Status</label>
-                <select class="form-control" id="filterStatus">
-                    <option value="all">Semua</option>
-                    <option value="hadir">Hadir</option>
-                    <option value="sakit">Sakit</option>
-                    <option value="izin">Izin</option>
-                    <option value="alpha">Alpha</option>
-                    <option value="belum">Belum Absen</option>
-                </select>
-            </div>
-        </div>
-    </form>
-</div>
 
-<!-- Floating Filter Button (shows when filter is collapsed) -->
-<div class="floating-filter-btn" id="floatingFilterBtn" style="display: none;">
-    <button type="button" class="btn-float-filter" title="Buka Menu Filter">
-        <i class="fas fa-filter"></i>
-        <span>Filter</span>
-    </button>
-</div>
-
-<!-- Enhanced Students Grid -->
-<div class="students-grid" id="studentsGrid">
-    <?php foreach ($students as $index => $student): ?>
-    <div class="student-card" data-siswa-id="<?= $student['siswa_id'] ?>" 
-         data-student-name="<?= strtolower($student['nama']) ?>"
-         data-student-nisn="<?= $student['nisn'] ?? '' ?>">
-        
-        <!-- Student Header -->
-        <div class="student-header">
-            <div class="student-avatar">
-                <div class="avatar-circle">
-                    <span><?= strtoupper(substr($student['nama'], 0, 2)) ?></span>
+            <!-- Floating Save Button - SINGLE INSTANCE ONLY -->
+            <?php if ($selectedKelas && !empty($students)): ?>
+            <button type="button" 
+                    class="floating-save-btn" 
+                    id="saveAll">
+                <!-- Icon -->
+                <i class="fas fa-paper-plane"></i>
+                
+                <!-- Unsaved Count Badge -->
+                <span class="unsaved-count" id="unsavedCount">0</span>
+                
+                <!-- Hover Text -->
+                <div class="hover-tooltip">
+                    <span>Kirim Daftar Hadir</span>
                 </div>
-                <div class="status-indicator" data-status="<?= $student['status'] ?? 'none' ?>"></div>
+            </button>
+            <?php else: ?>
+            <!-- Debug: Show conditions -->
+            <div class="fixed bottom-20 right-6 bg-red-500 text-white p-2 rounded text-xs" style="z-index: 99999;">
+                Debug: selectedKelas = "<?= $selectedKelas ?? 'NULL' ?>", 
+                students = <?= isset($students) ? count($students) : 0 ?>
             </div>
-            
-            <div class="student-info">
-                <h3 class="student-name"><?= $student['nama'] ?></h3>
-                <div class="student-details">
-                    <div class="detail-item">
-                        <i class="fas fa-id-card"></i>
-                        <span>NISN: <?= $student['nisn'] ?? '-' ?></span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-<?= isset($student['jk']) && $student['jk'] == 'L' ? 'mars' : 'venus' ?>"></i>
-                        <span class="gender-badge <?= isset($student['jk']) && $student['jk'] == 'L' ? 'male' : 'female' ?>">
-                            <?= isset($student['jk']) ? ($student['jk'] == 'L' ? 'Laki-laki' : 'Perempuan') : '-' ?>
-                        </span>
-                    </div>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
-        
-        <!-- Attendance Buttons -->
-        <div class="attendance-buttons">
-            <button type="button" class="btn-attendance hadir <?= $student['status']==='hadir' ? 'active' : '' ?>" 
-                    data-status="hadir" title="Hadir">
-                <i class="fas fa-check"></i>
-                <span>Hadir</span>
-            </button>
-            
-            <button type="button" class="btn-attendance sakit <?= $student['status']==='sakit' ? 'active' : '' ?>" 
-                    data-status="sakit" title="Sakit">
-                <i class="fas fa-thermometer-half"></i>
-                <span>Sakit</span>
-            </button>
-            
-            <button type="button" class="btn-attendance izin <?= $student['status']==='izin' ? 'active' : '' ?>" 
-                    data-status="izin" title="Izin">
-                <i class="fas fa-hand-paper"></i>
-                <span>Izin</span>
-            </button>
-            
-            <button type="button" class="btn-attendance alpha <?= $student['status']==='alpha' ? 'active' : '' ?>" 
-                    data-status="alpha" title="Alpha">
-                <i class="fas fa-times"></i>
-                <span>Alpha</span>
-            </button>
-        </div>
-        
-        <!-- Notes Section -->
-        <div class="notes-section">
-            <button type="button" class="btn-notes" onclick="toggleNotes(this)">
-                <i class="fas fa-sticky-note"></i>
-                Catatan
-            </button>
-            <div class="notes-input" style="display: none;">
-                <textarea class="student-keterangan" placeholder="Tambahkan catatan..."><?= $student['keterangan'] ?? '' ?></textarea>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden" id="loadingModal">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm mx-4">
+            <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
+                <h5 class="text-lg font-bold text-gray-800 mb-2">Memproses Data...</h5>
+                <p class="text-gray-500">Mohon tunggu sebentar</p>
             </div>
         </div>
-        
-        <div class="card-number">#<?= str_pad($index + 1, 2, '0', STR_PAD_LEFT) ?></div>
     </div>
-    <?php endforeach; ?>
-</div>
-
-<!-- Floating Action Button -->
-<div class="floating-action">
-    <button type="button" id="saveAll" class="fab">
-        <i class="fas fa-paper-plane"></i>
-        <span>Kirim Daftar Hadir</span>
-        <div class="fab-badge" id="fabBadge" style="display: none;">0</div>
-    </button>
-</div>
-
-<?php elseif ($selectedKelas): ?>
-<!-- Empty State -->
-<div class="empty-state">
-    <div class="empty-icon">
-        <i class="fas fa-users"></i>
-    </div>
-    <h3>Tidak ada siswa ditemukan</h3>
-    <p>Kelas <?= $selectedKelas ?> belum memiliki siswa yang terdaftar atau semua siswa sedang tidak aktif.</p>
-    <button type="button" class="btn btn-primary">
-        <i class="fas fa-user-plus"></i>
-        Kelola Data Siswa
-    </button>
-</div>
-<?php else: ?>
-<!-- Initial State -->
-<div class="initial-state">
-    <div class="initial-icon">
-        <i class="fas fa-calendar-alt"></i>
-    </div>
-    <h3>Mulai Input Absensi</h3>
-    <p>Pilih tanggal dan kelas pada filter di atas untuk memulai proses input absensi siswa.</p>
-    <div class="initial-actions">
-        <button type="button" class="btn btn-outline" onclick="document.getElementById('tanggal').focus()">
-            <i class="fas fa-calendar"></i>
-            Pilih Tanggal
-        </button>
-        <button type="button" class="btn btn-outline" onclick="document.getElementById('kelas').focus()">
-            <i class="fas fa-school"></i>
-            Pilih Kelas
-        </button>
-    </div>
-</div>
-<?php endif; ?>
-
 </div>
 
 <style>
-/**
- * ==========================================
- * ENHANCED ATTENDANCE SYSTEM STYLES
- * ==========================================
- * Modern, consistent design system
- * Author: Manus AI
- * Version: 2.0
- */
+/* ================================
+   FLOATING SAVE BUTTON - CLEAN VERSION
+   ================================ */
 
-/* CSS Custom Properties for Design System */
-:root {
-    /* Colors */
-    --primary-color: #667eea;
-    --primary-dark: #5a67d8;
-    --secondary-color: #764ba2;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
-    --info-color: #3b82f6;
+/* Ensure only ONE floating button exists */
+#saveAll:not(:first-of-type) {
+    display: none !important;
+}
+
+.floating-save-btn {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 999999 !important;
     
-    /* Grays */
-    --gray-50: #f9fafb;
-    --gray-100: #f3f4f6;
-    --gray-200: #e5e7eb;
-    --gray-300: #d1d5db;
-    --gray-400: #9ca3af;
-    --gray-500: #6b7280;
-    --gray-600: #4b5563;
-    --gray-700: #374151;
-    --gray-800: #1f2937;
-    --gray-900: #111827;
+    /* Size and Shape */
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50% !important;
     
-    /* Spacing */
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
-    --spacing-2xl: 3rem;
+    /* Styling */
+    background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%) !important;
+    color: white !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(10px);
     
-    /* Border Radius */
-    --radius-sm: 0.375rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
-    --radius-xl: 1rem;
-    --radius-2xl: 1.5rem;
+    /* Layout */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Interaction */
+    cursor: pointer !important;
+    pointer-events: auto !important;
     
-    /* Transitions */
-    --transition-fast: 150ms ease-in-out;
-    --transition-normal: 300ms ease-in-out;
-    --transition-slow: 500ms ease-in-out;
+    /* Animation */
+    transition: all 0.3s ease !important;
+    animation: float 3s ease-in-out infinite;
 }
 
-/* Global Improvements */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+.floating-save-btn:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
 }
 
-html, body {
-    height: 100%;
-    overflow-x: hidden;
+.floating-save-btn:active {
+    transform: scale(0.95) !important;
 }
 
-/* Fix untuk menghilangkan area putih */
-.content-area {
-    background-color: #f8fafc !important;
-    min-height: 100vh;
+/* Icon styling */
+.floating-save-btn i {
+    font-size: 1.25rem !important;
+    color: white !important;
+    pointer-events: none !important;
+    transition: transform 0.3s ease;
 }
 
-/* Pastikan tidak ada gap atau spacing yang berlebihan */
-.attendance-container > * {
-    margin-bottom: 0;
+.floating-save-btn:hover i {
+    transform: rotate(12deg);
 }
 
-.attendance-container > *:not(:last-child) {
-    margin-bottom: var(--spacing-xl);
-}
-
-/* Debug untuk area putih (hapus setelah masalah teratasi) */
-.page-header, .filter-section, .students-grid, .empty-state, .initial-state {
-    border: 2px solid transparent;
-}
-
-/* Pastikan floating button tidak mengganggu layout */
-.floating-action {
-    position: fixed;
-    bottom: var(--spacing-xl);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    pointer-events: none;
-}
-
-.floating-action .fab {
-    pointer-events: all;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.6;
-    color: var(--gray-700);
-    background-color: #f8fafc !important;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.attendance-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: var(--spacing-lg);
-    padding-bottom: 120px; /* Space for floating button */
-    background-color: transparent;
-    min-height: calc(100vh - 144px); /* Adjust for header and padding */
-    width: 100%;
-    position: relative;
-}
-
-/* Debug Info */
-.debug-info {
-    background: var(--info-color);
-    color: white;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-lg);
-    font-size: 0.875rem;
-    box-shadow: var(--shadow-md);
-}
-
-/* Enhanced Page Header */
-.page-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    border-radius: var(--radius-2xl);
-    padding: var(--spacing-2xl);
-    margin-bottom: var(--spacing-xl);
-    box-shadow: var(--shadow-xl);
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.page-header::before {
-    content: '';
+/* Badge styling */
+.floating-save-btn .unsaved-count {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="1" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    pointer-events: none;
-}
-
-.header-content {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: var(--spacing-xl);
-    align-items: center;
-}
-
-.header-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-lg);
-}
-
-.header-icon {
-    width: 60px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-xl);
-    display: flex;
+    top: -6px;
+    right: -6px;
+    background: #ef4444;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    display: none;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: pulse 2s infinite;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    z-index: 1000000;
+    /* Prevent badge from being affected by button transforms */
+    transform: none !important;
+    transition: none !important;
 }
 
-.header-text h1 {
-    margin: 0;
-    font-size: 2rem;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.floating-save-btn .unsaved-count:not(.hidden) {
+    display: flex !important;
 }
 
-.date-info {
-    margin: var(--spacing-xs) 0 0 0;
-    opacity: 0.9;
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-md);
-}
-
-.stat-card {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    text-align: center;
-    transition: var(--transition-normal);
-}
-
-.stat-card:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: var(--spacing-xs);
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    opacity: 0.9;
-    font-weight: 500;
-}
-
-.quick-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-/* Enhanced Filter Section */
-.filter-section {
-    background: white;
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-xl);
-    margin: 0 0 var(--spacing-xl) 0;
-    box-shadow: var(--shadow-lg);
-    border: 1px solid var(--gray-200);
-    transition: var(--transition-normal);
-    width: 100%;
-}
-
-.filter-section.collapsed {
-    padding-bottom: var(--spacing-lg);
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.1), 0 2px 4px -1px rgba(102, 126, 234, 0.06);
-}
-
-.filter-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--gray-200);
-}
-
-.filter-header h3 {
-    margin: 0;
-    color: var(--gray-800);
-    font-size: 1.25rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.filter-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: linear-gradient(135deg, var(--gray-50), white);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-lg);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--gray-700);
-    box-shadow: var(--shadow-sm);
-}
-
-.filter-toggle:hover {
-    background: linear-gradient(135deg, var(--gray-100), var(--gray-50));
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-}
-
-.filter-toggle:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-sm);
-}
-
-.filter-toggle i {
-    transition: var(--transition-normal);
-    font-size: 0.875rem;
-}
-
-.filter-toggle.collapsed i {
-    transform: rotate(180deg);
-    color: var(--primary-color);
-}
-
-.filter-toggle.collapsed {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(102, 126, 234, 0.05));
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-.filter-form {
-    transition: all var(--transition-normal) ease-in-out;
-    overflow: hidden;
-    max-height: 1000px; /* Set a reasonable max height */
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.filter-form.collapsed {
-    max-height: 0;
+/* Tooltip styling */
+.floating-save-btn .hover-tooltip {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(20px);
+    margin-right: 16px;
     opacity: 0;
-    margin-bottom: calc(-1 * var(--spacing-lg));
-    padding-top: 0;
-    padding-bottom: 0;
-    transform: translateY(-10px);
+    pointer-events: none;
+    transition: all 0.3s ease;
+    background: #1f2937;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
-/* Responsive adjustments for toggle */
+.floating-save-btn:hover .hover-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Float animation */
+@keyframes float {
+    0%, 100% { 
+        transform: translateY(0px); 
+    }
+    50% { 
+        transform: translateY(-8px); 
+    }
+}
+
+/* Mobile responsive - SINGLE BUTTON ONLY */
 @media (max-width: 768px) {
-    .filter-toggle .toggle-text {
-        display: none;
+    /* Hide any duplicate buttons */
+    .floating-save-btn:not(#saveAll) {
+        display: none !important;
     }
     
-    .filter-toggle {
-        padding: var(--spacing-sm);
-        min-width: 44px;
-        justify-content: center;
+    .floating-save-btn {
+        bottom: 16px !important;
+        right: 16px !important;
+        width: 56px !important;
+        height: 56px !important;
+        left: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+        position: fixed !important;
+        z-index: 999999 !important;
+    }
+    
+    .floating-save-btn i {
+        font-size: 1.1rem !important;
+    }
+    
+    .floating-save-btn .hover-tooltip {
+        display: none !important; /* Hide tooltip on mobile */
+    }
+    
+    /* Mobile badge positioning - IMPORTANT FIX */
+    .floating-save-btn .unsaved-count {
+        top: -4px !important;
+        right: -4px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        border: 1.5px solid white !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5) !important;
+        z-index: 1000001 !important;
+        line-height: 1 !important;
+        padding: 0 !important;
     }
 }
 
-.auto-reload-status {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: 0.875rem;
-    color: var(--gray-600);
-    background: var(--gray-50);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--gray-200);
+/* CRITICAL: Global text visibility overrides */
+h6.student-name, .student-name {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #1f2937 !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    text-overflow: unset !important;
 }
 
-.status-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--success-color);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
+small.text-gray-500, .text-gray-500 {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #6b7280 !important;
+    font-size: 12px !important;
 }
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.filter-grid {
-    display: grid;
-    grid-template-columns: auto 1fr 1fr;
-    gap: var(--spacing-lg);
-    align-items: end;
-}
-
-.date-navigation {
-    display: flex;
-    align-items: end;
-    gap: var(--spacing-sm);
-}
-
-.date-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.input-group label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--gray-700);
-}
-
-.form-control {
-    padding: var(--spacing-md);
-    border: 2px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    font-size: 0.875rem;
-    transition: var(--transition-fast);
-    background: white;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.btn-nav {
-    width: 44px;
-    height: 44px;
-    border: 2px solid var(--gray-300);
-    background: white;
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    color: var(--gray-600);
-}
-
-.btn-nav:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-    background: var(--gray-50);
-}
-
-.quick-filters {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
-    padding-top: var(--spacing-md);
-    border-top: 1px solid var(--gray-200);
-}
-
-.filter-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--gray-700);
-    margin-right: var(--spacing-sm);
-}
-
-.filter-btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--gray-300);
-    background: white;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    color: var(--gray-600);
-}
-
-.filter-btn:hover {
-    background: var(--gray-50);
-    border-color: var(--gray-400);
-}
-
-.filter-btn.active {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    color: white;
-}
-
-/* Enhanced Students Grid */
-.students-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-md);
-    margin: 0 0 var(--spacing-lg) 0;
-    width: 100%;
-}
-
 .student-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    overflow: hidden;
-    transition: var(--transition-normal);
-    position: relative;
-    min-width: 0;
-}
-
-.student-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .student-card.filtered-out {
-    opacity: 0.3;
-    transform: scale(0.95);
-    pointer-events: none;
+    display: none !important;
+    opacity: 0 !important;
+    transform: scale(0.95) !important;
+    pointer-events: none !important;
 }
 
-.student-header {
-    padding: var(--spacing-md);
-    background: linear-gradient(135deg, var(--gray-50), white);
-    border-bottom: 1px solid var(--gray-200);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+.student-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.student-avatar {
-    position: relative;
+.student-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Ensure student name is always visible */
+.student-name {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #1f2937 !important;
+    font-size: 0.875rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    text-overflow: unset !important;
 }
 
 .avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 0.9rem;
-    box-shadow: var(--shadow-sm);
-}
-
-.status-indicator {
-    position: absolute;
-    bottom: -1px;
-    right: -1px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: var(--shadow-sm);
-}
-
-.status-indicator[data-status="hadir"] { background: var(--success-color); }
-.status-indicator[data-status="sakit"] { background: var(--warning-color); }
-.status-indicator[data-status="izin"] { background: var(--info-color); }
-.status-indicator[data-status="alpha"] { background: var(--danger-color); }
-.status-indicator[data-status="none"] { background: var(--gray-300); }
-
-.student-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.student-name {
-    margin: 0 0 var(--spacing-xs) 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--gray-800);
-    white-space: nowrap;
+    width: 3rem !important; /* lebar tetap desktop */
+    height: 3rem !important; /* tinggi tetap desktop */
+    min-width: 3rem !important; /* minimum width untuk mencegah shrinking */
+    max-width: 3rem !important; /* maximum width untuk mencegah expanding */
+    border-radius: 9999px !important; /* lingkaran penuh */
+    aspect-ratio: 1 / 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    padding: 0 !important;
     overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
+    box-sizing: border-box !important;
+    text-align: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0; /* mencegah flex item mengecil */
+    flex-grow: 0; /* mencegah flex item membesar */
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    margin-right: 0.75rem !important; /* margin kanan untuk desktop */
+    margin-bottom: 0; /* default tidak ada margin bawah */
 }
 
-.student-details {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.avatar-circle:hover {
+    transform: scale(1.1);
 }
 
-.detail-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    font-size: 0.75rem;
-    color: var(--gray-600);
+/* Radio button states for attendance */
+input[type="radio"]:checked + .attendance-btn {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.detail-item i {
-    width: 16px;
-    color: var(--gray-400);
-}
-
-.gender-badge {
-    padding: 2px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.gender-badge.male {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--info-color);
-}
-
-.gender-badge.female {
-    background: rgba(236, 72, 153, 0.1);
-    color: #ec4899;
-}
-
-/* Enhanced Attendance Buttons */
-.attendance-buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-xs);
-    padding: var(--spacing-md);
-}
-
-.btn-attendance {
-    padding: var(--spacing-xs);
-    border: 1px solid;
-    border-radius: var(--radius-sm);
-    background: white;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1px;
-    position: relative;
-    overflow: hidden;
-    min-height: 35px;
-}
-
-.btn-attendance::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left var(--transition-slow);
-}
-
-.btn-attendance:hover::before {
-    left: 100%;
-}
-
-.btn-attendance i {
-    font-size: 0.85rem;
-}
-
-.btn-attendance.hadir {
-    border-color: rgba(16, 185, 129, 0.3);
-    color: var(--success-color);
-}
-
-.btn-attendance.hadir:hover,
-.btn-attendance.hadir.active {
-    border-color: var(--success-color);
-    background: var(--success-color);
+/* Specific colors for checked states */
+input[value="hadir"]:checked + .attendance-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: transparent;
     color: white;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.btn-attendance.sakit {
-    border-color: rgba(245, 158, 11, 0.3);
-    color: var(--warning-color);
-}
-
-.btn-attendance.sakit:hover,
-.btn-attendance.sakit.active {
-    border-color: var(--warning-color);
-    background: var(--warning-color);
+input[value="sakit"]:checked + .attendance-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: transparent;
     color: white;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
-.btn-attendance.izin {
-    border-color: rgba(59, 130, 246, 0.3);
-    color: var(--info-color);
-}
-
-.btn-attendance.izin:hover,
-.btn-attendance.izin.active {
-    border-color: var(--info-color);
-    background: var(--info-color);
+input[value="izin"]:checked + .attendance-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: transparent;
     color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.btn-attendance.alpha {
-    border-color: rgba(239, 68, 68, 0.3);
-    color: var(--danger-color);
-}
-
-.btn-attendance.alpha:hover,
-.btn-attendance.alpha.active {
-    border-color: var(--danger-color);
-    background: var(--danger-color);
+input[value="alpha"]:checked + .attendance-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: transparent;
     color: white;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-/* Notes Section */
-.notes-section {
-    padding: 0 var(--spacing-md) var(--spacing-md);
+/* Attendance status indicator states */
+.student-item.has-attendance .attendance-status-indicator .fas.fa-circle {
+    color: #10b981 !important;
+    transform: scale(1.2);
 }
 
-.btn-notes {
-    width: 100%;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 1px solid var(--gray-300);
-    background: var(--gray-50);
-    border-radius: var(--radius-md);
-    font-size: 0.75rem;
-    color: var(--gray-600);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-xs);
+/* Animation for attendance updates */
+.student-card.attendance-updated {
+    animation: attendanceUpdate 0.6s ease;
 }
 
-.btn-notes:hover {
-    background: var(--gray-100);
-    border-color: var(--gray-400);
+@keyframes attendanceUpdate {
+    0% { transform: scale(1); }
+    50% { 
+        transform: scale(1.03); 
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+    100% { transform: scale(1); }
 }
 
-.notes-input {
-    margin-top: var(--spacing-sm);
+/* Enhanced animations for mark all present process */
+.animate-pulse {
+    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.student-keterangan {
-    width: 100%;
-    padding: var(--spacing-xs);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-md);
-    font-size: 0.75rem;
-    resize: vertical;
-    min-height: 40px;
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .7;
+    }
 }
 
-.card-number {
-    position: absolute;
-    top: var(--spacing-xs);
-    right: var(--spacing-xs);
-    background: var(--gray-100);
-    color: var(--gray-500);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
+/* Processing animation for cards */
+.bg-green-50 {
+    background-color: rgb(240 253 244);
+    transition: all 0.3s ease;
 }
 
-/* Floating Filter Button */
-.floating-filter-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1001;
-    animation: slideInRight 0.3s ease-out;
+.border-green-200 {
+    border-color: rgb(187 247 208);
+    transition: all 0.3s ease;
 }
 
-.btn-float-filter {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    border: none;
-    color: white;
-    padding: 12px 16px;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: var(--shadow-lg);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 100px;
-    justify-content: center;
+.bg-green-100 {
+    background-color: rgb(220 252 231);
+    transition: all 0.3s ease;
 }
 
-.btn-float-filter:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-xl);
-    background: linear-gradient(135deg, var(--primary-dark), var(--secondary-color));
+.border-green-300 {
+    border-color: rgb(134 239 172);
+    transition: all 0.3s ease;
 }
 
-.btn-float-filter:active {
-    transform: translateY(0);
+/* Button loading states */
+.opacity-80 {
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.cursor-not-allowed {
+    cursor: not-allowed !important;
+}
+
+/* Success animation for button */
+.bg-green-600 {
+    background-color: rgb(22 163 74) !important;
+    transition: background-color 0.3s ease;
+}
+
+/* Unsaved count pulse animation */
+#unsavedCount.pulse {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+/* Loading modal animation */
+.loading-modal-enter {
+    animation: fadeIn 0.3s ease;
+}
+
+.loading-modal-exit {
+    animation: fadeOut 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.9); }
+}
+
+/* Search results animation */
+.search-results-enter {
+    animation: slideInDown 0.3s ease;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Toast notification animations */
+.toast-enter {
+    animation: slideInRight 0.3s ease;
+}
+
+.toast-exit {
+    animation: slideOutRight 0.3s ease;
 }
 
 @keyframes slideInRight {
     from {
         opacity: 0;
-        transform: translateX(100px);
+        transform: translateX(100%);
     }
     to {
         opacity: 1;
@@ -1086,231 +761,16 @@ body {
     }
     to {
         opacity: 0;
-        transform: translateX(100px);
+        transform: translateX(100%);
     }
 }
 
-.fab {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    border: none;
-    color: white;
-    padding: var(--spacing-lg) var(--spacing-2xl);
-    border-radius: 50px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: var(--shadow-xl);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    position: relative;
-    min-width: 240px;
-    justify-content: center;
+/* Filter clear animation */
+.fade-in-up {
+    animation: fadeInUp 0.3s ease forwards;
 }
 
-.fab:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-.fab-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: var(--danger-color);
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 700;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
-}
-
-/* Button Styles */
-.btn {
-    padding: var(--spacing-md) var(--spacing-lg);
-    border: none;
-    border-radius: var(--radius-lg);
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    text-decoration: none;
-    font-size: 0.875rem;
-}
-
-.btn-primary {
-    background: var(--primary-color);
-    color: white;
-}
-
-.btn-primary:hover {
-    background: var(--primary-dark);
-}
-
-.btn-success {
-    background: var(--success-color);
-    color: white;
-}
-
-.btn-success:hover {
-    background: #059669;
-}
-
-.btn-secondary {
-    background: var(--gray-600);
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: var(--gray-700);
-}
-
-.btn-outline {
-    background: transparent;
-    border: 2px solid var(--gray-300);
-    color: var(--gray-700);
-}
-
-.btn-outline:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-/* Empty States */
-.empty-state,
-.initial-state {
-    text-align: center;
-    padding: var(--spacing-2xl);
-    background: white;
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--gray-200);
-}
-
-.empty-icon,
-.initial-icon {
-    font-size: 4rem;
-    color: var(--gray-300);
-    margin-bottom: var(--spacing-lg);
-}
-
-.empty-state h3,
-.initial-state h3 {
-    margin: 0 0 var(--spacing-md) 0;
-    color: var(--gray-800);
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.empty-state p,
-.initial-state p {
-    color: var(--gray-600);
-    margin-bottom: var(--spacing-xl);
-    font-size: 1rem;
-}
-
-.initial-actions {
-    display: flex;
-    gap: var(--spacing-md);
-    justify-content: center;
-}
-
-/* Responsive Design */
-@media (max-width: 1400px) {
-    .students-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 1024px) {
-    .header-content {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-        text-align: center;
-    }
-    
-    .filter-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-    
-    .date-navigation {
-        justify-content: center;
-    }
-    
-    .students-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-md);
-    }
-}
-
-@media (max-width: 768px) {
-    .attendance-container {
-        padding: var(--spacing-md);
-    }
-    
-    .page-header {
-        padding: var(--spacing-lg);
-    }
-    
-    .header-info {
-        flex-direction: column;
-        text-align: center;
-        gap: var(--spacing-md);
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
-    }
-    
-    .students-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-sm);
-    }
-    
-    .fab {
-        padding: var(--spacing-md) var(--spacing-lg);
-        font-size: 0.875rem;
-        min-width: 200px;
-    }
-    
-    .initial-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .students-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
-    }
-}
-
-/* Animation Classes */
-.fade-in {
-    animation: fadeIn 0.6s ease-out;
-}
-
-.slide-up {
-    animation: slideUp 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
+@keyframes fadeInUp {
     from {
         opacity: 0;
         transform: translateY(20px);
@@ -1321,419 +781,1470 @@ body {
     }
 }
 
-/* Loading States */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
+/* Button hover effects */
+.btn-hover-lift {
+    transition: all 0.2s ease;
 }
 
-.spinner {
-    animation: spin 1s linear infinite;
+.btn-hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
 }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+/* Focus states for accessibility */
+.focus-ring:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* Prevent text wrapping in student count and headers */
+.flex.justify-between.items-center {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+}
+
+.flex.justify-between.items-center h5,
+.flex.justify-between.items-center h4 {
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.flex.justify-between.items-center h5 span,
+.flex.justify-between.items-center h4 span {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    /* Container padding adjustment for mobile navbar */
+    .container-fluid.py-4 {
+        padding-top: 8rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    /* Hide any duplicate buttons */
+    .floating-save-btn:not(#saveAll) {
+        display: none !important;
+    }
+    
+    .floating-save-btn {
+        bottom: 16px !important;
+        right: 16px !important;
+        width: 56px !important;
+        height: 56px !important;
+        left: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+        position: fixed !important;
+        z-index: 999999 !important;
+    }
+    
+    .floating-save-btn i {
+        font-size: 1.1rem !important;
+    }
+    
+    .floating-save-btn .hover-tooltip {
+        display: none !important; /* Hide tooltip on mobile */
+    }
+    
+    /* Mobile badge positioning - CONSISTENT */
+    .floating-save-btn .unsaved-count {
+        top: -4px !important;
+        right: -4px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        border: 1.5px solid white !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5) !important;
+        z-index: 1000001 !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+    }
+    
+    /* Header button adjustments for mobile */
+    #markAllPresent {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+        white-space: nowrap !important;
+        min-width: auto !important;
+        width: auto !important;
+        flex-shrink: 0 !important;
+    }
+    
+    #markAllPresent span {
+        display: inline !important; /* Show full text on mobile */
+        margin-left: 6px !important;
+    }
+    
+    #markAllPresent i {
+        margin-right: 6px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Mobile header button styling */
+    #markAllPresentMobile {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+        min-width: auto !important;
+        width: auto !important;
+        flex-shrink: 0 !important;
+    }
+    
+    #markAllPresentMobile span {
+        display: inline !important; /* Show full text on mobile */
+        margin-left: 4px !important;
+        font-size: 12px !important;
+    }
+    
+    #markAllPresentMobile i {
+        margin-right: 4px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Mobile Header Cleanup - Prevent Overlapping */
+    .bg-gradient-to-r {
+        padding: 16px !important;
+    }
+    
+    .bg-gradient-to-r .block.md\\:hidden .flex.items-center.justify-between.mb-3 {
+        margin-bottom: 12px !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    .bg-gradient-to-r .flex.items-center.flex-1.min-w-0 {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+    }
+    
+    .bg-gradient-to-r h4.text-lg {
+        font-size: 16px !important;
+        line-height: 20px !important;
+        margin: 0 !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
+    
+    .bg-gradient-to-r small.text-white\\/90 {
+        font-size: 12px !important;
+        line-height: 16px !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
+    
+    .bg-gradient-to-r .flex.items-center.justify-between {
+        margin-bottom: 0 !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    
+    .bg-gradient-to-r span.rounded-full {
+        font-size: 10px !important;
+        padding: 4px 8px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Text wrapping prevention */
+    .truncate {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    
+    /* Mobile layout adjustments */
+    .student-card {
+        margin-bottom: 1rem;
+    }
+    
+    /* Ensure student info is visible */
+    .student-name {
+        font-size: 0.875rem !important;
+        line-height: 1.2 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .flex-1 {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        display: block !important;
+    }
+    
+    /* Mobile avatar styling - centered, smaller */
+    .avatar-circle {
+        width: 40px !important; /* diperkecil dari 50px ke 40px */
+        height: 40px !important;
+        min-width: 40px !important; /* minimum width untuk mencegah shrinking */
+        max-width: 40px !important; /* maximum width untuk mencegah expanding */
+        font-size: 0.8rem !important; /* font disesuaikan dengan ukuran lebih kecil */
+        border-radius: 9999px !important;
+        aspect-ratio: 1 / 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+        overflow: hidden;
+        box-sizing: border-box !important;
+        text-align: center;
+        flex-shrink: 0; /* mencegah flex item mengecil */
+        flex-grow: 0; /* mencegah flex item membesar */
+        margin-right: 0 !important; /* hilangkan margin kanan di mobile */
+        margin-bottom: 0.5rem !important; /* tambah margin bawah */
+        margin-left: auto !important; /* center horizontal */
+        margin-top: 0 !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12) !important; /* shadow disesuaikan */
+    }
+    
+    /* Improve attendance button size for mobile */
+    .attendance-btn {
+        padding: 0.75rem 0.5rem !important;
+        font-size: 0.875rem !important;
+        min-height: 60px !important;
+        gap: 4px !important;
+    }
+    
+    .attendance-btn i {
+        font-size: 1rem !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .attendance-btn span {
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        display: block !important; /* Show text on mobile */
+    }
+    
+    /* Make the grid gap larger for easier touch */
+    .grid-cols-4.gap-1 {
+        gap: 6px !important;
+    }
+    
+    /* Filter form responsive */
+    .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    /* Student count mobile styling - PREVENT WRAPPING */
+    .flex.justify-between.items-center h5 {
+        font-size: 1rem !important;
+        line-height: 1.2 !important;
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+    }
+    
+    .flex.justify-between.items-center h5 span {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+        margin-left: 0.5rem !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Header title mobile adjustments */
+    .bg-gradient-to-r.from-blue-600.to-purple-600 h4 {
+        font-size: 1.25rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    .bg-gradient-to-r.from-blue-600.to-purple-600 h4 span {
+        font-size: 0.875rem !important;
+        padding: 0.25rem 0.75rem !important;
+        margin-left: 0.5rem !important;
+    }
+}
+
+/* Specific for Samsung Galaxy A51 and similar dimensions (around 412px) */
+@media (max-width: 414px) {
+    /* Consistent container padding */
+    .container-fluid.py-4 {
+        padding-top: 7rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+    
+    .avatar-circle {
+        width: 40px !important; /* konsisten dengan breakpoint 768px */
+        height: 40px !important;
+        min-width: 40px !important; /* minimum width untuk mencegah shrinking */
+        max-width: 40px !important; /* maximum width untuk mencegah expanding */
+        font-size: 0.75rem !important; /* sedikit lebih kecil untuk layar kecil */
+        border-radius: 9999px !important;
+        aspect-ratio: 1 / 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+        overflow: hidden;
+        box-sizing: border-box !important;
+        text-align: center;
+        flex-shrink: 0; /* mencegah flex item mengecil */
+        flex-grow: 0; /* mencegah flex item membesar */
+        margin-right: 0 !important;
+        margin-bottom: 0.5rem !important;
+        margin-left: auto !important;
+        margin-top: 0 !important;
+        border: 2px solid rgba(255, 255, 255, 0.9) !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    /* More compact text for smaller screens */
+    .flex.justify-between.items-center h5 {
+        font-size: 0.9rem !important;
+    }
+    
+    .flex.justify-between.items-center h5 span {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.4rem !important;
+    }
+}
+
+@media (max-width: 399px) {
+    /* Container padding for very small screens */
+    .container-fluid.py-4 {
+        padding-top: 7rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    /* Even larger buttons for very small phones */
+    .attendance-btn {
+        padding: 1rem 0.5rem;
+        font-size: 1rem;
+        min-height: 70px;
+        gap: 6px;
+    }
+    
+    .attendance-btn i {
+        font-size: 1.125rem;
+        margin-bottom: 6px;
+    }
+    
+    .attendance-btn span {
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+    
+    /* Larger grid gap for very small screens */
+    .grid-cols-4.gap-1 {
+        gap: 8px;
+    }
+    
+    /* Add more padding to student cards */
+    .student-card .p-4 {
+        padding: 1.25rem;
+    }
+    
+    /* Avatar untuk layar sangat kecil - lebih kecil lagi */
+    .avatar-circle {
+        width: 35px !important; /* lebih kecil untuk layar sangat kecil */
+        height: 35px !important;
+        min-width: 35px !important; /* minimum width untuk mencegah shrinking */
+        max-width: 35px !important; /* maximum width untuk mencegah expanding */
+        font-size: 0.7rem !important; /* font disesuaikan */
+        font-weight: 700 !important;
+        border-radius: 9999px !important;
+        aspect-ratio: 1 / 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+        overflow: hidden;
+        box-sizing: border-box !important;
+        text-align: center;
+        flex-shrink: 0; /* mencegah flex item mengecil */
+        flex-grow: 0; /* mencegah flex item membesar */
+        margin-right: 0 !important;
+        margin-bottom: 0.5rem !important;
+        margin-left: auto !important;
+        margin-top: 0 !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+    }
+    
+    /* Very compact text for very small screens */
+    .flex.justify-between.items-center h5 {
+        font-size: 0.85rem !important;
+        line-height: 1.1 !important;
+    }
+    
+    .flex.justify-between.items-center h5 span {
+        font-size: 0.65rem !important;
+        padding: 0.15rem 0.3rem !important;
+        margin-left: 0.25rem !important;
+    }
+    
+    /* Header adjustments for very small screens */
+    .bg-gradient-to-r.from-blue-600.to-purple-600 h4 {
+        font-size: 1.1rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    .bg-gradient-to-r.from-blue-600.to-purple-600 h4 span {
+        font-size: 0.8rem !important;
+        padding: 0.2rem 0.6rem !important;
+        margin-left: 0.4rem !important;
+    }
+}
+
+/* Ultra small screens (320px and below) - iPhone SE and similar */
+@media (max-width: 320px) {
+    /* Container ultra compact */
+    .container-fluid.py-4 {
+        padding-top: 8rem !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    /* Header ultra compact */
+    .bg-gradient-to-r {
+        padding: 10px !important;
+    }
+    
+    .bg-gradient-to-r .block.md\\:hidden .flex.items-center.justify-between.mb-3 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .bg-gradient-to-r h4.text-lg {
+        font-size: 14px !important;
+        line-height: 18px !important;
+    }
+    
+    .bg-gradient-to-r small {
+        font-size: 10px !important;
+        line-height: 14px !important;
+    }
+    
+    .bg-gradient-to-r span.rounded-full {
+        font-size: 8px !important;
+        padding: 2px 6px !important;
+    }
+    
+    #markAllPresent {
+        padding: 6px 8px !important;
+        font-size: 12px !important;
+        min-width: auto !important;
+        width: auto !important;
+        height: 32px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+    
+    #markAllPresent span {
+        display: inline !important; /* Show full text */
+        margin-left: 4px !important;
+        font-size: 10px !important;
+    }
+    
+    #markAllPresent i {
+        margin-right: 4px !important;
+        font-size: 10px !important;
+    }
+    
+    #markAllPresentMobile {
+        padding: 4px 6px !important;
+        font-size: 10px !important;
+        min-width: auto !important;
+        width: auto !important;
+        height: 28px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+    
+    #markAllPresentMobile span {
+        display: inline !important; /* Show full text */
+        margin-left: 2px !important;
+        font-size: 9px !important;
+    }
+    
+    #markAllPresentMobile i {
+        margin-right: 2px !important;
+        font-size: 9px !important;
+    }
+    
+    /* Filter form ultra compact */
+    .grid.grid-cols-1 {
+        gap: 8px !important;
+    }
+    
+    /* Student cards ultra compact */
+    .student-card {
+        padding: 10px !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .student-name {
+        font-size: 12px !important;
+        line-height: 16px !important;
+    }
+    
+    /* Avatar ultra small */
+    .avatar-circle {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        max-width: 30px !important;
+        font-size: 0.6rem !important;
+    }
+    
+    /* Attendance buttons ultra compact */
+    .attendance-btn {
+        padding: 0.5rem 0.3rem !important;
+        font-size: 0.75rem !important;
+        min-height: 50px !important;
+        gap: 2px !important;
+    }
+    
+    .attendance-btn i {
+        font-size: 0.875rem !important;
+        margin-bottom: 2px !important;
+    }
+    
+    /* Floating button ultra small */
+    .floating-save-btn {
+        width: 44px !important;
+        height: 44px !important;
+        bottom: 12px !important;
+        right: 12px !important;
+    }
+    
+    .floating-save-btn i {
+        font-size: 14px !important;
+    }
+    
+    .floating-save-btn .unsaved-count {
+        min-width: 12px !important;
+        height: 12px !important;
+        font-size: 8px !important;
+        top: -2px !important;
+        right: -2px !important;
+    }
+}
+
+/* Custom scrollbar */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ==============================
+   ULTIMATE FLOATING BUTTON FIX - FORCE RIGHT POSITION
+   ============================== */
+/* Page-specific spacing tweaks */
+#studentsGrid { margin-bottom: 0; padding-bottom: 0; }
+.absensi-page-last { margin-bottom: 0 !important; padding-bottom: 0 !important; }
+/* Reduce bottom gap by letting this page's content shrink to content height */
+/* Clean, solid-white background for this page only (no gradients) */
+.content-area { 
+    min-height: calc(100vh - 60px) !important; 
+    padding-bottom: 0 !important; 
+    flex: 1 0 auto !important; 
+    background: #ffffff !important; 
+    background-image: none !important;
+}
+/* Also ensure the document background is plain white while this page is active */
+body { background: #ffffff !important; background-image: none !important; }
+.content-area > *:last-child { margin-bottom: 0 !important; }
+.content-area .container-fluid.py-4 { padding-bottom: 0 !important; }
+/* Tighten main content area for this page only */
+/* Avoid altering global layout sizing here; rely on layout.css */
+/* Override ANY external CSS that might interfere - AGGRESSIVE VERSION */
+@media (max-width: 768px) {
+    /* CRITICAL: Override aggressive mobile CSS resets */
+    .floating-save-btn,
+    #saveAll,
+    button[id="saveAll"] {
+        position: fixed !important;
+        z-index: 999999 !important;
+        bottom: 16px !important;
+        right: 16px !important;
+        left: auto !important;
+        top: auto !important;
+        width: 56px !important;
+        height: 56px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%) !important;
+        color: white !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+        margin: 0 !important;
+    }
+    
+    /* CRITICAL: Badge positioning for mobile */
+    .floating-save-btn .unsaved-count,
+    #saveAll .unsaved-count {
+        position: absolute !important;
+        top: -4px !important;
+        right: -4px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        border: 1.5px solid white !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5) !important;
+        z-index: 1000001 !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+        background: #ef4444 !important;
+        color: white !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* CRITICAL: Ensure proper top spacing for mobile */
+    body .container-fluid.py-4,
+    .container-fluid[style*="padding-top"] {
+        padding-top: 8rem !important;
+        margin-top: 0 !important;
+    }
 }
 </style>
 
 <script>
+// Global variables
+let attendanceData = {};
+let loadingModal;
+
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize attendance tracking
-    let attendanceData = {};
-    let totalStudents = document.querySelectorAll('.student-card').length;
+    console.log('🚀 === ATTENDANCE SYSTEM INITIALIZATION ===');
+    console.log('DOM Content Loaded - Starting initialization...');
     
-    // Filter Toggle Functionality
-    const filterToggle = document.getElementById('filterToggle');
-    const filterForm = document.querySelector('.filter-form');
-    const filterSection = document.querySelector('.filter-section');
-    const toggleIcon = filterToggle.querySelector('i');
-    const toggleText = filterToggle.querySelector('.toggle-text');
-    const floatingFilterBtn = document.getElementById('floatingFilterBtn');
+    // Make sure markAllPresent is available globally
+    window.markAllPresent = markAllPresent;
+    console.log('📍 markAllPresent function attached to window');
     
-    function updateFilterToggleUI(isCollapsed) {
-        if (isCollapsed) {
-            // Collapsed state
-            filterForm.classList.add('collapsed');
-            filterSection.classList.add('collapsed');
-            filterToggle.classList.add('collapsed');
-            toggleIcon.className = 'fas fa-chevron-down';
-            if (toggleText) toggleText.textContent = 'Tampilkan Menu';
-            
-            // Show floating button
-            floatingFilterBtn.style.display = 'block';
-            floatingFilterBtn.style.animation = 'slideInRight 0.3s ease-out';
-        } else {
-            // Expanded state
-            filterForm.classList.remove('collapsed');
-            filterSection.classList.remove('collapsed');
-            filterToggle.classList.remove('collapsed');
-            toggleIcon.className = 'fas fa-chevron-up';
-            if (toggleText) toggleText.textContent = 'Sembunyikan Menu';
-            
-            // Hide floating button
-            floatingFilterBtn.style.animation = 'slideOutRight 0.3s ease-out';
-            setTimeout(() => {
-                floatingFilterBtn.style.display = 'none';
-            }, 300);
-        }
-    }
+    // Initialize floating button FIRST
+    initializeFloatingButton();
     
-    filterToggle.addEventListener('click', function() {
-        const isCollapsed = filterForm.classList.contains('collapsed');
-        updateFilterToggleUI(!isCollapsed);
-        
-        // Save state to localStorage
-        localStorage.setItem('filter-collapsed', !isCollapsed);
-    });
+    // Initialize other components
+    initializeAttendanceSystem();
+    initializeSearch();
+    initializeFilters();
+    initializeModal();
+    initializeAllEventListeners();
     
-    // Floating filter button click handler
-    floatingFilterBtn?.querySelector('.btn-float-filter').addEventListener('click', function() {
-        updateFilterToggleUI(false);
-        localStorage.setItem('filter-collapsed', false);
-    });
+    // Final setup
+    updateUnsavedCount();
+    updateAttendanceStats();
+    // Apply initial filters without pagination
+    applyFilters();
     
-    // Restore filter state from localStorage
-    const savedFilterState = localStorage.getItem('filter-collapsed');
-    if (savedFilterState === 'true') {
-        updateFilterToggleUI(true);
-    }
-    
-    // Initialize from existing data
-    document.querySelectorAll('.student-card').forEach(card => {
-        const siswaId = card.dataset.siswaId;
-        const activeButton = card.querySelector('.btn-attendance.active');
-        if (activeButton) {
-            attendanceData[siswaId] = {
-                status: activeButton.dataset.status,
-                keterangan: card.querySelector('.student-keterangan').value || ''
-            };
-        }
-    });
-    
-    // Update counters
-    function updateCounters() {
-        const attendedCount = Object.keys(attendanceData).length;
-        const pendingCount = totalStudents - attendedCount;
-        
-        document.getElementById('attendedCount').textContent = attendedCount;
-        document.getElementById('pendingCount').textContent = pendingCount;
-        
-        const fabBadge = document.getElementById('fabBadge');
-        if (attendedCount > 0) {
-            fabBadge.textContent = attendedCount;
-            fabBadge.style.display = 'flex';
-        } else {
-            fabBadge.style.display = 'none';
-        }
-        
-        // Update status indicators
-        document.querySelectorAll('.student-card').forEach(card => {
-            const siswaId = card.dataset.siswaId;
-            const indicator = card.querySelector('.status-indicator');
-            if (attendanceData[siswaId]) {
-                indicator.dataset.status = attendanceData[siswaId].status;
-            } else {
-                indicator.dataset.status = 'none';
-            }
-        });
-    }
-    
-    // Handle attendance button clicks
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('.btn-attendance, .btn-attendance *')) {
-            const button = e.target.closest('.btn-attendance');
-            const card = button.closest('.student-card');
-            const siswaId = card.dataset.siswaId;
-            const status = button.dataset.status;
-            
-            // Remove active state from all buttons in this card
-            card.querySelectorAll('.btn-attendance').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Add active state to clicked button
-            button.classList.add('active');
-            
-            // Update attendance data
-            attendanceData[siswaId] = {
-                status: status,
-                keterangan: card.querySelector('.student-keterangan').value || ''
-            };
-            
-            // Visual feedback
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                button.style.transform = '';
-            }, 150);
-            
-            // Update counters
-            updateCounters();
-            
-            console.log('Updated attendance:', attendanceData);
-        }
-    });
-    
-    // Mark All Present
-    document.getElementById('markAllPresent')?.addEventListener('click', function() {
-        const button = this;
-        const originalHTML = button.innerHTML;
-        
-        button.innerHTML = '<i class="fas fa-spinner spinner"></i> Memproses...';
-        button.disabled = true;
-        
-        document.querySelectorAll('.student-card').forEach((card, index) => {
-            setTimeout(() => {
-                const siswaId = card.dataset.siswaId;
-                const hadirButton = card.querySelector('[data-status="hadir"]');
-                
-                // Reset all buttons
-                card.querySelectorAll('.btn-attendance').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // Activate hadir button
-                hadirButton.classList.add('active');
-                
-                // Update data
-                attendanceData[siswaId] = {
-                    status: 'hadir',
-                    keterangan: ''
-                };
-                
-                // Animation
-                card.style.transform = 'scale(1.02)';
-                setTimeout(() => {
-                    card.style.transform = '';
-                }, 200);
-                
-                // Update counters on last iteration
-                if (index === document.querySelectorAll('.student-card').length - 1) {
-                    updateCounters();
-                    setTimeout(() => {
-                        button.innerHTML = originalHTML;
-                        button.disabled = false;
-                        showNotification('Semua siswa telah ditandai hadir!', 'success');
-                    }, 300);
-                }
-            }, index * 50);
-        });
-    });
-    
-    // Filter functionality with dropdown
-    document.getElementById('filterStatus')?.addEventListener('change', function() {
-        const filter = this.value;
-        
-        document.querySelectorAll('.student-card').forEach(card => {
-            const siswaId = card.dataset.siswaId;
-            const hasAttendance = attendanceData[siswaId];
-            
-            let show = false;
-            
-            if (filter === 'all') {
-                show = true;
-            } else if (filter === 'belum') {
-                show = !hasAttendance;
-            } else {
-                show = hasAttendance && attendanceData[siswaId].status === filter;
-            }
-            
-            if (show) {
-                card.classList.remove('filtered-out');
-            } else {
-                card.classList.add('filtered-out');
-            }
-        });
-    });
-    
-    // Date navigation
-    document.getElementById('prevDay')?.addEventListener('click', function() {
-        const dateInput = document.getElementById('tanggal');
-        const currentDate = new Date(dateInput.value);
-        currentDate.setDate(currentDate.getDate() - 1);
-        dateInput.value = currentDate.toISOString().split('T')[0];
-        dateInput.dispatchEvent(new Event('change'));
-    });
-    
-    document.getElementById('nextDay')?.addEventListener('click', function() {
-        const dateInput = document.getElementById('tanggal');
-        const currentDate = new Date(dateInput.value);
-        currentDate.setDate(currentDate.getDate() + 1);
-        dateInput.value = currentDate.toISOString().split('T')[0];
-        dateInput.dispatchEvent(new Event('change'));
-    });
-    
-    // Auto-submit on change
-    document.getElementById('tanggal')?.addEventListener('change', function() {
-        document.getElementById('filterForm').submit();
-    });
-    
-    document.getElementById('kelas')?.addEventListener('change', function() {
-        document.getElementById('filterForm').submit();
-    });
-    
-    // Save All functionality
-    document.getElementById('saveAll')?.addEventListener('click', function() {
-        const button = this;
-        const originalHTML = button.innerHTML;
-        
-        if (Object.keys(attendanceData).length === 0) {
-            showNotification('Silakan pilih status kehadiran untuk setidaknya satu siswa', 'warning');
-            return;
-        }
-        
-        if (Object.keys(attendanceData).length < totalStudents) {
-            const remaining = totalStudents - Object.keys(attendanceData).length;
-            if (!confirm(`Masih ada ${remaining} siswa yang belum dipilih. Lanjutkan?`)) {
-                return;
-            }
-        }
-        
-        button.innerHTML = '<i class="fas fa-spinner spinner"></i> Menyimpan...';
-        button.disabled = true;
-        
-        // Prepare data
-        const formData = new FormData();
-        formData.append('tanggal', document.getElementById('tanggal').value);
-        formData.append('kelas', document.getElementById('kelas')?.value || '<?= $userKelas ?? '' ?>');
-        
-        const attendanceArray = Object.keys(attendanceData).map(siswaId => ({
-            siswa_id: siswaId,
-            status: attendanceData[siswaId].status,
-            keterangan: attendanceData[siswaId].keterangan || ''
-        }));
-        
-        formData.append('attendance_data', JSON.stringify(attendanceArray));
-        
-        // Submit
-        fetch('<?= base_url('admin/absensi/save_all') ?>', {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('Data absensi berhasil disimpan!', 'success');
-                
-                // Success animation
-                document.querySelectorAll('.student-card').forEach((card, index) => {
-                    setTimeout(() => {
-                        card.style.background = 'linear-gradient(135deg, #ecfdf5, #d1fae5)';
-                        setTimeout(() => {
-                            card.style.background = '';
-                        }, 1000);
-                    }, index * 30);
-                });
-                
-                // Reset data
-                attendanceData = {};
-                updateCounters();
-            } else {
-                showNotification(data.message || 'Gagal menyimpan data', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Gagal menyimpan data: ' + error.message, 'error');
-        })
-        .finally(() => {
-            setTimeout(() => {
-                button.innerHTML = originalHTML;
-                button.disabled = false;
-            }, 1000);
-        });
-    });
-    
-    // Notification system
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            padding: 16px 24px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            transform: translateX(400px);
-            transition: all 0.3s ease;
-            max-width: 400px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        `;
-        
-        const colors = {
-            success: 'linear-gradient(135deg, #10b981, #059669)',
-            error: 'linear-gradient(135deg, #ef4444, #dc2626)',
-            warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            info: 'linear-gradient(135deg, #3b82f6, #2563eb)'
-        };
-        
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-times-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
-        };
-        
-        notification.style.background = colors[type] || colors.info;
-        
-        notification.innerHTML = `
-            <i class="fas ${icons[type] || icons.info}"></i>
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 0;">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-        
-        setTimeout(() => {
-            notification.style.transform = 'translateX(400px)';
-            setTimeout(() => notification.remove(), 300);
-        }, 5000);
-    }
-    
-    // Initialize
-    updateCounters();
-    
-    // Add fade-in animation to cards
-    document.querySelectorAll('.student-card').forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            card.style.transition = 'all 0.6s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 50);
-    });
+    console.log('✅ === ATTENDANCE SYSTEM READY ===');
+    console.log('All systems initialized successfully!');
 });
 
-// Toggle notes function
-function toggleNotes(button) {
-    const notesInput = button.parentElement.querySelector('.notes-input');
-    const isVisible = notesInput.style.display !== 'none';
-    
-    if (isVisible) {
-        notesInput.style.display = 'none';
-        button.innerHTML = '<i class="fas fa-sticky-note"></i> Catatan';
-    } else {
-        notesInput.style.display = 'block';
-        button.innerHTML = '<i class="fas fa-sticky-note"></i> Tutup';
-        notesInput.querySelector('textarea').focus();
+// Simple floating button initialization
+function initializeFloatingButton() {
+    // Remove any duplicate buttons first
+    const allSaveButtons = document.querySelectorAll('#saveAll, .floating-save-btn');
+    if (allSaveButtons.length > 1) {
+        console.log('Found multiple save buttons, removing duplicates...');
+        for (let i = 1; i < allSaveButtons.length; i++) {
+            allSaveButtons[i].remove();
+        }
     }
+    
+    const floatingBtn = document.getElementById('saveAll');
+    if (!floatingBtn) {
+        console.log('Floating button not found');
+        return;
+    }
+    
+    console.log('Floating button initialized');
+    
+    // Just ensure it's clickable - let CSS handle positioning
+    floatingBtn.addEventListener('click', function() {
+        saveAllAttendance();
+    });
+}
+
+// Pagination removed
+
+function getCurrentlyMatchingCards() {
+    const searchTerm = document.getElementById('studentSearch')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+    const cards = Array.from(document.querySelectorAll('.student-card'));
+    const result = [];
+    cards.forEach(card => {
+        const studentName = card.dataset.studentName || '';
+        const studentNisn = card.dataset.studentNisn || '';
+        const currentStatus = getStudentCurrentStatus(card);
+        let match = true;
+        if (searchTerm) {
+            const nameMatch = studentName.includes(searchTerm);
+            const nisnMatch = studentNisn.includes(searchTerm);
+            if (!nameMatch && !nisnMatch) match = false;
+        }
+        if (statusFilter !== 'all' && currentStatus !== statusFilter) match = false;
+        if (match) result.push(card);
+    });
+    return result;
+}
+
+function showAllMatchingCards() {
+    const matching = getCurrentlyMatchingCards();
+    // Show all matching, hide non-matching
+    const allCards = Array.from(document.querySelectorAll('.student-card'));
+    allCards.forEach(card => {
+        if (matching.includes(card)) {
+            card.style.display = 'block';
+            card.classList.remove('filtered-out');
+        } else {
+            card.style.display = 'none';
+            card.classList.add('filtered-out');
+        }
+    });
+    // Hide any pagination info UI
+    const top = document.getElementById('paginationTop');
+    const bottom = document.getElementById('paginationBottom');
+    if (top) top.innerHTML = '';
+    if (bottom) bottom.innerHTML = '';
+}
+
+// Remove range details; show a simpler info if filters active
+function updateSearchResultsForPagination(totalMatching) {
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsText = document.getElementById('searchResultsText');
+    if (!searchResults || !searchResultsText) return;
+    const searchTerm = document.getElementById('studentSearch')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+    if (searchTerm || statusFilter !== 'all') {
+        let message = `Menampilkan ${totalMatching} siswa`;
+        if (searchTerm) message += ` untuk pencarian "${searchTerm}"`;
+        if (statusFilter !== 'all') {
+            const statusNames = { hadir: 'Hadir', sakit: 'Sakit', izin: 'Izin', alpha: 'Alpha', belum: 'Belum Diisi' };
+            message += ` dengan status ${statusNames[statusFilter]}`;
+        }
+        searchResultsText.textContent = message;
+        searchResults.classList.remove('hidden');
+        searchResults.classList.add('search-results-enter');
+    } else {
+        searchResults.classList.add('hidden');
+    }
+}
+
+// Removed pagination controls and navigation
+
+// Initialize attendance system
+function initializeAttendanceSystem() {
+    // Add event listeners for attendance radios
+    document.querySelectorAll('input[type="radio"][name^="status_"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateAttendanceData(this);
+        });
+    });
+    
+    // Add event listeners for keterangan textareas
+    document.querySelectorAll('.student-keterangan').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            updateKeteranganData(this);
+        });
+    });
+}
+
+// Initialize search functionality
+function initializeSearch() {
+    const studentSearch = document.getElementById('studentSearch');
+    if (studentSearch) {
+        studentSearch.addEventListener('input', function() {
+            console.log('Search input changed:', this.value);
+            applyFilters();
+        });
+        console.log('Search functionality initialized');
+    } else {
+        console.warn('Student search element not found');
+    }
+}
+
+// Initialize filters
+function initializeFilters() {
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterStatus) {
+        filterStatus.addEventListener('change', function() {
+            console.log('Filter status changed:', this.value);
+            applyFilters();
+        });
+        console.log('Filter functionality initialized');
+    } else {
+        console.warn('Filter status element not found');
+    }
+    
+    // Mark all present button - Desktop version
+    const markAllBtn = document.getElementById('markAllPresent');
+    if (markAllBtn) {
+        // Clear any existing listeners by cloning the element
+        const newMarkAllBtn = markAllBtn.cloneNode(true);
+        markAllBtn.parentNode.replaceChild(newMarkAllBtn, markAllBtn);
+        
+        // Add fresh event listener
+        newMarkAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎯 Mark All Present button clicked (Desktop)');
+            
+            // Directly execute without confirmation
+            markAllPresent();
+        });
+        console.log('✅ Mark All Present button (Desktop) initialized');
+    } else {
+        console.warn('Mark All Present button not found');
+    }
+    
+    // Mark all present button - Mobile version
+    const markAllBtnMobile = document.getElementById('markAllPresentMobile');
+    if (markAllBtnMobile) {
+        // Clear any existing listeners by cloning the element
+        const newMarkAllBtnMobile = markAllBtnMobile.cloneNode(true);
+        markAllBtnMobile.parentNode.replaceChild(newMarkAllBtnMobile, markAllBtnMobile);
+        
+        // Add fresh event listener
+        newMarkAllBtnMobile.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎯 Mark All Present button clicked (Mobile)');
+            
+            // Directly execute without confirmation
+            markAllPresent();
+        });
+        console.log('✅ Mark All Present Mobile button initialized');
+    }
+}
+
+// Initialize modal functionality
+function initializeModal() {
+    const loadingModal = document.getElementById('loadingModal');
+    if (loadingModal) {
+        loadingModal.show = function() {
+            this.classList.remove('hidden');
+            this.classList.add('loading-modal-enter');
+        };
+        
+        loadingModal.hide = function() {
+            this.classList.add('loading-modal-exit');
+            setTimeout(() => {
+                this.classList.add('hidden');
+                this.classList.remove('loading-modal-enter', 'loading-modal-exit');
+            }, 300);
+        };
+    }
+}
+
+// Update attendance data
+function updateAttendanceData(radio) {
+    const siswaId = radio.name.replace('status_', '');
+    const status = radio.value;
+    const studentCard = radio.closest('.student-card');
+    
+    if (!attendanceData[siswaId]) {
+        attendanceData[siswaId] = {};
+    }
+    
+    // CRITICAL FIX: Include siswa_id in the data structure
+    attendanceData[siswaId].siswa_id = siswaId;
+    attendanceData[siswaId].status = status;
+    attendanceData[siswaId].keterangan = attendanceData[siswaId].keterangan || '';
+    
+    // Update visual feedback
+    if (studentCard) {
+        studentCard.classList.add('attendance-updated');
+        setTimeout(() => {
+            studentCard.classList.remove('attendance-updated');
+        }, 600);
+    }
+    
+    updateUnsavedCount();
+    console.log('Attendance updated for student:', siswaId, 'Status:', status, 'Data:', attendanceData[siswaId]);
+}
+
+// Update keterangan data
+function updateKeteranganData(textarea) {
+    const siswaId = textarea.dataset.siswaId || textarea.getAttribute('data-siswa-id');
+    const keterangan = textarea.value;
+    
+    if (!siswaId) {
+        console.warn('No siswa ID found for textarea:', textarea);
+        return;
+    }
+    
+    if (!attendanceData[siswaId]) {
+        attendanceData[siswaId] = {};
+    }
+    
+    // CRITICAL FIX: Include siswa_id in the data structure
+    attendanceData[siswaId].siswa_id = siswaId;
+    attendanceData[siswaId].keterangan = keterangan;
+    // Preserve existing status if any
+    if (!attendanceData[siswaId].status) {
+        attendanceData[siswaId].status = '';
+    }
+    
+    console.log('Keterangan updated for student:', siswaId, 'Keterangan:', keterangan, 'Data:', attendanceData[siswaId]);
+}
+
+// Apply filters
+function applyFilters() {
+    console.log('Applying filters...');
+    const matching = getCurrentlyMatchingCards();
+    console.log(`Matching cards: ${matching.length}`);
+    showAllMatchingCards();
+    updateSearchResultsForPagination(matching.length);
+}
+
+// Get current status of student
+function getStudentCurrentStatus(card) {
+    const checkedRadio = card.querySelector('input[type="radio"]:checked');
+    if (checkedRadio) {
+        return checkedRadio.value;
+    }
+    return 'belum';
+}
+
+// Update search results display
+function updateSearchResults(searchTerm, statusFilter, visibleCount, totalCount) {
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsText = document.getElementById('searchResultsText');
+    
+    if (!searchResults || !searchResultsText) return;
+    
+    if (searchTerm || statusFilter !== 'all') {
+        let message = `Menampilkan ${visibleCount} dari ${totalCount} siswa`;
+        
+        if (searchTerm) {
+            message += ` untuk pencarian "${searchTerm}"`;
+        }
+        
+        if (statusFilter !== 'all') {
+            const statusNames = {
+                'hadir': 'Hadir',
+                'sakit': 'Sakit', 
+                'izin': 'Izin',
+                'alpha': 'Alpha',
+                'belum': 'Belum Diisi'
+            };
+            message += ` dengan status ${statusNames[statusFilter]}`;
+        }
+        
+    searchResultsText.textContent = message;
+    searchResults.classList.remove('hidden');
+    searchResults.classList.add('search-results-enter');
+    } else {
+        searchResults.classList.add('hidden');
+    }
+}
+
+// Mark all students as present
+function markAllPresent() {
+    console.log('🚀 === MARK ALL PRESENT FUNCTION CALLED ===');
+    console.log('Function starting execution...');
+    
+    // Prevent multiple executions
+    if (window.markAllPresentRunning) {
+        console.log('⚠️ Function already running, preventing duplicate execution');
+        return;
+    }
+    
+    console.log('✅ Setting running flag to true');
+    window.markAllPresentRunning = true;
+    
+    // Get all visible student cards
+    const allCards = document.querySelectorAll('.student-card');
+    const visibleCards = Array.from(allCards).filter(card => {
+        return card.style.display !== 'none' && !card.classList.contains('filtered-out');
+    });
+    
+    console.log(`Total cards: ${allCards.length}, Visible cards: ${visibleCards.length}`);
+    
+    if (visibleCards.length === 0) {
+        showNotification('Tidak ada siswa yang terlihat untuk ditandai hadir!', 'warning');
+        window.markAllPresentRunning = false;
+        return;
+    }
+    
+    let successCount = 0;
+    
+    // Get the active button (desktop or mobile)
+    const btnDesktop = document.getElementById('markAllPresent');
+    const btnMobile = document.getElementById('markAllPresentMobile');
+    const isDesktopView = window.innerWidth >= 768;
+    
+    let activeButton = isDesktopView ? btnDesktop : btnMobile;
+    if (!activeButton) activeButton = btnDesktop || btnMobile; // fallback
+    
+    if (!activeButton) {
+        console.error('No button found');
+        window.markAllPresentRunning = false;
+        return;
+    }
+    
+    // Store original HTML and set enhanced loading state
+    const originalHTML = activeButton.innerHTML;
+    const originalDisabled = activeButton.disabled;
+    const originalClasses = activeButton.className;
+    
+    // Enhanced loading state with better animation
+    activeButton.innerHTML = `
+        <div class="flex items-center justify-center">
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+            <span>Memproses...</span>
+        </div>
+    `;
+    activeButton.disabled = true;
+    activeButton.classList.add('opacity-80', 'cursor-not-allowed');
+    
+    console.log('Button set to loading:', activeButton.id, 'Window width:', window.innerWidth);
+    
+    // Show initial loading notification
+    showNotification('Memproses data siswa...', 'info');
+    
+    try {
+        let processDelay = 0;
+        
+        // Process students with visual feedback and smooth animation
+        visibleCards.forEach((card, index) => {
+            setTimeout(() => {
+                const siswaId = card.getAttribute('data-siswa-id');
+                
+                console.log(`Processing card ${index + 1}/${visibleCards.length}, siswaId: ${siswaId}`);
+                
+                if (!siswaId) {
+                    console.error(`No siswa ID found for card ${index + 1}`);
+                    return;
+                }
+                
+                const hadirRadio = card.querySelector(`input[name="status_${siswaId}"][value="hadir"]`);
+                
+                if (hadirRadio) {
+                    // Add processing animation to card
+                    card.classList.add('animate-pulse', 'bg-green-50', 'border-green-200');
+                    
+                    // Select the radio and update data
+                    hadirRadio.checked = true;
+                    updateAttendanceData(hadirRadio);
+                    successCount++;
+                    
+                    console.log(`✅ Successfully processed student ${index + 1}/${visibleCards.length}: ${siswaId}`);
+                    
+                    // Remove processing animation and add success highlight
+                    setTimeout(() => {
+                        card.classList.remove('animate-pulse', 'bg-green-50', 'border-green-200');
+                        card.classList.add('bg-green-100', 'border-green-300', 'attendance-updated');
+                        
+                        // Remove success highlight after delay
+                        setTimeout(() => {
+                            card.classList.remove('bg-green-100', 'border-green-300', 'attendance-updated');
+                        }, 1000);
+                    }, 200);
+                    
+                } else {
+                    console.error(`No hadir radio found for student: ${siswaId}`);
+                }
+                
+                // If this is the last card, finish the process
+                if (index === visibleCards.length - 1) {
+                    setTimeout(() => {
+                        finishMarkAllProcess(activeButton, originalHTML, originalDisabled, originalClasses, successCount);
+                    }, 300);
+                }
+            }, processDelay);
+            
+            processDelay += 30; // 30ms delay between each card for smooth animation
+        });
+        
+    } catch (error) {
+        console.error('Error during processing:', error);
+        finishMarkAllProcess(activeButton, originalHTML, originalDisabled, originalClasses, successCount);
+    }
+}
+
+// Finish mark all present process with enhanced animation
+function finishMarkAllProcess(activeButton, originalHTML, originalDisabled, originalClasses, successCount) {
+    console.log('Finishing mark all present process...');
+    
+    // Show success state animation on button
+    activeButton.innerHTML = `
+        <div class="flex items-center justify-center">
+            <i class="fas fa-check mr-2 text-green-200"></i>
+            <span>Selesai!</span>
+        </div>
+    `;
+    activeButton.classList.remove('opacity-80', 'cursor-not-allowed');
+    activeButton.classList.add('bg-green-600', 'animate-pulse');
+    
+    // After brief success display, restore to original state
+    setTimeout(() => {
+        activeButton.innerHTML = originalHTML;
+        activeButton.disabled = originalDisabled;
+        activeButton.className = originalClasses;
+        
+        // Show final success notification
+        showNotification(`🎉 ${successCount} siswa berhasil ditandai hadir!`, 'success');
+        updateUnsavedCount();
+        
+        // Reset running flag
+        window.markAllPresentRunning = false;
+        
+        console.log('✅ Mark all present process completed successfully!');
+    }, 1200);
+}
+
+// Update unsaved count
+function updateUnsavedCount() {
+    const count = Object.keys(attendanceData).length;
+    const badge = document.getElementById('unsavedCount');
+    
+    if (badge) {
+        badge.textContent = count;
+        if (count > 0) {
+            badge.classList.remove('hidden');
+            badge.classList.add('pulse');
+        } else {
+            badge.classList.add('hidden');
+            badge.classList.remove('pulse');
+        }
+    }
+}
+
+// Update attendance statistics
+function updateAttendanceStats() {
+    // This function can be expanded to show statistics
+    console.log('Attendance stats updated');
+}
+
+// Save all attendance data
+function saveAllAttendance() {
+    console.log('saveAllAttendance() called');
+    console.log('Current attendanceData object:', attendanceData);
+    console.log('Number of records in attendanceData:', Object.keys(attendanceData).length);
+    
+    if (Object.keys(attendanceData).length === 0) {
+        showNotification('Belum ada data absensi yang diisi!', 'warning');
+        return;
+    }
+    
+    // Enhanced loading state for floating button
+    const saveBtn = document.getElementById('saveAll');
+    if (!saveBtn) return;
+    
+    const iconElement = saveBtn.querySelector('.fas');
+    const originalIcon = iconElement.className;
+    
+    // Change to loading state
+    iconElement.className = 'fas fa-spinner fa-spin';
+    saveBtn.style.pointerEvents = 'none';
+    
+    // Show loading modal
+    const loadingModal = document.getElementById('loadingModal');
+    if (loadingModal && loadingModal.show) {
+        loadingModal.show();
+    }
+    
+    // Prepare data for submission
+    // Convert attendanceData object to array format expected by server
+    const attendanceArray = Object.values(attendanceData).filter(data => 
+        data.siswa_id && data.status
+    );
+    
+    console.log('Filtered attendance array:', attendanceArray);
+    console.log('Array length after filter:', attendanceArray.length);
+    
+    if (attendanceArray.length === 0) {
+        console.warn('No valid attendance data after filtering!');
+        showNotification('Data absensi tidak valid - siswa_id atau status tidak lengkap!', 'error');
+        
+        // Restore button state
+        iconElement.className = originalIcon;
+        saveBtn.style.pointerEvents = 'auto';
+        if (loadingModal && loadingModal.hide) {
+            loadingModal.hide();
+        }
+        return;
+    }
+    
+    const formData = new FormData();
+    const tanggal = document.getElementById('tanggal')?.value || '';
+    const kelas = document.getElementById('kelas')?.value || document.querySelector('input[name="kelas"]')?.value || '';
+    
+    formData.append('tanggal', tanggal);
+    formData.append('kelas', kelas);
+    formData.append('attendance_data', JSON.stringify(attendanceArray));
+    
+    console.log('Form data being sent:');
+    console.log('- tanggal:', tanggal);
+    console.log('- kelas:', kelas);
+    console.log('- attendance_data:', JSON.stringify(attendanceArray));
+    
+    // Get CSRF token from cookie
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+    
+    const csrfToken = getCookie('csrf_cookie_name');
+    if (csrfToken) {
+        formData.append('csrf_test_name', csrfToken);
+    }
+    
+    // Submit data to save_all endpoint
+    fetch('/admin/absensi/save_all', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken || ''
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Data absensi berhasil disimpan! 🎉', 'success');
+            attendanceData = {}; // Clear data
+            updateUnsavedCount();
+        } else {
+            showNotification('Gagal menyimpan data: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Terjadi kesalahan saat menyimpan data', 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        iconElement.className = originalIcon;
+        saveBtn.style.pointerEvents = 'auto';
+        
+        // Hide loading modal
+        if (loadingModal && loadingModal.hide) {
+            loadingModal.hide();
+        }
+    });
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    console.log(`=== SHOWING NOTIFICATION ===`);
+    console.log('Message:', message);
+    console.log('Type:', type);
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm toast-enter ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        type === 'warning' ? 'bg-yellow-500 text-black' :
+        'bg-blue-500 text-white'
+    }`;
+    
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${
+                type === 'success' ? 'fa-check-circle' :
+                type === 'error' ? 'fa-times-circle' :
+                type === 'warning' ? 'fa-exclamation-triangle' :
+                'fa-info-circle'
+            } mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    console.log('Notification element created:', notification);
+    console.log('Appending to document.body...');
+    document.body.appendChild(notification);
+    console.log('Notification appended successfully!');
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        console.log('Removing notification after 3 seconds...');
+        notification.classList.add('toast-exit');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+                console.log('Notification removed from DOM');
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Clear filters function
+function clearFilters() {
+    const studentSearch = document.getElementById('studentSearch');
+    const filterStatus = document.getElementById('filterStatus');
+    
+    if (studentSearch) studentSearch.value = '';
+    if (filterStatus) filterStatus.value = 'all';
+    
+    applyFilters();
+    showNotification('Filter berhasil dikosongkan', 'success');
+}
+
+// Navigate date function
+function navigateDate(days) {
+    const dateInput = document.getElementById('tanggal');
+    if (!dateInput) return;
+    
+    const currentDate = new Date(dateInput.value);
+    currentDate.setDate(currentDate.getDate() + days);
+    
+    const newDate = currentDate.toISOString().split('T')[0];
+    dateInput.value = newDate;
+    
+    reloadPage();
+}
+
+// Reload page function
+function reloadPage() {
+    const form = document.getElementById('filterForm');
+    if (form) {
+        form.submit();
+    }
+}
+
+// Initialize modal functionality - ENHANCED VERSION
+function initializeModal() {
+    const loadingModal = document.getElementById('loadingModal');
+    if (loadingModal) {
+        loadingModal.show = function() {
+            this.classList.remove('hidden');
+            this.classList.add('loading-modal-enter');
+        };
+        
+        loadingModal.hide = function() {
+            this.classList.add('loading-modal-exit');
+            setTimeout(() => {
+                this.classList.add('hidden');
+                this.classList.remove('loading-modal-enter', 'loading-modal-exit');
+            }, 300);
+        };
+    }
+}
+
+// Initialize all event listeners - ENHANCED VERSION
+function initializeAllEventListeners() {
+    console.log('Initializing all event listeners...');
+    
+    // Save button - ONLY handle save functionality here
+    const saveBtn = document.getElementById('saveAll');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Save button clicked!');
+            saveAllAttendance();
+        });
+        console.log('Save button event listener attached');
+    }
+    
+    // NOTE: Mark All Present buttons are handled in initializeFilters()
+    // Removed duplicate event listeners to prevent conflicts
+    
+    // Date navigation
+    const prevDayBtn = document.getElementById('prevDay');
+    if (prevDayBtn) {
+        prevDayBtn.addEventListener('click', function() {
+            navigateDate(-1);
+        });
+    }
+    
+    const nextDayBtn = document.getElementById('nextDay');
+    if (nextDayBtn) {
+        nextDayBtn.addEventListener('click', function() {
+            navigateDate(1);
+        });
+    }
+    
+    // Form change listeners
+    const dateInput = document.getElementById('tanggal');
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            reloadPage();
+        });
+    }
+    
+    const kelasSelect = document.getElementById('kelas');
+    if (kelasSelect) {
+        kelasSelect.addEventListener('change', function() {
+            reloadPage();
+        });
+    }
+    
+    // NOTE: Search and filter listeners are handled in their respective init functions
+    // Removed duplicate event listeners to prevent conflicts
+    
+    // Attendance radio button listeners
+    document.querySelectorAll('input[type="radio"][name^="status_"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateAttendanceData(this);
+        });
+    });
+    
+    // Keterangan textarea listeners  
+    document.querySelectorAll('.student-keterangan').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            updateKeteranganData(this);
+        });
+    });
+    
+    console.log('All event listeners initialized successfully');
 }
 </script>
 
 <?= $this->endSection() ?>
-

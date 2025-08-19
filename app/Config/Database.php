@@ -32,7 +32,7 @@ class Database extends Config
         'database'     => '',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
-        'pConnect'     => false,
+        'pConnect'     => true, // Enable persistent connections for better performance
         'DBDebug'      => true,
         'charset'      => 'utf8mb4',
         'DBCollat'     => 'utf8mb4_general_ci',
@@ -49,6 +49,10 @@ class Database extends Config
             'datetime' => 'Y-m-d H:i:s',
             'time'     => 'H:i:s',
         ],
+        // Additional optimization settings
+        'save_queries' => ENVIRONMENT !== 'production', // Only save queries in non-production
+        'maxLifetime'  => 0, // Connection max lifetime (0 = no limit)
+        'maxIdleTime'  => 600, // Max idle time before closing (10 minutes)
     ];
 
     //    /**

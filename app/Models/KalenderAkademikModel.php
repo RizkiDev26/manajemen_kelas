@@ -61,37 +61,53 @@ class KalenderAkademikModel extends Model
     // Callbacks
     protected $allowCallbacks = true;
     protected $beforeInsert   = [];
-    protected $afterInsert    = [];
+    protected $afterInsert    = ['clearCache'];
     protected $beforeUpdate   = [];
-    protected $afterUpdate    = [];
+    protected $afterUpdate    = ['clearCache'];
     protected $beforeFind     = [];
     protected $afterFind      = [];
     protected $beforeDelete   = [];
-    protected $afterDelete    = [];
+    protected $afterDelete    = ['clearCache'];
 
-    /**
-     * Get calendar events for a specific month/year
-     */
-    public function getCalendarEvents($year, $month)
+    protected $cacheHelper;
+
+    public function __construct()
     {
-        $startDate = "$year-$month-01";
-        $endDate = date('Y-m-t', strtotime($startDate));
-        
-        return $this->where('tanggal_mulai <=', $endDate)
-                   ->where('tanggal_selesai >=', $startDate)
-                   ->orderBy('tanggal_mulai', 'ASC')
-                   ->findAll();
+        parent::__construct();
+        $this->cacheHelper = new \App\Libraries\CacheHelper();
     }
 
     /**
-     * Get events for a specific date
+     * Get calendar events for a specific month/year with caching
+     */
+    public function getCalendarEvents($year, $month)
+    {
+        $cacheKey = "calendar_events_{$year}_{$month}";
+        
+        return $this->cacheHelper->remember($cacheKey, function() use ($year, $month) {
+            $startDate = "$year-$month-01";
+            $endDate = date('Y-m-t', strtotime($startDate));
+            
+            return $this->where('tanggal_mulai <=', $endDate)
+                       ->where('tanggal_selesai >=', $startDate)
+                       ->orderBy('tanggal_mulai', 'ASC')
+                       ->findAll();
+        }, \App\Libraries\CacheHelper::KALENDER_AKADEMIK_TTL);
+    }
+
+    /**
+     * Get events for a specific date with caching
      */
     public function getEventsByDate($date)
     {
-        return $this->where('tanggal_mulai <=', $date)
-                   ->where('tanggal_selesai >=', $date)
-                   ->orderBy('tanggal_mulai', 'ASC')
-                   ->findAll();
+        $cacheKey = "calendar_date_" . str_replace('-', '_', $date);
+        
+        return $this->cacheHelper->remember($cacheKey, function() use ($date) {
+            return $this->where('tanggal_mulai <=', $date)
+                       ->where('tanggal_selesai >=', $date)
+                       ->orderBy('tanggal_mulai', 'ASC')
+                       ->findAll();
+        }, \App\Libraries\CacheHelper::KALENDER_AKADEMIK_TTL);
     }
 
     /**
@@ -172,7 +188,24 @@ class KalenderAkademikModel extends Model
             return false;
         }
 
+        // Clear cache after successful operation
+        if ($result) {
+            $this->cacheHelper->invalidateKalenderAkademik();
+        }
+
         return $result;
+    }
+
+    /**
+     * Callback to clear cache after database operations
+     * 
+     * @param array $data
+     * @return array
+     */
+    protected function clearCache(array $data)
+    {
+        $this->cacheHelper->invalidateKalenderAkademik();
+        return $data;
     }
 
     /**

@@ -48,9 +48,6 @@ if (getcwd() . DIRECTORY_SEPARATOR !== FCPATH) {
 
 // LOAD OUR PATHS CONFIG FILE
 // This is the line that might need to be changed, depending on your folder structure.
-<<<<<<< HEAD
-require FCPATH . '../app/Config/Paths.php';
-=======
 // Resolve the expected paths file and fail with a clear message if it's missing.
 $expectedPaths = FCPATH . '../app/Config/Paths.php';
 $resolvedPaths = realpath($expectedPaths);
@@ -66,7 +63,6 @@ if ($resolvedPaths === false || ! is_file($resolvedPaths)) {
 }
 
 require $resolvedPaths;
->>>>>>> a53e094 (Fix: use existing login view; move rewrite to public/.htaccess; add .env.example)
 // ^^^ Change this line if you move your application folder
 
 $paths = new Paths();

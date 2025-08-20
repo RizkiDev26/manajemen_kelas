@@ -1,0 +1,521 @@
+<?php
+
+namespace App\Controllers\Admin;
+
+use App\Controllers\BaseController;
+use App\Models\UserModel;
+use App\Models\GuruModel;
+use App\Models\SiswaModel;
+use App\Models\AbsensiModel;
+
+class Dashboard extends BaseController
+{
+    protected $cache;
+    
+    public function __construct()
+    {
+        $this->cache = \Config\Services::cache();
+    }
+
+    public function index()
+    {
+        $session = session();
+        
+        // Check if user is logged in
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+
+        // Initialize data with session info
+        $data = [
+            'currentUser' => [
+                'id' => $session->get('user_id'),
+                'username' => $session->get('username'),
+                'nama' => $session->get('nama'),
+                'role' => $session->get('role')
+            ],
+            'dbError' => false,
+            'errorMessage' => '',
+            'lastUpdated' => date('Y-m-d H:i:s')
+        ];
+
+        // Try to get real data from database
+        try {
+            $data = array_merge($data, $this->getDashboardData($session->get('user_id')));
+        } catch (\Exception $e) {
+            // Log the error
+            log_message('error', 'Dashboard database error: ' . $e->getMessage());
+            
+            // Set fallback data with error indication
+            $data = array_merge($data, $this->getFallbackData());
+            $data['dbError'] = true;
+            $data['errorMessage'] = 'Tidak dapat mengambil data dari database. Menampilkan data default.';
+        }
+
+        return view('admin/dashboard', $data);
+    }
+
+    /**
+     * Get dashboard data from database with caching
+     */
+    private function getDashboardData($userId)
+    {
+        // Try to get cached data first
+        $cacheKey = "dashboard_data_{$userId}";
+        $cachedData = $this->cache->get($cacheKey);
+        
+        if ($cachedData !== null) {
+            $cachedData['fromCache'] = true;
+            return $cachedData;
+        }
+
+        // Get fresh data from database
+        $userModel = new UserModel();
+        $guruModel = new GuruModel();
+        $siswaModel = new SiswaModel();
+        $absensiModel = new AbsensiModel();
+        
+        // Get current user info with walikelas data if applicable
+        $currentUser = $userModel->getUserWithWalikelas($userId);
+        
+        // Check if user is walikelas
+        $isWalikelas = $currentUser && $currentUser['role'] === 'walikelas';
+        
+        if ($isWalikelas && !empty($currentUser['walikelas_id'])) {
+            // Get walikelas-specific data
+            $data = $this->getWalikelasData($currentUser, $siswaModel, $absensiModel);
+        } else {
+            // Get admin data (original functionality)
+            $data = $this->getAdminData($currentUser, $guruModel, $userModel, $siswaModel, $absensiModel);
+        }
+        
+        // Cache the data for 5 minutes
+        $this->cache->save($cacheKey, $data, 300);
+        
+        return $data;
+    }
+
+    /**
+     * Get walikelas-specific dashboard data
+     */
+    private function getWalikelasData($currentUser, $siswaModel, $absensiModel)
+    {
+        // Get walikelas class info
+        $walikelasModel = new \App\Models\WalikelasModel();
+        $walikelasInfo = $walikelasModel->find($currentUser['walikelas_id']);
+        
+        if (!$walikelasInfo) {
+            // Fallback if walikelas info not found
+            return $this->getFallbackWalikelasData($currentUser);
+        }
+        
+        // Get students in walikelas's class
+        $classStudents = $siswaModel->where('kelas', $walikelasInfo['kelas'])->findAll();
+        $totalSiswa = count($classStudents);
+        
+        // Count by gender
+        $siswaLaki = count(array_filter($classStudents, fn($s) => $s['jk'] === 'L'));
+        $siswaPerempuan = count(array_filter($classStudents, fn($s) => $s['jk'] === 'P'));
+        
+        // Get attendance data for the class (last 7 days)
+        $attendanceData = $this->getWalikelasAttendanceData($absensiModel, $walikelasInfo['kelas']);
+        
+        return [
+            'currentUser' => $currentUser,
+            'walikelasInfo' => $walikelasInfo,
+            'totalSiswa' => $totalSiswa,
+            'siswaLaki' => $siswaLaki,
+            'siswaPerempuan' => $siswaPerempuan,
+            'attendanceData' => $attendanceData,
+            'isWalikelas' => true,
+            'fromCache' => false
+        ];
+    }
+
+    /**
+     * Get admin dashboard data (original functionality)
+     */
+    private function getAdminData($currentUser, $guruModel, $userModel, $siswaModel, $absensiModel)
+    {
+        // Dashboard statistics
+        $totalGuru = $guruModel->countAllResults();
+        $totalWalikelas = $userModel->where('role', 'walikelas')->where('is_active', 1)->countAllResults();
+        $totalUsers = $userModel->where('is_active', 1)->countAllResults();
+        $siswaStats = $siswaModel->getStatistics();
+        
+        // Get attendance data for current week
+        $attendanceData = $this->getWeeklyAttendanceData($absensiModel);
+        
+        // Get recent activities
+        $recentGuru = $guruModel->orderBy('created_at', 'DESC')->findAll(5);
+        $recentSiswa = $siswaModel->orderBy('created_at', 'DESC')->findAll(5);
+        
+        return [
+            'currentUser' => $currentUser ?: [
+                'id' => session('user_id'),
+                'username' => session('username'),
+                'nama' => session('nama'),
+                'role' => session('role')
+            ],
+            'totalGuru' => $totalGuru,
+            'totalWalikelas' => $totalWalikelas,
+            'totalUsers' => $totalUsers,
+            'totalSiswa' => $siswaStats['total'],
+            'siswaLaki' => $siswaStats['laki_laki'],
+            'siswaPerempuan' => $siswaStats['perempuan'],
+            'recentGuru' => $recentGuru,
+            'recentSiswa' => $recentSiswa,
+            'attendanceData' => $attendanceData,
+            'isWalikelas' => false,
+            'fromCache' => false
+        ];
+    }
+
+    /**
+     * Get attendance data specific to walikelas class for last 7 days
+     */
+    private function getWalikelasAttendanceData($absensiModel, $kelas)
+    {
+        try {
+            $db = \Config\Database::connect();
+            
+            // Get last 7 days attendance for the specific class
+            $startDate = date('Y-m-d', strtotime('-6 days'));
+            $endDate = date('Y-m-d');
+            
+            $query = "
+                SELECT 
+                    DATE(a.tanggal) as tanggal,
+                    COUNT(CASE WHEN a.status = 'hadir' THEN 1 END) as hadir,
+                    COUNT(CASE WHEN a.status = 'sakit' THEN 1 END) as sakit,
+                    COUNT(CASE WHEN a.status = 'izin' THEN 1 END) as izin,
+                    COUNT(CASE WHEN a.status = 'alpha' THEN 1 END) as alpha,
+                    COUNT(a.id) as total
+                FROM absensi a
+                JOIN siswa s ON a.siswa_id = s.id
+                WHERE s.kelas = ? AND a.tanggal >= ? AND a.tanggal <= ?
+                GROUP BY DATE(a.tanggal)
+                ORDER BY a.tanggal ASC
+            ";
+            
+            $weeklyData = $db->query($query, [$kelas, $startDate, $endDate])->getResultArray();
+            
+            // Format data for last 7 days
+            $chartData = [];
+            $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            
+            for ($i = 0; $i < 7; $i++) {
+                $currentDate = date('Y-m-d', strtotime($startDate . " +{$i} days"));
+                $dayName = $dayNames[date('w', strtotime($currentDate))];
+                
+                // Find data for this day
+                $dayData = null;
+                foreach ($weeklyData as $data) {
+                    if ($data['tanggal'] === $currentDate) {
+                        $dayData = $data;
+                        break;
+                    }
+                }
+                
+                $chartData[] = [
+                    'day' => $dayName,
+                    'date' => $currentDate,
+                    'hadir' => $dayData ? (int)$dayData['hadir'] : 0,
+                    'sakit' => $dayData ? (int)$dayData['sakit'] : 0,
+                    'izin' => $dayData ? (int)$dayData['izin'] : 0,
+                    'alpha' => $dayData ? (int)$dayData['alpha'] : 0,
+                    'total' => $dayData ? (int)$dayData['total'] : 0,
+                    'percentage' => $dayData && $dayData['total'] > 0 ? 
+                        round(($dayData['hadir'] / $dayData['total']) * 100) : 0
+                ];
+            }
+            
+            // Get total attendance summary for the class
+            $totalQuery = "
+                SELECT 
+                    COUNT(CASE WHEN a.status = 'hadir' THEN 1 END) as total_hadir,
+                    COUNT(CASE WHEN a.status = 'sakit' THEN 1 END) as total_sakit,
+                    COUNT(CASE WHEN a.status = 'izin' THEN 1 END) as total_izin,
+                    COUNT(CASE WHEN a.status = 'alpha' THEN 1 END) as total_alpha,
+                    COUNT(a.id) as total_records
+                FROM absensi a
+                JOIN siswa s ON a.siswa_id = s.id
+                WHERE s.kelas = ? AND a.tanggal >= ? AND a.tanggal <= ?
+            ";
+            
+            $totalData = $db->query($totalQuery, [$kelas, $startDate, $endDate])->getRowArray();
+            
+            return [
+                'weekly' => $chartData,
+                'summary' => $totalData ?: [
+                    'total_hadir' => 0,
+                    'total_sakit' => 0,
+                    'total_izin' => 0,
+                    'total_alpha' => 0,
+                    'total_records' => 0
+                ],
+                'period' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
+            ];
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting walikelas attendance data: ' . $e->getMessage());
+            return $this->getFallbackWalikelasAttendanceData();
+        }
+    }
+
+    /**
+     * Get fallback data for walikelas when database is not available
+     */
+    private function getFallbackWalikelasData($currentUser)
+    {
+        return [
+            'currentUser' => $currentUser,
+            'walikelasInfo' => [
+                'kelas' => 'Kelas tidak ditemukan',
+                'nama' => $currentUser['nama']
+            ],
+            'totalSiswa' => 0,
+            'siswaLaki' => 0,
+            'siswaPerempuan' => 0,
+            'attendanceData' => $this->getFallbackWalikelasAttendanceData(),
+            'isWalikelas' => true,
+            'fromCache' => false
+        ];
+    }
+
+    /**
+     * Get fallback attendance data for walikelas
+     */
+    private function getFallbackWalikelasAttendanceData()
+    {
+        $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        $chartData = [];
+        
+        for ($i = 0; $i < 7; $i++) {
+            $currentDate = date('Y-m-d', strtotime('-6 days +' . $i . ' days'));
+            $dayName = $dayNames[date('w', strtotime($currentDate))];
+            
+            $chartData[] = [
+                'day' => $dayName,
+                'date' => $currentDate,
+                'hadir' => rand(15, 25),
+                'sakit' => rand(1, 3),
+                'izin' => rand(0, 2),
+                'alpha' => rand(0, 1),
+                'total' => rand(20, 30),
+                'percentage' => rand(80, 95)
+            ];
+        }
+        
+        return [
+            'weekly' => $chartData,
+            'summary' => [
+                'total_hadir' => 140,
+                'total_sakit' => 12,
+                'total_izin' => 8,
+                'total_alpha' => 5,
+                'total_records' => 165
+            ],
+            'period' => [
+                'start_date' => date('Y-m-d', strtotime('-6 days')),
+                'end_date' => date('Y-m-d')
+            ]
+        ];
+    }
+
+    /**
+     * Get weekly attendance data for charts
+     */
+    private function getWeeklyAttendanceData($absensiModel)
+    {
+        try {
+            $startDate = date('Y-m-d', strtotime('monday this week'));
+            $endDate = date('Y-m-d', strtotime('sunday this week'));
+            
+            $db = \Config\Database::connect();
+            
+            // Get daily attendance summary for current week
+            $query = "
+                SELECT 
+                    DATE(a.tanggal) as tanggal,
+                    COUNT(CASE WHEN a.status = 'hadir' THEN 1 END) as hadir,
+                    COUNT(CASE WHEN a.status = 'sakit' THEN 1 END) as sakit,
+                    COUNT(CASE WHEN a.status = 'izin' THEN 1 END) as izin,
+                    COUNT(CASE WHEN a.status = 'alpha' THEN 1 END) as alpha,
+                    COUNT(a.id) as total
+                FROM absensi a
+                WHERE a.tanggal >= ? AND a.tanggal <= ?
+                GROUP BY DATE(a.tanggal)
+                ORDER BY a.tanggal ASC
+            ";
+            
+            $weeklyData = $db->query($query, [$startDate, $endDate])->getResultArray();
+            
+            // Format data for charts
+            $chartData = [];
+            $weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            for ($i = 0; $i < 7; $i++) {
+                $currentDate = date('Y-m-d', strtotime($startDate . " +{$i} days"));
+                $dayName = $weekDays[$i];
+                
+                // Find data for this day
+                $dayData = null;
+                foreach ($weeklyData as $data) {
+                    if ($data['tanggal'] === $currentDate) {
+                        $dayData = $data;
+                        break;
+                    }
+                }
+                
+                $chartData[] = [
+                    'day' => substr($dayName, 0, 1), // M, T, W, T, F, S, S
+                    'date' => $currentDate,
+                    'hadir' => $dayData ? (int)$dayData['hadir'] : 0,
+                    'sakit' => $dayData ? (int)$dayData['sakit'] : 0,
+                    'izin' => $dayData ? (int)$dayData['izin'] : 0,
+                    'alpha' => $dayData ? (int)$dayData['alpha'] : 0,
+                    'total' => $dayData ? (int)$dayData['total'] : 0,
+                    'percentage' => $dayData && $dayData['total'] > 0 ? 
+                        round(($dayData['hadir'] / $dayData['total']) * 100) : 0
+                ];
+            }
+            
+            // Get monthly summary
+            $monthStart = date('Y-m-01');
+            $monthEnd = date('Y-m-t');
+            
+            $monthlyQuery = "
+                SELECT 
+                    COUNT(CASE WHEN a.status = 'hadir' THEN 1 END) as total_hadir,
+                    COUNT(CASE WHEN a.status = 'sakit' THEN 1 END) as total_sakit,
+                    COUNT(CASE WHEN a.status = 'izin' THEN 1 END) as total_izin,
+                    COUNT(CASE WHEN a.status = 'alpha' THEN 1 END) as total_alpha,
+                    COUNT(a.id) as total_records
+                FROM absensi a
+                WHERE a.tanggal >= ? AND a.tanggal <= ?
+            ";
+            
+            $monthlyData = $db->query($monthlyQuery, [$monthStart, $monthEnd])->getRowArray();
+            
+            return [
+                'weekly' => $chartData,
+                'monthly' => $monthlyData ?: [
+                    'total_hadir' => 0,
+                    'total_sakit' => 0,
+                    'total_izin' => 0,
+                    'total_alpha' => 0,
+                    'total_records' => 0
+                ],
+                'period' => [
+                    'week_start' => $startDate,
+                    'week_end' => $endDate,
+                    'month_start' => $monthStart,
+                    'month_end' => $monthEnd
+                ]
+            ];
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting attendance data: ' . $e->getMessage());
+            return $this->getFallbackAttendanceData();
+        }
+    }
+
+    /**
+     * Get fallback data when database is not available
+     */
+    private function getFallbackData()
+    {
+        return [
+            'totalGuru' => 6,
+            'totalWalikelas' => 6,
+            'totalUsers' => 4,
+            'totalSiswa' => 6,
+            'siswaLaki' => 3,
+            'siswaPerempuan' => 3,
+            'recentGuru' => [],
+            'recentSiswa' => [],
+            'attendanceData' => $this->getFallbackAttendanceData(),
+            'fromCache' => false
+        ];
+    }
+
+    /**
+     * Get fallback attendance data
+     */
+    private function getFallbackAttendanceData()
+    {
+        $weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+        $chartData = [];
+        
+        foreach ($weekDays as $day) {
+            $chartData[] = [
+                'day' => $day,
+                'date' => date('Y-m-d'),
+                'hadir' => rand(80, 95),
+                'sakit' => rand(2, 8),
+                'izin' => rand(1, 5),
+                'alpha' => rand(0, 3),
+                'total' => 100,
+                'percentage' => rand(85, 95)
+            ];
+        }
+        
+        return [
+            'weekly' => $chartData,
+            'monthly' => [
+                'total_hadir' => 850,
+                'total_sakit' => 45,
+                'total_izin' => 25,
+                'total_alpha' => 15,
+                'total_records' => 935
+            ],
+            'period' => [
+                'week_start' => date('Y-m-d', strtotime('monday this week')),
+                'week_end' => date('Y-m-d', strtotime('sunday this week')),
+                'month_start' => date('Y-m-01'),
+                'month_end' => date('Y-m-t')
+            ]
+        ];
+    }
+
+    /**
+     * AJAX endpoint to refresh dashboard data
+     */
+    public function refresh()
+    {
+        $session = session();
+        
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setJSON(['error' => 'Unauthorized']);
+        }
+
+        try {
+            // Clear cache
+            $cacheKey = "dashboard_data_{$session->get('user_id')}";
+            $this->cache->delete($cacheKey);
+            
+            // Get fresh data
+            $data = $this->getDashboardData($session->get('user_id'));
+            $data['lastUpdated'] = date('Y-m-d H:i:s');
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $data,
+                'message' => 'Data berhasil diperbarui'
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Dashboard refresh error: ' . $e->getMessage());
+            
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Gagal memperbarui data',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+}

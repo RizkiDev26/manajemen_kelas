@@ -8,8 +8,8 @@ class Login extends BaseController
 {
     public function index()
     {
-    helper(['form']);
-    return view('login');
+        helper(['form']);
+        return view('login');
     }
 
     public function authenticate()

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Disable directory browsing
 Options -Indexes
 
@@ -47,3 +48,26 @@ Options -Indexes
 # Disable server signature start
 ServerSignature Off
 # Disable server signature end
+=======
+# CodeIgniter recommended public/.htaccess
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # If the request is for an existing file or directory, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Otherwise redirect to front controller
+    RewriteRule ^(.*)$ index.php/$1 [L,QSA]
+
+    # Pass Authorization header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    ErrorDocument 404 index.php
+</IfModule>
+>>>>>>> a53e094 (Fix: use existing login view; move rewrite to public/.htaccess; add .env.example)

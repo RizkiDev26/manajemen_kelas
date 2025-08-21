@@ -2101,245 +2101,25 @@ function habitApp() {
     saveData() {
       const storageKey = `siswa-habits-7-kebiasaan-${this.selectedDate}`;
       localStorage.setItem(storageKey, JSON.stringify(this.habits));
-      console.log(`✅ Data saved locally for ${this.selectedDate}`);
-      
-      // Also save to server if it's today or recent date
-      if (this.isToday() || this.isRecentDate()) {
-        this.saveToServer();
-      }
-    },
-    
-    // Check if date is recent (within last 7 days)
-    isRecentDate() {
-      const selectedDate = new Date(this.selectedDate);
-      const today = new Date();
-      const diffTime = today - selectedDate;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays >= 0 && diffDays <= 7;
-    },
-    
-    // Save data to server
-    async saveToServer() {
-      try {
-        const payload = this.prepareServerPayload();
-        
-        const response = await fetch('<?= base_url('siswa/logs') ?>', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({
-            date: this.selectedDate,
-            habits: payload
-          })
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('✅ Data saved to server:', result.message);
-        } else {
-          console.log('❌ Failed to save to server:', response.statusText);
-        }
-      } catch (error) {
-        console.log('❌ Error saving to server:', error);
-      }
-    },
-    
-    // Prepare data payload for server
-    prepareServerPayload() {
-      const payload = {};
-      
-      // 1. Wake Up (Bangun Pagi)
-      if (this.habits.wakeUp.completed) {
-        payload[1] = {
-          bool: true,
-          time: this.habits.wakeUp.time || null
-        };
-      }
-      
-      // 2. Worship (Beribadah)
-      if (this.habits.worship.completed) {
-        payload[2] = {
-          bool: true,
-          notes: this.habits.worship.activities.join(', ') || null
-        };
-      }
-      
-      // 3. Exercise (Olahraga)
-      if (this.habits.exercise.completed) {
-        payload[3] = {
-          bool: true,
-          number: this.habits.exercise.duration ? parseFloat(this.habits.exercise.duration) : null,
-          notes: this.habits.exercise.activities ? this.habits.exercise.activities.join(', ') : null
-        };
-      }
-      
-      // 4. Healthy Food (Makan Sehat)
-      if (this.habits.healthyFood.completed) {
-        payload[4] = {
-          bool: true,
-          notes: this.habits.healthyFood.items.join(', ') || null
-        };
-      }
-      
-      // 5. Learning (Gemar Belajar)
-      if (this.habits.learning.completed) {
-        payload[5] = {
-          bool: true,
-          notes: this.habits.learning.items.join(', ') || null
-        };
-      }
-      
-      // 6. Social (Bermasyarakat)
-      if (this.habits.social.completed) {
-        payload[6] = {
-          bool: true,
-          notes: this.habits.social.items.join(', ') || null
-        };
-      }
-      
-      // 7. Sleep (Tidur Cepat)
-      if (this.habits.sleep.completed) {
-        payload[7] = {
-          bool: true,
-          time: this.habits.sleep.time || null
-        };
-      }
-      
-      return payload;
+      console.log(`✅ Data saved for ${this.selectedDate}`);
     },
     
     loadDataForDate() {
-      // First try to load from server
-      this.loadFromServer().then(() => {
-        // If no server data, try localStorage as fallback
-        if (!this.hasAnyCompletedHabits()) {
-          this.loadFromLocalStorage();
-        }
-      }).catch(() => {
-        // If server fails, use localStorage
-        this.loadFromLocalStorage();
-      });
-    },
-    
-    // Load data from server
-    async loadFromServer() {
-      try {
-        const response = await fetch(`<?= base_url('siswa/summary') ?>?date=${this.selectedDate}`);
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.data && result.data.length > 0) {
-            this.mapServerDataToHabits(result.data);
-            console.log(`📊 Loaded data from server for ${this.selectedDate}`);
-            return;
-          }
-        }
-      } catch (error) {
-        console.log('❌ Error loading from server:', error);
-      }
-      
-      // If no server data, reset habits
-      this.resetHabits();
-    },
-    
-    // Load data from localStorage (fallback)
-    loadFromLocalStorage() {
       const storageKey = `siswa-habits-7-kebiasaan-${this.selectedDate}`;
       const saved = localStorage.getItem(storageKey);
       
       if (saved) {
         try {
           this.habits = JSON.parse(saved);
-          console.log(`📊 Loaded data from localStorage for ${this.selectedDate}`);
+          console.log(`📊 Loaded data for ${this.selectedDate}:`, this.habits);
         } catch (e) {
-          console.log('❌ Error loading localStorage data:', e);
+          console.log('❌ Error loading data:', e);
           this.resetHabits();
         }
       } else {
-        console.log(`📅 No localStorage data found for ${this.selectedDate}`);
+        console.log(`📅 No data found for ${this.selectedDate}, starting fresh`);
+        this.resetHabits();
       }
-    },
-    
-    // Map server data to habits object
-    mapServerDataToHabits(serverData) {
-      this.resetHabits();
-      
-      serverData.forEach(item => {
-        switch (item.habit_id) {
-          case 1: // Wake Up
-            if (item.value_bool) {
-              this.habits.wakeUp.completed = true;
-              this.habits.wakeUp.time = item.value_time || '';
-            }
-            break;
-            
-          case 2: // Worship
-            if (item.value_bool) {
-              this.habits.worship.completed = true;
-              if (item.notes) {
-                this.habits.worship.activities = item.notes.split(', ').filter(a => a.trim());
-              }
-            }
-            break;
-            
-          case 3: // Exercise
-            if (item.value_bool) {
-              this.habits.exercise.completed = true;
-              this.habits.exercise.duration = item.value_number ? item.value_number.toString() : '';
-              if (item.notes) {
-                this.habits.exercise.activities = item.notes.split(', ').filter(a => a.trim());
-              }
-            }
-            break;
-            
-          case 4: // Healthy Food
-            if (item.value_bool) {
-              this.habits.healthyFood.completed = true;
-              if (item.notes) {
-                this.habits.healthyFood.items = item.notes.split(', ').filter(a => a.trim());
-              }
-            }
-            break;
-            
-          case 5: // Learning
-            if (item.value_bool) {
-              this.habits.learning.completed = true;
-              if (item.notes) {
-                this.habits.learning.items = item.notes.split(', ').filter(a => a.trim());
-              }
-            }
-            break;
-            
-          case 6: // Social
-            if (item.value_bool) {
-              this.habits.social.completed = true;
-              if (item.notes) {
-                this.habits.social.items = item.notes.split(', ').filter(a => a.trim());
-              }
-            }
-            break;
-            
-          case 7: // Sleep
-            if (item.value_bool) {
-              this.habits.sleep.completed = true;
-              this.habits.sleep.time = item.value_time || '';
-            }
-            break;
-        }
-      });
-    },
-    
-    // Check if any habits are completed
-    hasAnyCompletedHabits() {
-      return this.habits.wakeUp.completed || 
-             this.habits.worship.completed || 
-             this.habits.exercise.completed || 
-             this.habits.healthyFood.completed || 
-             this.habits.learning.completed || 
-             this.habits.social.completed || 
-             this.habits.sleep.completed;
     },
     
     resetHabits() {

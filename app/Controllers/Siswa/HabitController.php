@@ -113,22 +113,39 @@ class HabitController extends BaseController
                 'value_bool' => isset($vals['bool']) ? (int)!!$vals['bool'] : null,
                 'value_time' => $vals['time'] ?? null,
                 'value_number' => isset($vals['number']) && $vals['number'] !== '' ? (float)$vals['number'] : null,
-                // notes can store JSON (e.g., prayers) or plain text
                 'notes'      => null,
+                'value_json' => null,
                 'created_by' => $createdBy,
             ];
 
-            // Serialize notes/prayers if provided
-            $notesPayload = [];
+            // Handle complex data (prayers, activities, etc.)
+            $complexData = [];
+            
+            // Handle prayer times for worship habit
             if (isset($vals['prayers']) && is_array($vals['prayers'])) {
-                $notesPayload['prayers'] = $vals['prayers'];
+                $complexData['prayers'] = $vals['prayers'];
             }
+            
+            // Handle activities list (exercise, learning, social, etc.)
+            if (isset($vals['activities']) && is_array($vals['activities'])) {
+                $complexData['activities'] = $vals['activities'];
+            }
+            
+            // Handle food items for healthy food habit
+            if (isset($vals['items']) && is_array($vals['items'])) {
+                $complexData['items'] = $vals['items'];
+            }
+            
+            // Store complex data as JSON
+            if (!empty($complexData)) {
+                $data['value_json'] = json_encode($complexData, JSON_UNESCAPED_UNICODE);
+            }
+
+            // Handle simple notes
             if (isset($vals['notes']) && is_string($vals['notes']) && $vals['notes'] !== '') {
-                $notesPayload['note'] = $vals['notes'];
+                $data['notes'] = $vals['notes'];
             }
-            if (!empty($notesPayload)) {
-                $data['notes'] = json_encode($notesPayload, JSON_UNESCAPED_UNICODE);
-            }
+
             $this->habitLogModel->upsertLog($data);
         }
 
@@ -154,6 +171,14 @@ class HabitController extends BaseController
             return $this->response->setStatusCode(400)->setJSON(['message' => 'Sesi siswa tidak ditemukan']);
         }
         $rows = $this->habitLogModel->getDailySummary($studentId, $date);
+        
+        // Parse JSON data if exists
+        foreach ($rows as &$row) {
+            if (!empty($row['value_json'])) {
+                $row['complex_data'] = json_decode($row['value_json'], true);
+            }
+        }
+        
         return $this->response->setJSON(['data' => $rows]);
     }
 

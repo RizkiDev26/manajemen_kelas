@@ -833,7 +833,7 @@ input[type="checkbox"] {
         <input type="date" 
                x-model="selectedDate" 
                :max="getCurrentDate()"
-               @change="loadDataForDate()"
+               @change="console.log('📅 Date changed to:', selectedDate); loadDataForDate()"
                style="padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; cursor: pointer; transition: border-color 0.3s ease;">
         <button @click="goToToday()" 
                 style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: transform 0.2s ease;"
@@ -866,8 +866,8 @@ input[type="checkbox"] {
     
     <!-- 1. Bangun Pagi -->
     <div class="habit-card card-wake-up" 
-         :class="[habits.wakeUp.completed ? 'completed' : '', !isToday() ? 'disabled' : '']" 
-         @click="isToday() ? openWakeUpModal() : showPastDateWarning()">
+         :class="[habits.wakeUp.completed ? 'completed' : '']" 
+         @click="openWakeUpModal()">
       <!-- Konten Kartu Modern -->
       <div class="habit-content">
         <!-- Icon Container Modern -->
@@ -890,23 +890,16 @@ input[type="checkbox"] {
         <div x-show="habits.wakeUp.time">
           <span class="tag">✅ Bangun jam: <span x-text="habits.wakeUp.time"></span></span>
         </div>
-        <div x-show="!habits.wakeUp.time && isToday()">
+        <div x-show="!habits.wakeUp.time">
           <span style="color: #64748b; font-size: 0.875rem; font-style: italic;">Klik untuk set waktu bangun pagi</span>
         </div>
-        <div x-show="!habits.wakeUp.time && !isToday()">
-          <span style="color: #94a3b8; font-size: 0.875rem;">Tidak ada data</span>
-        </div>
-      </div>
-      
-      <div x-show="!isToday()" class="past-date-overlay">
-        <i class="fas fa-eye" style="font-size: 1.5rem; color: #64748b;"></i>
       </div>
     </div>
 
     <!-- 2. Beribadah -->
     <div class="habit-card card-worship" 
-         :class="[habits.worship.completed ? 'completed' : '', !isToday() ? 'disabled' : '']" 
-         @click="isToday() ? openWorshipModal() : showPastDateWarning()">
+         :class="[habits.worship.completed ? 'completed' : '']" 
+         @click="openWorshipModal()">
       <!-- Konten Kartu Modern -->
       <div class="habit-content">
         <!-- Icon Container Modern -->
@@ -934,23 +927,16 @@ input[type="checkbox"] {
             </template>
           </div>
         </div>
-        <div x-show="!habits.worship.completed && isToday()">
+        <div x-show="!habits.worship.completed">
           <span style="color: #64748b; font-size: 0.875rem; font-style: italic;">Klik untuk mencatat ibadah</span>
         </div>
-        <div x-show="!habits.worship.completed && !isToday()">
-          <span style="color: #94a3b8; font-size: 0.875rem;">Tidak ada data</span>
-        </div>
-      </div>
-      
-      <div x-show="!isToday()" class="past-date-overlay">
-        <i class="fas fa-eye" style="font-size: 1.5rem; color: #64748b;"></i>
       </div>
     </div>
 
     <!-- 3. Berolahraga -->
     <div class="habit-card card-exercise" 
-         :class="[habits.exercise.completed ? 'completed' : '', !isToday() ? 'disabled' : '']" 
-         @click="isToday() ? openExerciseModal() : showPastDateWarning()">
+         :class="[habits.exercise.completed ? 'completed' : '']" 
+         @click="openExerciseModal()">
       <!-- Row 1: Konten dengan text wrapping -->
       <div class="habit-content">
         <div class="habit-image">
@@ -972,23 +958,16 @@ input[type="checkbox"] {
             </template>
           </div>
         </div>
-        <div x-show="!habits.exercise.completed && isToday()">
+        <div x-show="!habits.exercise.completed">
           <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat olahraga</span>
         </div>
-        <div x-show="!habits.exercise.completed && !isToday()">
-          <span style="color: #9ca3af;">Tidak ada data</span>
-        </div>
-      </div>
-      
-      <div x-show="!isToday()" class="past-date-overlay">
-        <i class="fas fa-eye" style="font-size: 1.5rem; color: #6b7280;"></i>
       </div>
     </div>
 
     <!-- 4. Makan Sehat dan Bergizi -->
     <div class="habit-card card-healthy-food" 
-         :class="[habits.healthyFood.completed ? 'completed' : '', !isToday() ? 'disabled' : '']" 
-         @click="isToday() ? openHealthyFoodModal() : showPastDateWarning()">
+         :class="[habits.healthyFood.completed ? 'completed' : '']" 
+         @click="openHealthyFoodModal()">
       <!-- Row 1: Konten dengan text wrapping -->
       <div class="habit-content">
         <div class="habit-image">
@@ -1010,23 +989,16 @@ input[type="checkbox"] {
             </template>
           </div>
         </div>
-        <div x-show="habits.healthyFood.items.length === 0 && isToday()">
+        <div x-show="habits.healthyFood.items.length === 0">
           <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat makanan sehat</span>
         </div>
-        <div x-show="habits.healthyFood.items.length === 0 && !isToday()">
-          <span style="color: #9ca3af;">Tidak ada data</span>
-        </div>
-      </div>
-      
-      <div x-show="!isToday()" class="past-date-overlay">
-        <i class="fas fa-eye" style="font-size: 1.5rem; color: #6b7280;"></i>
       </div>
     </div>
 
     <!-- 5. Gemar Belajar -->
     <div class="habit-card card-learning" 
-         :class="[habits.learning.completed ? 'completed' : '', !isToday() ? 'disabled' : '']" 
-         @click="isToday() ? openLearningModal() : showPastDateWarning()">
+         :class="[habits.learning.completed ? 'completed' : '']" 
+         @click="openLearningModal()">
       <!-- Row 1: Konten dengan text wrapping -->
       <div class="habit-content">
         <div class="habit-image">
@@ -1048,23 +1020,16 @@ input[type="checkbox"] {
             </template>
           </div>
         </div>
-        <div x-show="habits.learning.items.length === 0 && isToday()">
+        <div x-show="habits.learning.items.length === 0">
           <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat pembelajaran hari ini</span>
         </div>
-        <div x-show="habits.learning.items.length === 0 && !isToday()">
-          <span style="color: #9ca3af;">Tidak ada data</span>
-        </div>
-      </div>
-      
-      <div x-show="!isToday()" class="past-date-overlay">
-        <i class="fas fa-eye" style="font-size: 1.5rem; color: #6b7280;"></i>
       </div>
     </div>
 
     <!-- 6. Bermasyarakat -->
     <div class="habit-card card-social" 
-         :class="[habits.social.completed ? 'completed' : '', !isToday() ? 'disabled' : '']" 
-         @click="isToday() ? openSocialModal() : showPastDateWarning()">
+         :class="[habits.social.completed ? 'completed' : '']" 
+         @click="openSocialModal()">
       <!-- Row 1: Konten dengan text wrapping -->
       <div class="habit-content">
         <div class="habit-image">
@@ -1086,23 +1051,16 @@ input[type="checkbox"] {
             </template>
           </div>
         </div>
-        <div x-show="habits.social.items.length === 0 && isToday()">
+        <div x-show="habits.social.items.length === 0">
           <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat kegiatan sosial</span>
         </div>
-        <div x-show="habits.social.items.length === 0 && !isToday()">
-          <span style="color: #9ca3af;">Tidak ada data</span>
-        </div>
-      </div>
-      
-      <div x-show="!isToday()" class="past-date-overlay">
-        <i class="fas fa-eye" style="font-size: 1.5rem; color: #6b7280;"></i>
       </div>
     </div>
 
     <!-- 7. Tidur Cepat -->
     <div class="habit-card card-sleep" 
-         :class="[habits.sleep.completed ? 'completed' : '', !isToday() ? 'disabled' : '']" 
-         @click="isToday() ? openSleepModal() : showPastDateWarning()">
+         :class="[habits.sleep.completed ? 'completed' : '']" 
+         @click="openSleepModal()">
       <!-- Row 1: Konten dengan text wrapping -->
       <div class="habit-content">
         <div class="habit-image">
@@ -1119,16 +1077,9 @@ input[type="checkbox"] {
         <div x-show="habits.sleep.time">
           <span class="tag" x-text="'Tidur jam: ' + habits.sleep.time"></span>
         </div>
-        <div x-show="!habits.sleep.time && isToday()">
+        <div x-show="!habits.sleep.time">
           <span style="color: #6b7280; font-style: italic;">Klik untuk set waktu tidur</span>
         </div>
-        <div x-show="!habits.sleep.time && !isToday()">
-          <span style="color: #9ca3af;">Tidak ada data</span>
-        </div>
-      </div>
-      
-      <div x-show="!isToday()" class="past-date-overlay">
-        <i class="fas fa-eye" style="font-size: 1.5rem; color: #6b7280;"></i>
       </div>
     </div>
 
@@ -1664,6 +1615,8 @@ function habitApp() {
       console.log('🚀 7 Kebiasaan Anak Indonesia Hebat - App initialized (Official Version)');
       this.selectedDate = this.getCurrentDate();
       this.selectedMonth = this.getCurrentMonth();
+      
+      console.log(`📅 Initial date set to: ${this.selectedDate}`);
       this.loadDataForDate();
       
       // Bind escape key handler to this context
@@ -1677,7 +1630,9 @@ function habitApp() {
     },
     
     goToToday() {
-      this.selectedDate = this.getCurrentDate();
+      const todayDate = this.getCurrentDate();
+      console.log(`📅 Going to today: ${todayDate} (was: ${this.selectedDate})`);
+      this.selectedDate = todayDate;
       this.loadDataForDate();
     },
     
@@ -2101,12 +2056,10 @@ function habitApp() {
     saveData() {
       const storageKey = `siswa-habits-7-kebiasaan-${this.selectedDate}`;
       localStorage.setItem(storageKey, JSON.stringify(this.habits));
-      console.log(`✅ Data saved locally for ${this.selectedDate}`);
+      console.log(`✅ Data saved locally for ${this.selectedDate}:`, this.habits);
       
-      // Also save to server if it's today or recent date
-      if (this.isToday() || this.isRecentDate()) {
-        this.saveToServer();
-      }
+      // Always try to save to server for any date
+      this.saveToServer();
     },
     
     // Check if date is recent (within last 7 days)
@@ -2211,14 +2164,20 @@ function habitApp() {
     },
     
     loadDataForDate() {
-      // First try to load from server
-      this.loadFromServer().then(() => {
-        // If no server data, try localStorage as fallback
-        if (!this.hasAnyCompletedHabits()) {
+      console.log(`🔄 Loading data for ${this.selectedDate}`);
+      
+      // Try to load from server first (most up-to-date data)
+      this.loadFromServer().then((hasServerData) => {
+        if (!hasServerData) {
+          console.log(`📊 No server data, falling back to localStorage for ${this.selectedDate}`);
+          // Only load from localStorage if no server data found
           this.loadFromLocalStorage();
+        } else {
+          console.log(`📊 Using server data for ${this.selectedDate}`);
         }
-      }).catch(() => {
-        // If server fails, use localStorage
+      }).catch((error) => {
+        console.log('⚠️ Server load failed, falling back to localStorage:', error);
+        // Fallback to localStorage if server fails
         this.loadFromLocalStorage();
       });
     },
@@ -2232,16 +2191,21 @@ function habitApp() {
           const result = await response.json();
           if (result.data && result.data.length > 0) {
             this.mapServerDataToHabits(result.data);
-            console.log(`📊 Loaded data from server for ${this.selectedDate}`);
-            return;
+            // Force Alpine.js to update by triggering a re-render
+            this.$nextTick(() => {
+              console.log(`📊 UI updated after loading ${result.data.length} records for ${this.selectedDate}`);
+            });
+            console.log(`📊 Loaded ${result.data.length} records from server for ${this.selectedDate}`);
+            return true; // Found server data
           }
         }
+        
+        console.log(`📅 No server data found for ${this.selectedDate}`);
+        return false; // No server data
       } catch (error) {
         console.log('❌ Error loading from server:', error);
+        throw error; // Re-throw to be caught by loadDataForDate
       }
-      
-      // If no server data, reset habits
-      this.resetHabits();
     },
     
     // Load data from localStorage (fallback)
@@ -2251,14 +2215,19 @@ function habitApp() {
       
       if (saved) {
         try {
-          this.habits = JSON.parse(saved);
-          console.log(`📊 Loaded data from localStorage for ${this.selectedDate}`);
+          const loadedData = JSON.parse(saved);
+          this.habits = loadedData;
+          console.log(`📊 Loaded data from localStorage for ${this.selectedDate}:`, loadedData);
+          return true;
         } catch (e) {
           console.log('❌ Error loading localStorage data:', e);
           this.resetHabits();
+          return false;
         }
       } else {
-        console.log(`📅 No localStorage data found for ${this.selectedDate}`);
+        console.log(`📅 No localStorage data found for ${this.selectedDate}, resetting habits`);
+        this.resetHabits();
+        return false;
       }
     },
     
@@ -2266,69 +2235,152 @@ function habitApp() {
     mapServerDataToHabits(serverData) {
       this.resetHabits();
       
+      console.log('🔍 Raw server data:', serverData);
+      
       serverData.forEach(item => {
-        switch (item.habit_id) {
-          case 1: // Wake Up
-            if (item.value_bool) {
+        console.log(`🔍 Processing habit_id ${item.habit_id}:`, item);
+        
+        // Convert habit_id to integer for comparison
+        const habitId = parseInt(item.habit_id);
+        
+        switch (habitId) {
+          case 1: // Wake Up - uses value_time
+            if (item.value_time && item.value_time.trim() !== '') {
               this.habits.wakeUp.completed = true;
-              this.habits.wakeUp.time = item.value_time || '';
+              this.habits.wakeUp.time = item.value_time;
+              console.log('✅ Wake Up set to completed with time:', item.value_time);
+            } else {
+              console.log('❌ Wake Up - no valid value_time');
             }
             break;
             
-          case 2: // Worship
-            if (item.value_bool) {
+          case 2: // Worship - uses value_bool, notes, and value_json
+            if (worshipBool == 1 || worshipBool === '1' || worshipBool === true || worshipBool === 'true') {
               this.habits.worship.completed = true;
-              if (item.notes) {
-                this.habits.worship.activities = item.notes.split(', ').filter(a => a.trim());
+              
+              // Parse value_json for complex data (prayers, activities)
+              if (item.value_json) {
+                try {
+                  const jsonData = JSON.parse(item.value_json);
+                  if (jsonData.prayers && Array.isArray(jsonData.prayers)) {
+                    this.habits.worship.activities = [...jsonData.prayers];
+                  }
+                  if (jsonData.activities && Array.isArray(jsonData.activities)) {
+                    this.habits.worship.activities = [...this.habits.worship.activities, ...jsonData.activities];
+                  }
+                  console.log('✅ Parsed worship JSON data:', jsonData);
+                } catch (e) {
+                  console.log('⚠️ Failed to parse worship JSON:', e);
+                }
+              } else if (item.notes) {
+                // Fallback to notes if no JSON data
+                this.habits.worship.activities = [item.notes];
               }
+              console.log('✅ Worship set to completed with activities:', this.habits.worship.activities);
+            } else {
+              console.log('❌ Worship - value_bool not truthy:', worshipBool);
             }
             break;
             
-          case 3: // Exercise
-            if (item.value_bool) {
+          case 3: // Exercise - uses value_number, notes, and value_json
+            const exerciseNum = parseFloat(item.value_number);
+            if (!isNaN(exerciseNum) && exerciseNum > 0) {
               this.habits.exercise.completed = true;
-              this.habits.exercise.duration = item.value_number ? item.value_number.toString() : '';
-              if (item.notes) {
-                this.habits.exercise.activities = item.notes.split(', ').filter(a => a.trim());
+              this.habits.exercise.duration = exerciseNum.toString();
+              
+              // Parse value_json for activities
+              if (item.value_json) {
+                try {
+                  const jsonData = JSON.parse(item.value_json);
+                  if (jsonData.activities && Array.isArray(jsonData.activities)) {
+                    this.habits.exercise.activities = [...jsonData.activities];
+                  }
+                  console.log('✅ Parsed exercise JSON data:', jsonData);
+                } catch (e) {
+                  console.log('⚠️ Failed to parse exercise JSON:', e);
+                }
+              } else if (item.notes) {
+                this.habits.exercise.activities = [item.notes];
               }
+              console.log('✅ Exercise set to completed with duration:', exerciseNum);
+            } else {
+              console.log('❌ Exercise - invalid value_number:', item.value_number);
             }
             break;
             
-          case 4: // Healthy Food
-            if (item.value_bool) {
+          case 4: // Healthy Food - uses value_bool and notes
+            const healthyBool = item.value_bool;
+            if (healthyBool == 1 || healthyBool === '1' || healthyBool === true || healthyBool === 'true') {
               this.habits.healthyFood.completed = true;
               if (item.notes) {
-                this.habits.healthyFood.items = item.notes.split(', ').filter(a => a.trim());
+                this.habits.healthyFood.items = [item.notes]; // Store as array
               }
+              console.log('✅ Healthy Food set to completed with value_bool:', healthyBool);
+            } else {
+              console.log('❌ Healthy Food - value_bool not truthy:', healthyBool);
             }
             break;
             
-          case 5: // Learning
-            if (item.value_bool) {
+          case 5: // Learning - uses value_bool and notes
+            const learningBool = item.value_bool;
+            if (learningBool == 1 || learningBool === '1' || learningBool === true || learningBool === 'true') {
               this.habits.learning.completed = true;
               if (item.notes) {
-                this.habits.learning.items = item.notes.split(', ').filter(a => a.trim());
+                this.habits.learning.items = [item.notes]; // Store as array
               }
+              console.log('✅ Learning set to completed with value_bool:', learningBool);
+            } else {
+              console.log('❌ Learning - value_bool not truthy:', learningBool);
             }
             break;
             
-          case 6: // Social
-            if (item.value_bool) {
+          case 6: // Social - uses value_bool and notes
+            const socialBool = item.value_bool;
+            if (socialBool == 1 || socialBool === '1' || socialBool === true || socialBool === 'true') {
               this.habits.social.completed = true;
               if (item.notes) {
-                this.habits.social.items = item.notes.split(', ').filter(a => a.trim());
+                this.habits.social.items = [item.notes]; // Store as array
               }
+              console.log('✅ Social set to completed with value_bool:', socialBool);
+            } else {
+              console.log('❌ Social - value_bool not truthy:', socialBool);
             }
             break;
             
-          case 7: // Sleep
-            if (item.value_bool) {
+          case 7: // Sleep - uses value_time
+            if (item.value_time && item.value_time.trim() !== '') {
               this.habits.sleep.completed = true;
-              this.habits.sleep.time = item.value_time || '';
+              this.habits.sleep.time = item.value_time;
+              console.log('✅ Sleep set to completed with time:', item.value_time);
+            } else {
+              console.log('❌ Sleep - no valid value_time');
             }
             break;
+            
+          default:
+            console.log('❌ Unknown habit_id:', habitId);
         }
       });
+      
+      console.log('📊 Mapped server data to habits:', this.habits);
+      console.log('🔍 Final habits state after mapping:');
+      console.log('- wakeUp.completed:', this.habits.wakeUp.completed);
+      console.log('- worship.completed:', this.habits.worship.completed);
+      console.log('- exercise.completed:', this.habits.exercise.completed);
+      console.log('- healthyFood.completed:', this.habits.healthyFood.completed);
+      console.log('- learning.completed:', this.habits.learning.completed);
+      console.log('- social.completed:', this.habits.social.completed);
+      console.log('- sleep.completed:', this.habits.sleep.completed);
+      console.log('🔢 Progress calculation:', this.getCompletedCount(), 'of', this.getTotalCount());
+      
+      // Parse activities to UI elements
+      this.parseActivitiesFromData();
+      
+      // Force reactivity by triggering Alpine.js update
+      this.$el.dispatchEvent(new CustomEvent('habits-updated'));
+      
+      // Also manually save to ensure persistence
+      this.saveData();
     },
     
     // Check if any habits are completed
@@ -2389,13 +2441,6 @@ function habitApp() {
       return savedDates.sort();
     },
     
-    // Warning for past dates
-    showPastDateWarning() {
-      if (!this.isToday()) {
-        alert('🔒 Anda sedang melihat data kebiasaan masa lalu. Data hanya bisa diedit pada hari yang sama.');
-      }
-    },
-
     // Monthly Report Functions
     getCurrentMonth() {
       const today = new Date();
@@ -2523,6 +2568,91 @@ function habitApp() {
         if (worship.prayers.isya) prayers.push('Isya');
       }
       return prayers.join(', ') || 'Tidak ada sholat';
+    },
+
+    // Parse loaded activities data to UI elements (checkboxes)
+    parseActivitiesFromData() {
+      console.log('🔄 Parsing activities from loaded data...');
+      
+      // Parse worship activities to prayer times checkboxes
+      if (this.habits.worship.activities && this.habits.worship.activities.length > 0) {
+        console.log('🔍 Worship activities found:', this.habits.worship.activities);
+        this.habits.worship.activities.forEach(activity => {
+          console.log('📋 Processing worship activity:', activity);
+          // Check for prayer times (stored as notes in database)
+          if (activity.includes('Sholat') || activity.includes('sholat')) {
+            // Parse prayer names from the activity string
+            const prayers = activity.split(/[,;]/); // Split by comma or semicolon
+            prayers.forEach(prayer => {
+              const cleanPrayer = prayer.trim().toLowerCase();
+              if (cleanPrayer.includes('subuh')) {
+                this.prayerTimes.subuh = true;
+                console.log('✅ Set Subuh prayer to true');
+              }
+              if (cleanPrayer.includes('dzuhur') || cleanPrayer.includes('zuhur')) {
+                this.prayerTimes.dzuhur = true;
+                console.log('✅ Set Dzuhur prayer to true');
+              }
+              if (cleanPrayer.includes('ashar') || cleanPrayer.includes('asar')) {
+                this.prayerTimes.ashar = true;
+                console.log('✅ Set Ashar prayer to true');
+              }
+              if (cleanPrayer.includes('maghrib')) {
+                this.prayerTimes.maghrib = true;
+                console.log('✅ Set Maghrib prayer to true');
+              }
+              if (cleanPrayer.includes('isya') || cleanPrayer.includes('isha')) {
+                this.prayerTimes.isya = true;
+                console.log('✅ Set Isya prayer to true');
+              }
+            });
+          }
+          
+          // Check for other worship activities
+          if (activity.includes('Baca Kitab Suci') || activity.includes('baca kitab')) {
+            this.worshipActivities.reading = true;
+            console.log('✅ Set reading worship to true');
+          }
+          if (activity.includes('Sedekah') || activity.includes('sedekah') || activity.includes('Amal')) {
+            this.worshipActivities.charity = true;
+            console.log('✅ Set charity worship to true');
+          }
+          if (activity.includes('Berdoa') || activity.includes('berdoa')) {
+            this.worshipActivities.dua = true;
+            console.log('✅ Set prayer worship to true');
+          }
+        });
+      }
+      
+      // Parse exercise activities
+      if (this.habits.exercise.activities && this.habits.exercise.activities.length > 0) {
+        console.log('🔍 Exercise activities found:', this.habits.exercise.activities);
+        // Add exercise activities to the list
+        this.exerciseList = [...this.habits.exercise.activities];
+      }
+      
+      // Parse healthy food items
+      if (this.habits.healthyFood.items && this.habits.healthyFood.items.length > 0) {
+        console.log('🔍 Healthy food items found:', this.habits.healthyFood.items);
+        // Add food items to the list
+        this.healthyFoodList = [...this.habits.healthyFood.items];
+      }
+      
+      // Parse learning items
+      if (this.habits.learning.items && this.habits.learning.items.length > 0) {
+        console.log('🔍 Learning items found:', this.habits.learning.items);
+        // Add learning items to the list
+        this.learningList = [...this.habits.learning.items];
+      }
+      
+      // Parse social items
+      if (this.habits.social.items && this.habits.social.items.length > 0) {
+        console.log('🔍 Social items found:', this.habits.social.items);
+        // Add social items to the list
+        this.socialList = [...this.habits.social.items];
+      }
+      
+      console.log('✅ Activities parsing completed');
     }
   }
 }

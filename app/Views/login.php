@@ -107,40 +107,7 @@
             </div>
         </form>
 
-        <!-- Divider -->
-        <div class="my-6 sm:my-8">
-            <div class="relative">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300"></div>
-                </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="px-2 bg-white text-gray-500">atau</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Quick Access -->
-        <div class="text-center">
-            <p class="text-xs sm:text-sm text-gray-600 mb-3">Akses cepat untuk:</p>
-            <div class="flex flex-wrap justify-center gap-2">
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                    <i class="fas fa-user-tie mr-1"></i>Admin
-                </span>
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                    <i class="fas fa-chalkboard-teacher mr-1"></i>Guru
-                </span>
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
-                    <i class="fas fa-users mr-1"></i>Wali Kelas
-                </span>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-6 sm:mt-8 text-center">
-            <p class="text-xs sm:text-sm text-gray-500">
-                © 2025 SDN Grogol Utara 09. Semua hak dilindungi.
-            </p>
-        </div>
     </div>
 
     <script>

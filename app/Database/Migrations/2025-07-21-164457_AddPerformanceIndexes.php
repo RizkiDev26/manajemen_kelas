@@ -12,8 +12,31 @@ class AddPerformanceIndexes extends Migration
         
         // Users table indexes
         if ($this->db->tableExists('users')) {
-            $this->forge->addKey('role');
-            $this->forge->addKey('email');
+            // Check if index doesn't exist before adding
+            $indexExists = false;
+            try {
+                $query = $this->db->query("SHOW INDEX FROM users WHERE Key_name = 'role'");
+                $indexExists = $query->getNumRows() > 0;
+            } catch (Exception $e) {
+                // Index query failed, assume it doesn't exist
+            }
+            
+            if (!$indexExists) {
+                $this->forge->addKey('role');
+            }
+            
+            $emailIndexExists = false;
+            try {
+                $query = $this->db->query("SHOW INDEX FROM users WHERE Key_name = 'email'");
+                $emailIndexExists = $query->getNumRows() > 0;
+            } catch (Exception $e) {
+                // Index query failed, assume it doesn't exist
+            }
+            
+            if (!$emailIndexExists) {
+                $this->forge->addKey('email');
+            }
+            
             $this->forge->processIndexes('users');
         }
 
@@ -26,9 +49,18 @@ class AddPerformanceIndexes extends Migration
 
         // TB Siswa table indexes
         if ($this->db->tableExists('tb_siswa')) {
-            $this->forge->addKey('kelas');
-            $this->forge->addKey('siswa_id');
-            $this->forge->addKey(['kelas', 'siswa_id']); // Composite index
+            // Check if columns exist before adding indexes
+            $fields = $this->db->getFieldNames('tb_siswa');
+            
+            if (in_array('kelas', $fields)) {
+                $this->forge->addKey('kelas');
+            }
+            if (in_array('siswa_id', $fields)) {
+                $this->forge->addKey('siswa_id');
+            }
+            if (in_array('kelas', $fields) && in_array('siswa_id', $fields)) {
+                $this->forge->addKey(['kelas', 'siswa_id']); // Composite index
+            }
             $this->forge->processIndexes('tb_siswa');
         }
 

@@ -13,6 +13,18 @@ body {
   color: #1e293b;
 }
 
+/* Custom Circular Loader */
+.custom-loader {
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  border:8px solid;
+  border-color:#E4E4ED;
+  border-right-color:#766DF4;
+  animation:s2 1s infinite linear;
+}
+@keyframes s2 {to{transform: rotate(1turn)}}
+
 .habits-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -804,12 +816,10 @@ input[type="checkbox"] {
 <div id="habitApp" x-data="habitApp()" x-init="init()">
   <!-- Simplified Loading Overlay -->
   <template x-if="dateLoading">
-    <div style="position:fixed; inset:0; background:rgba(255,255,255,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; font-family:Inter,system-ui,sans-serif;">
-      <h3 style="margin:0 0 12px 0; font-size:1.05rem; color:#334155; font-weight:600;">Memuat data <span x-text="selectedDate"></span></h3>
-      <div style="width:320px; max-width:80%; background:#e2e8f0; height:10px; border-radius:6px; overflow:hidden;">
-        <div :style="`width:${dateLoadingProgress}%; height:100%; background:#6366f1; transition:width .25s ease;`"></div>
-      </div>
-      <div style="margin-top:8px; font-size:0.85rem; color:#475569; font-variant-numeric:tabular-nums;" x-text="dateLoadingProgress + '%'" />
+    <div style="position:fixed; inset:0; background:rgba(255,255,255,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:9999; font-family:Inter,system-ui,sans-serif;">
+      <div class="custom-loader" aria-label="Memuat data"></div>
+      <div style="font-size:0.9rem; color:#334155; font-weight:600;" x-text="'Memuat data ' + selectedDate"></div>
+      <div style="font-size:0.75rem; color:#64748b; letter-spacing:.5px;" x-text="dateLoadingProgress + '%'" aria-live="polite"></div>
     </div>
   </template>
   <!-- Modern Header -->

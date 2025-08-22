@@ -2106,10 +2106,16 @@ function habitApp() {
         });
         
         if (response.ok) {
+          const ct = (response.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) {
+            // Likely redirected to login (HTML returned)
+            console.warn('⚠️ Server returned non-JSON (likely login page). Please login and try again.');
+            return; // Do not throw; keep UX smooth
+          }
           const result = await response.json();
-          console.log('✅ Data saved to server:', result.message);
+          console.log('✅ Data saved to server:', result.message || result);
         } else {
-          console.log('❌ Failed to save to server:', response.statusText);
+          console.log('❌ Failed to save to server:', response.status, response.statusText);
         }
       } catch (error) {
         console.log('❌ Error saving to server:', error);
@@ -2235,6 +2241,12 @@ function habitApp() {
         const response = await fetch(`<?= base_url('siswa/summary') ?>?date=${this.selectedDate}`);
         
         if (response.ok) {
+          const ct = (response.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) {
+            // Got HTML instead of JSON (most likely login page due to missing session)
+            console.warn('⚠️ Not authenticated or non-JSON response. Falling back to local data. Please login.');
+            return false;
+          }
           const result = await response.json();
           if (result.data && result.data.length > 0) {
             this.mapServerDataToHabits(result.data);

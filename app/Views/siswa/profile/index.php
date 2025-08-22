@@ -63,7 +63,7 @@
           <div class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium"><?= esc($student['nisn'] ?? ($student['nis'] ?? '-')) ?></div>
         </div>
         <div>
-          <div class="text-xs text-slate-500 mb-1">NIS</div>
+          <div class="text-xs text-slate-500 mb-1">NIPD</div>
           <div class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium"><?= esc($student['nis'] ?? '-') ?></div>
         </div>
         <div>
@@ -76,7 +76,7 @@
         </div>
         <div>
           <div class="text-xs text-slate-500 mb-1">Jenis Kelamin</div>
-          <div class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium"><?= esc($student['jenis_kelamin'] ?? '-') ?></div>
+          <div class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium"><?= esc(($student['jenis_kelamin']==='L'?'Laki-laki':($student['jenis_kelamin']==='P'?'Perempuan':($student['jenis_kelamin']??'-')))) ?></div>
         </div>
         <div>
           <div class="text-xs text-slate-500 mb-1">Tempat, Tanggal Lahir</div>

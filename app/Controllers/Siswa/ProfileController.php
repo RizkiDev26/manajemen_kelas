@@ -26,26 +26,52 @@ class ProfileController extends BaseController
     public function index()
     {
         $studentId = session('student_id');
-        $username = session('username'); // siswa login via NISN
+        $username = session('username'); // diisi NISN saat login siswa
         if (!$username && !$studentId) {
             return redirect()->to('/login')->with('error', 'Sesi siswa berakhir');
         }
 
-        // Primary: resolve by session student_id; Fallback: resolve by username (nisn)
+        // Ambil data dasar dari tabel siswa (aplikasi internal)
         $student = null;
-        if ($studentId) {
-            $student = $this->studentModel->find($studentId);
-        }
-        if (!$student && $username) {
-            // Try by NISN first, fallback to NIS
+        if ($username) {
             $student = $this->studentModel->where('nisn', $username)->first();
             if (!$student) {
                 $student = $this->studentModel->where('nis', $username)->first();
             }
-            // Sync session student_id if found
-            if ($student && (!session()->has('student_id') || session('student_id') !== $student['id'])) {
-                session()->set('student_id', $student['id']);
-            }
+        }
+        if (!$student && $studentId) {
+            $student = $this->studentModel->find($studentId);
+        }
+
+        // Ambil data lengkap dari tb_siswa (sumber resmi dapodik) berdasar NISN
+        $tbRow = null;
+        if ($username) {
+            $tbRow = $this->tbSiswaModel->where('nisn', $username)->first();
+        } elseif (!empty($student['nisn'])) {
+            $tbRow = $this->tbSiswaModel->where('nisn', $student['nisn'])->first();
+        }
+
+        // Sinkronkan session student_id bila perlu
+        if ($student && (!session()->has('student_id') || session('student_id') != $student['id'])) {
+            session()->set('student_id', $student['id']);
+        }
+
+        // Gabungkan / override field dengan prioritas tb_siswa
+        if ($student || $tbRow) {
+            $merged = [
+                'nama' => $tbRow['nama'] ?? ($student['nama'] ?? null),
+                // NIPD disimpan sebagai 'nis' untuk tampilan sesuai permintaan
+                'nis' => $tbRow['nipd'] ?? ($student['nis'] ?? null),
+                'nisn' => $tbRow['nisn'] ?? ($student['nisn'] ?? null),
+                'jenis_kelamin' => $tbRow['jk'] ?? ($student['jenis_kelamin'] ?? null),
+                'tempat_lahir' => $tbRow['tempat_lahir'] ?? ($student['tempat_lahir'] ?? null),
+                'tanggal_lahir' => $tbRow['tanggal_lahir'] ?? ($student['tanggal_lahir'] ?? null),
+                'alamat' => trim(($tbRow['alamat'] ?? '') . ' ' . ($tbRow['dusun'] ?? '')), // sederhana
+                'agama' => $tbRow['agama'] ?? ($student['agama'] ?? null),
+                'kelas' => $tbRow['kelas'] ?? null,
+            ];
+            // Simpan kembali ke $student untuk view (tanpa memodifikasi DB)
+            $student = array_merge($student ?? [], $merged);
         }
 
         if (!$student) {
@@ -57,21 +83,23 @@ class ProfileController extends BaseController
             session()->set('student_name', $student['nama']);
         }
 
-        $class = $student && !empty($student['kelas_id']) ? $this->classModel->find($student['kelas_id']) : null;
+        $class = null;
+        if (!empty($student['kelas_id'])) {
+            $class = $this->classModel->find($student['kelas_id']);
+        } elseif (!empty($student['kelas'])) {
+            // Kelas string dari tb_siswa
+            $class = ['nama' => $student['kelas']];
+        }
 
         // detect Islam
         $isIslam = false;
-        $fromTb = null;
-    $agama = $student['agama'] ?? null;
-        if (!empty($student['nisn'] ?? null)) {
-            $fromTb = $this->tbSiswaModel->where('nisn', $student['nisn'])->first();
-            if (!$agama) { $agama = $fromTb['agama'] ?? null; }
-        }
+    $fromTb = $tbRow;
+    $agama = $student['agama'] ?? ($tbRow['agama'] ?? null);
         if ($agama && stripos($agama, 'islam') !== false) $isIslam = true;
 
         // Fallback Tempat/Tanggal Lahir
-        $ttlTempat = $student['tempat_lahir'] ?? ($fromTb['tempat_lahir'] ?? null);
-        $ttlTanggal = $student['tanggal_lahir'] ?? ($fromTb['tanggal_lahir'] ?? null);
+    $ttlTempat = $student['tempat_lahir'] ?? ($tbRow['tempat_lahir'] ?? null);
+    $ttlTanggal = $student['tanggal_lahir'] ?? ($tbRow['tanggal_lahir'] ?? null);
 
         // get beribadah habit id (fallback to berdoa)
         $ibadahHabit = $this->habitModel->where('code', 'beribadah')->first();

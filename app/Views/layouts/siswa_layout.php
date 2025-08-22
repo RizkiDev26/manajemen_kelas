@@ -7,6 +7,8 @@
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -162,9 +164,15 @@
                     <i class="fas fa-home"></i> Dashboard
                 </a>
             </li>
+            <!-- 7 KAIH Menu with submenu -->
             <li class="nav-item">
-                <a class="nav-link <?= strpos(current_url(), 'habits') !== false ? 'active' : '' ?>" href="<?= base_url('siswa/habits') ?>">
-                    <i class="fas fa-star"></i> Kegiatan Harian
+                <a class="nav-link <?= (strpos(current_url(), 'habits') !== false && strpos(current_url(), 'monthly-report') === false) ? 'active' : '' ?>" href="<?= base_url('siswa/habits') ?>">
+                    <i class="fas fa-star"></i> 7 KAIH - Input
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <?= strpos(current_url(), 'monthly-report') !== false ? 'active' : '' ?>" href="<?= base_url('siswa/habits/monthly-report') ?>">
+                    <i class="fas fa-calendar"></i> 7 KAIH - Rekap Bulanan
                 </a>
             </li>
             <li class="nav-item">
@@ -189,9 +197,10 @@
             </button>
             <h1 class="header-title"><?= $this->renderSection('title') ?></h1>
             <div class="user-info">
-                <span>Selamat datang, <strong><?= session('username') ?? 'Siswa' ?></strong></span>
+                <?php $displayName = session('student_name') ?? session('username') ?? 'Siswa'; ?>
+                <span>Selamat datang, <strong><?= esc($displayName) ?></strong></span>
                 <div class="user-avatar">
-                    <?= strtoupper(substr(session('username') ?? 'S', 0, 1)) ?>
+                    <?= strtoupper(substr($displayName ?? 'S', 0, 1)) ?>
                 </div>
             </div>
         </div>

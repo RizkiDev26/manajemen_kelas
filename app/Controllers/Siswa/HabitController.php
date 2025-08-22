@@ -41,6 +41,10 @@ class HabitController extends BaseController
         }
         if ($stu) {
             session()->set('student_id', (int)$stu['id']);
+            // Simpan nama lengkap agar tampilan tidak menampilkan angka NIS/NISN
+            if (!empty($stu['nama'])) {
+                session()->set('student_name', $stu['nama']);
+            }
             return (int)$stu['id'];
         }
         return null;
@@ -66,6 +70,9 @@ class HabitController extends BaseController
         // Detect religion (Islam) for special UI in "Beribadah"
         $isIslam = false;
         $student = $this->studentModel->find($studentId);
+        if ($student && !empty($student['nama']) && session('student_name') !== $student['nama']) {
+            session()->set('student_name', $student['nama']);
+        }
         $agama = $student['agama'] ?? null;
         if (!$agama && !empty($student['nisn'] ?? null)) {
             $fromTb = $this->tbSiswaModel->where('nisn', $student['nisn'])->first();

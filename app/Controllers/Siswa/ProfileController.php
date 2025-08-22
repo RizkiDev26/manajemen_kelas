@@ -52,6 +52,11 @@ class ProfileController extends BaseController
             return redirect()->to('/login')->with('error', 'Data siswa tidak ditemukan');
         }
 
+        // Pastikan nama lengkap tersedia di session untuk header global
+        if (!empty($student['nama']) && session('student_name') !== $student['nama']) {
+            session()->set('student_name', $student['nama']);
+        }
+
         $class = $student && !empty($student['kelas_id']) ? $this->classModel->find($student['kelas_id']) : null;
 
         // detect Islam

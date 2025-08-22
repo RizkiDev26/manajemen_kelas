@@ -16,7 +16,8 @@ class App extends BaseConfig
      *
      * E.g., https://example.com/
      */
-    public string $baseURL = 'http://sdngu09.my.id/';
+    // Updated to HTTPS to prevent mixed content blocking in browsers
+    public string $baseURL = 'https://sdngu09.my.id/';
 
 
     /**

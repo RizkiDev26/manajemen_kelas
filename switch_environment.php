@@ -23,7 +23,7 @@ class EnvironmentSwitcher
     
     private $hostingConfig = [
         'CI_ENVIRONMENT' => 'production',
-        'app.baseURL' => 'http://sdngu09.my.id/',
+    'app.baseURL' => 'https://sdngu09.my.id/',
         'database.default.hostname' => 'localhost',
         'database.default.database' => 'sdngu09_manajemen_kelas',
         'database.default.username' => 'sdngu09_user',
@@ -63,7 +63,7 @@ class EnvironmentSwitcher
         echo "⚠️  Remember to update hosting database credentials!\n";
         $this->updateEnvFile($this->hostingConfig);
         echo "✅ Switched to Hosting (production)\n";
-        echo "🌐 Base URL: http://sdngu09.my.id/\n";
+    echo "🌐 Base URL: https://sdngu09.my.id/\n";
         echo "💾 Database: sdngu09_manajemen_kelas (hosting)\n";
         echo "📝 Update password in .env file!\n";
     }
@@ -135,7 +135,7 @@ class EnvironmentSwitcher
                 
             case 'hosting':
                 echo "🚀 Mode: Hosting Production\n";
-                echo "🌐 URL: http://sdngu09.my.id/\n";
+                echo "🌐 URL: https://sdngu09.my.id/\n";
                 echo "💾 Database: sdngu09_manajemen_kelas\n";
                 echo "👤 User: sdngu09_user\n";
                 break;

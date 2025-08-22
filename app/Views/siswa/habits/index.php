@@ -802,24 +802,23 @@ input[type="checkbox"] {
 </style>
 
 <div id="habitApp" x-data="habitApp()" x-init="init()">
+  <!-- Simplified Loading Overlay -->
+  <template x-if="dateLoading">
+    <div style="position:fixed; inset:0; background:rgba(255,255,255,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; font-family:Inter,system-ui,sans-serif;">
+      <h3 style="margin:0 0 12px 0; font-size:1.05rem; color:#334155; font-weight:600;">Memuat data <span x-text="selectedDate"></span></h3>
+      <div style="width:320px; max-width:80%; background:#e2e8f0; height:10px; border-radius:6px; overflow:hidden;">
+        <div :style="`width:${dateLoadingProgress}%; height:100%; background:#6366f1; transition:width .25s ease;`"></div>
+      </div>
+      <div style="margin-top:8px; font-size:0.85rem; color:#475569; font-variant-numeric:tabular-nums;" x-text="dateLoadingProgress + '%'" />
+    </div>
+  </template>
   <!-- Modern Header -->
   <div class="app-header">
     <h1>7 Kebiasaan Anak Indonesia Hebat</h1>
     <p>Bangun karakter hebat melalui kebiasaan positif setiap hari</p>
   </div>
 
-  <!-- Navigation Tabs -->
-  <div class="nav-tabs">
-    <button class="nav-tab" :class="currentView === 'daily' ? 'active' : ''" @click="currentView = 'daily'">
-      📅 Harian
-    </button>
-    <button class="nav-tab" :class="currentView === 'monthly' ? 'active' : ''" @click="currentView = 'monthly'; loadMonthlyReport()">
-      📊 Laporan Bulanan
-    </button>
-    <a href="<?= base_url('siswa/habits/monthly-report') ?>" class="nav-tab" style="text-decoration: none; color: inherit;">
-      📋 Rekap Tabel
-    </a>
-  </div>
+  <!-- Tabs removed: focusing only on daily view -->
 
   <!-- Daily View -->
   <div x-show="currentView === 'daily'" class="daily-view">
@@ -1526,6 +1525,11 @@ function habitApp() {
   return {
     // UI State
     currentView: 'daily',
+  // Loading state for date change
+  dateLoading: false,
+  dateLoadingProgress: 0,
+  _dateLoadingInterval: null,
+  _dotsInterval: null,
     
     // Date management
     selectedDate: '',
@@ -1562,7 +1566,7 @@ function habitApp() {
     worshipActivities: {
       reading: false,
       charity: false,
-      dua: false
+  dua: false
     },
     
     // Prayer times for Muslim students
@@ -1792,7 +1796,7 @@ function habitApp() {
       this.worshipActivities = {
         reading: false,
         charity: false,
-        dua: false
+  dua: false
       };
       <?php if ($isIslam): ?>
       this.prayerTimes = {
@@ -1808,30 +1812,34 @@ function habitApp() {
       // Load existing data from habits.worship.activities
       if (this.habits.worship.activities && this.habits.worship.activities.length > 0) {
         this.habits.worship.activities.forEach(activity => {
-          // Check for prayer times
           <?php if ($isIslam): ?>
           if (activity.startsWith('Sholat: ')) {
-            const prayers = activity.replace('Sholat: ', '').split(', ');
-            prayers.forEach(prayer => {
-              switch(prayer.trim()) {
-                case 'Subuh':
-                  this.prayerTimes.subuh = true;
-                  break;
-                case 'Dzuhur':
-                  this.prayerTimes.dzuhur = true;
-                  break;
-                case 'Ashar':
-                  this.prayerTimes.ashar = true;
-                  break;
-                case 'Maghrib':
-                  this.prayerTimes.maghrib = true;
-                  break;
-                case 'Isya':
-                  this.prayerTimes.isya = true;
-                  break;
+            // Split tokens after label
+            const tokens = activity.replace('Sholat: ', '').split(',').map(t => t.trim()).filter(Boolean);
+            tokens.forEach(token => {
+              const lower = token.toLowerCase();
+              if (['subuh','dzuhur','zuhur','ashar','asar','maghrib','isya','isha'].includes(lower)) {
+                switch(true){
+                  case lower === 'subuh': this.prayerTimes.subuh = true; break;
+                  case lower === 'dzuhur' || lower === 'zuhur': this.prayerTimes.dzuhur = true; break;
+                  case lower === 'ashar' || lower === 'asar': this.prayerTimes.ashar = true; break;
+                  case lower === 'maghrib': this.prayerTimes.maghrib = true; break;
+                  case lower === 'isya' || lower === 'isha': this.prayerTimes.isya = true; break;
+                }
+              } else {
+                // Non-prayer token embedded in Sholat line → treat as worship activity or custom
+                if (lower.includes('sedekah') || lower.includes('amal')) this.worshipActivities.charity = true;
+                else if (lower.includes('baca') && lower.includes('kitab')) this.worshipActivities.reading = true;
+                else if (lower.includes('berdoa')) this.worshipActivities.dua = true;
+                else if (lower.includes('menolong')) {
+                  if (!this.otherWorshipList.includes('Menolong orang')) this.otherWorshipList.push('Menolong orang');
+                } else if (!this.otherWorshipList.includes(token)) {
+                  this.otherWorshipList.push(token);
+                }
               }
             });
-          } else 
+            return; // Done with this combined string
+          }
           <?php endif; ?>
           if (activity === 'Baca Kitab Suci') {
             this.worshipActivities.reading = true;
@@ -1839,11 +1847,10 @@ function habitApp() {
             this.worshipActivities.charity = true;
           } else if (activity === 'Berdoa') {
             this.worshipActivities.dua = true;
-          } else {
-            // Custom worship activity
-            if (!activity.startsWith('Sholat: ')) {
-              this.otherWorshipList.push(activity);
-            }
+          } else if (activity === 'Menolong Orang' || activity.toLowerCase().includes('menolong')) {
+            if (!this.otherWorshipList.includes('Menolong orang')) this.otherWorshipList.push('Menolong orang');
+          } else if (!activity.startsWith('Sholat: ')) {
+            this.otherWorshipList.push(activity);
           }
         });
       }
@@ -2165,21 +2172,51 @@ function habitApp() {
     
     loadDataForDate() {
       console.log(`🔄 Loading data for ${this.selectedDate}`);
-      
-      // Try to load from server first (most up-to-date data)
-      this.loadFromServer().then((hasServerData) => {
-        if (!hasServerData) {
-          console.log(`📊 No server data, falling back to localStorage for ${this.selectedDate}`);
-          // Only load from localStorage if no server data found
+      this.startDateLoading();
+      // Slight delay to let overlay paint
+      setTimeout(() => {
+        this.loadFromServer().then((hasServerData) => {
+          if (!hasServerData) {
+            console.log(`📊 No server data, falling back to localStorage for ${this.selectedDate}`);
+            this.loadFromLocalStorage();
+          } else {
+            console.log(`📊 Using server data for ${this.selectedDate}`);
+          }
+        }).catch((error) => {
+          console.log('⚠️ Server load failed, falling back to localStorage:', error);
           this.loadFromLocalStorage();
-        } else {
-          console.log(`📊 Using server data for ${this.selectedDate}`);
+        }).finally(() => {
+          this.finishDateLoading();
+        });
+      }, 50);
+    },
+
+    startDateLoading() {
+      // Reset progress
+      this.dateLoading = true;
+      this.dateLoadingProgress = 0;
+      if (this._dateLoadingInterval) clearInterval(this._dateLoadingInterval);
+      // Progress simulation (fast to 70%, then slower)
+      this._dateLoadingInterval = setInterval(() => {
+        if (this.dateLoadingProgress < 92) {
+          this.dateLoadingProgress += Math.random() * 8 + 4; // 4-12%
+        } else if (this.dateLoadingProgress < 98) {
+          this.dateLoadingProgress += 1; // finalize
         }
-      }).catch((error) => {
-        console.log('⚠️ Server load failed, falling back to localStorage:', error);
-        // Fallback to localStorage if server fails
-        this.loadFromLocalStorage();
-      });
+        if (this.dateLoadingProgress > 98) this.dateLoadingProgress = 98;
+      }, 300);
+    },
+
+    finishDateLoading() {
+      // Complete progress smoothly
+      setTimeout(() => {
+        this.dateLoadingProgress = 100;
+        setTimeout(() => {
+          this.dateLoading = false;
+          if (this._dateLoadingInterval) clearInterval(this._dateLoadingInterval);
+          this._dateLoadingInterval = null;
+        }, 300);
+      }, 150);
     },
     
     // Load data from server
@@ -2255,6 +2292,7 @@ function habitApp() {
             break;
             
           case 2: // Worship - uses value_bool, notes, and value_json
+            const worshipBool = item.value_bool; // ensure defined
             if (worshipBool == 1 || worshipBool === '1' || worshipBool === true || worshipBool === 'true') {
               this.habits.worship.completed = true;
               
@@ -2620,6 +2658,12 @@ function habitApp() {
           if (activity.includes('Berdoa') || activity.includes('berdoa')) {
             this.worshipActivities.dua = true;
             console.log('✅ Set prayer worship to true');
+          }
+          if (activity.includes('Menolong') || activity.includes('menolong')) {
+            if (!this.otherWorshipList.includes('Menolong Orang')) {
+              this.otherWorshipList.push('Menolong Orang');
+              console.log('✅ Added Menolong Orang to otherWorshipList');
+            }
           }
         });
       }

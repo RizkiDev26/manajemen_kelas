@@ -5,7 +5,7 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+$routes->get('/', 'Login::index');
 $routes->get('/test', 'Test::index');
 
 // Buku Kasus Routes
@@ -234,6 +234,8 @@ $routes->group('siswa', ['filter' => 'role:siswa'], function($routes){
     $routes->get('habits', 'Siswa\\HabitController::index'); // Add explicit habits route
     $routes->get('habits/monthly-report', 'Siswa\\HabitController::monthlyReport'); // Monthly report page
     $routes->get('habits/monthly-data', 'Siswa\\HabitController::monthlyData'); // Monthly data API
+    $routes->post('habits/save', 'Siswa\\HabitController::saveHabitData'); // Save habit data
+    $routes->post('habits/delete', 'Siswa\\HabitController::deleteHabitData'); // Delete habit data
     $routes->post('logs', 'Siswa\\HabitController::store');
     $routes->get('today', 'Siswa\\HabitController::today');
     $routes->get('summary', 'Siswa\\HabitController::summary');

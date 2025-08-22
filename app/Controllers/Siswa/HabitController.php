@@ -304,8 +304,22 @@ class HabitController extends BaseController
         }
 
         $studentId = $this->resolveStudentId();
+        
+        // Enhanced debugging
+        log_message('info', 'Monthly data request - Month: ' . $month);
+        log_message('info', 'Session data - student_id: ' . (session('student_id') ?: 'null'));
+        log_message('info', 'Session data - username: ' . (session('username') ?: 'null'));
+        log_message('info', 'Resolved student ID: ' . ($studentId ?: 'null'));
+        
         if (!$studentId) {
-            return $this->response->setStatusCode(400)->setJSON(['message' => 'Sesi siswa tidak ditemukan']);
+            return $this->response->setStatusCode(400)->setJSON([
+                'message' => 'Sesi siswa tidak ditemukan',
+                'debug' => [
+                    'session_student_id' => session('student_id'),
+                    'session_username' => session('username'),
+                    'resolved_student_id' => $studentId
+                ]
+            ]);
         }
 
         // Get all habit logs for the month
@@ -398,5 +412,147 @@ class HabitController extends BaseController
                 'sample_data' => array_slice($results, 0, 3) // First 3 rows for debugging
             ]
         ]);
+    }
+    
+    /**
+     * Save habit data (for editing/adding from monthly report)
+     */
+    public function saveHabitData()
+    {
+        $studentId = $this->resolveStudentId();
+        
+        if (!$studentId) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'status' => 'error',
+                'message' => 'Sesi siswa tidak ditemukan'
+            ]);
+        }
+        
+        $json = $this->request->getJSON(true);
+        
+        // Validate required fields
+        if (!isset($json['habit_id']) || !isset($json['log_date'])) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'status' => 'error',
+                'message' => 'Data tidak lengkap'
+            ]);
+        }
+        
+        $habitId = (int) $json['habit_id'];
+        $logDate = $json['log_date'];
+        $completed = $json['completed'] ?? false;
+        $time = $json['time'] ?? null;
+        $duration = $json['duration'] ?? null;
+        $notes = $json['notes'] ?? null;
+        
+        // Validate habit_id
+        if ($habitId < 1 || $habitId > 7) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'status' => 'error',
+                'message' => 'ID kebiasaan tidak valid'
+            ]);
+        }
+        
+        // Validate date format
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $logDate)) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'status' => 'error',
+                'message' => 'Format tanggal tidak valid'
+            ]);
+        }
+        
+        try {
+            // Prepare data for upsert
+            $logData = [
+                'student_id' => $studentId,
+                'habit_id' => $habitId,
+                'log_date' => $logDate,
+                'value_bool' => $completed ? 1 : 0,
+                'value_time' => $time,
+                'value_number' => $duration ? (float) $duration : null,
+                'notes' => $notes
+            ];
+            
+            // Use upsertLog method from HabitLogModel
+            $result = $this->habitLogModel->upsertLog($logData);
+            
+            if ($result) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => 'Data kebiasaan berhasil disimpan',
+                    'data' => $logData
+                ]);
+            } else {
+                return $this->response->setStatusCode(500)->setJSON([
+                    'status' => 'error',
+                    'message' => 'Gagal menyimpan data kebiasaan'
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error saving habit data: ' . $e->getMessage());
+            
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Delete habit data
+     */
+    public function deleteHabitData()
+    {
+        $studentId = $this->resolveStudentId();
+        
+        if (!$studentId) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'status' => 'error',
+                'message' => 'Sesi siswa tidak ditemukan'
+            ]);
+        }
+        
+        $json = $this->request->getJSON(true);
+        
+        // Validate required fields
+        if (!isset($json['habit_id']) || !isset($json['log_date'])) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'status' => 'error',
+                'message' => 'Data tidak lengkap'
+            ]);
+        }
+        
+        $habitId = (int) $json['habit_id'];
+        $logDate = $json['log_date'];
+        
+        try {
+            $db = db_connect();
+            $deleted = $db->table('habit_logs')
+                ->where('student_id', $studentId)
+                ->where('habit_id', $habitId)
+                ->where('log_date', $logDate)
+                ->delete();
+            
+            if ($deleted) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => 'Data kebiasaan berhasil dihapus'
+                ]);
+            } else {
+                return $this->response->setStatusCode(404)->setJSON([
+                    'status' => 'error',
+                    'message' => 'Data tidak ditemukan'
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error deleting habit data: ' . $e->getMessage());
+            
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+            ]);
+        }
     }
 }

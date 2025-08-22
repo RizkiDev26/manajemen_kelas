@@ -138,6 +138,11 @@ class App extends BaseConfig
     public string $appTimezone = 'UTC';
 
     /**
+     * Force global secure requests so generated URLs use https even if proxy sends http to backend.
+     */
+    public bool $forceGlobalSecureRequests = true;
+
+    /**
      * --------------------------------------------------------------------------
      * Default Character Set
      * --------------------------------------------------------------------------
@@ -159,7 +164,7 @@ class App extends BaseConfig
      * secure, the user will be redirected to a secure version of the page
      * and the HTTP Strict Transport Security (HSTS) header will be set.
      */
-    public bool $forceGlobalSecureRequests = false;
+    // (Removed duplicate declaration; enforced above as true)
 
     /**
      * --------------------------------------------------------------------------

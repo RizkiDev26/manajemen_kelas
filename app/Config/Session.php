@@ -57,7 +57,10 @@ class Session extends BaseConfig
      *
      * IMPORTANT: You are REQUIRED to set a valid save path!
      */
-    public string $savePath = '';
+    // IMPORTANT: Must be an absolute, writable path for FileHandler. Leaving this empty causes
+    // mkdir(): Invalid path on Windows. Using the framework WRITEPATH helper which resolves to
+    // f:/manajemen_kelas/writable/ and appending 'session'. Ensure the directory exists.
+    public string $savePath = WRITEPATH . 'session';
 
     /**
      * --------------------------------------------------------------------------

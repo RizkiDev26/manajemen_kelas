@@ -171,6 +171,12 @@ $routes->group('admin', function($routes) {
     $routes->get('guru/import', 'Admin\Guru::import');
     $routes->get('guru/check-duplicates', 'Admin\Guru::checkDuplicates');
     $routes->post('guru/clean-duplicates', 'Admin\Guru::cleanDuplicates');
+
+    // 7 Kebiasaan - Monthly Recap (Admin)
+    $routes->get('habits/monthly', 'Admin\HabitMonthlyController::index');
+    $routes->get('habits/monthly/students/(:num)', 'Admin\HabitMonthlyController::students/$1');
+    $routes->get('habits/monthly/data', 'Admin\HabitMonthlyController::data');
+    $routes->get('habits/monthly/export', 'Admin\HabitMonthlyController::export');
 });
 
 // Walikelas Routes Group (without /admin prefix)
@@ -213,6 +219,12 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('profile', 'Admin\Profile::index');
     $routes->get('profile/edit', 'Admin\Profile::edit');
     $routes->post('profile/update', 'Admin\Profile::update');
+
+    // 7 Kebiasaan - Monthly Recap (Walikelas limited view)
+    $routes->get('habits/monthly', 'Admin\HabitMonthlyController::index');
+    $routes->get('habits/monthly/students/(:num)', 'Admin\HabitMonthlyController::students/$1');
+    $routes->get('habits/monthly/data', 'Admin\HabitMonthlyController::data');
+    $routes->get('habits/monthly/export', 'Admin\HabitMonthlyController::export');
 });
 
 // Logout Route (accessible from anywhere)
@@ -231,7 +243,7 @@ $routes->get('debug/auth/check', 'Debug\\AuthDebug::checkPassword');
 // Siswa role
 $routes->group('siswa', ['filter' => 'role:siswa'], function($routes){
     $routes->get('/', 'Siswa\\HabitController::index');
-    $routes->get('habits', 'Siswa\\HabitController::index'); // Add explicit habits route
+    $routes->get('habits', 'Siswa\\HabitController::habits'); // Habit input page
     $routes->get('habits/monthly-report', 'Siswa\\HabitController::monthlyReport'); // Monthly report page
     $routes->get('habits/monthly-data', 'Siswa\\HabitController::monthlyData'); // Monthly data API
     $routes->post('habits/save', 'Siswa\\HabitController::saveHabitData'); // Save habit data

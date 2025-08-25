@@ -119,6 +119,9 @@ class Dashboard extends BaseController
         
         // Get attendance data for the class (last 7 days)
         $attendanceData = $this->getWalikelasAttendanceData($absensiModel, $walikelasInfo['kelas']);
+
+        // Get daily progress (today attendance & habit logs)
+        $dailyProgress = $this->getWalikelasDailyProgress($walikelasInfo['kelas'], $totalSiswa);
         
         return [
             'currentUser' => $currentUser,
@@ -127,9 +130,71 @@ class Dashboard extends BaseController
             'siswaLaki' => $siswaLaki,
             'siswaPerempuan' => $siswaPerempuan,
             'attendanceData' => $attendanceData,
+            'dailyProgress' => $dailyProgress,
             'isWalikelas' => true,
             'fromCache' => false
         ];
+    }
+
+    /**
+     * Get daily progress for walikelas class (attendance present count & habit log completion)
+     */
+    private function getWalikelasDailyProgress(string $kelas, int $totalSiswa): array
+    {
+        $today = date('Y-m-d');
+        $db = \Config\Database::connect();
+
+        $result = [
+            'attendance_present' => 0,
+            'attendance_marked' => 0,
+            'habit_logged' => 0,
+            'total_students' => $totalSiswa,
+            'attendance_percentage' => 0,
+            'habit_percentage' => 0,
+        ];
+
+        try {
+            // Count attendance (present) and any attendance marked today
+            // Map tb_siswa (master) -> legacy siswa via nisn
+            $attendanceSql = "
+                SELECT
+                    SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) AS hadir_count,
+                    COUNT(DISTINCT a.siswa_id) AS marked_count
+                FROM absensi a
+                JOIN siswa ls ON ls.id = a.siswa_id
+                JOIN tb_siswa t ON t.nisn = ls.nisn
+                WHERE t.kelas = ? AND DATE(a.tanggal) = ?
+            ";
+            $attendanceRow = $db->query($attendanceSql, [$kelas, $today])->getRowArray();
+
+            if ($attendanceRow) {
+                $result['attendance_present'] = (int)$attendanceRow['hadir_count'];
+                $result['attendance_marked'] = (int)$attendanceRow['marked_count'];
+            }
+
+            // Count students with at least one habit log today
+            $habitSql = "
+                SELECT COUNT(DISTINCT hl.student_id) AS habit_logged
+                FROM habit_logs hl
+                JOIN siswa ls ON ls.id = hl.student_id
+                JOIN tb_siswa t ON t.nisn = ls.nisn
+                WHERE t.kelas = ? AND hl.log_date = ?
+            ";
+            $habitRow = $db->query($habitSql, [$kelas, $today])->getRowArray();
+            if ($habitRow) {
+                $result['habit_logged'] = (int)$habitRow['habit_logged'];
+            }
+
+            // Percentages
+            if ($totalSiswa > 0) {
+                $result['attendance_percentage'] = round(($result['attendance_present'] / $totalSiswa) * 100, 1);
+                $result['habit_percentage'] = round(($result['habit_logged'] / $totalSiswa) * 100, 1);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting walikelas daily progress: ' . $e->getMessage());
+        }
+
+        return $result;
     }
 
     /**

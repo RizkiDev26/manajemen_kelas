@@ -96,33 +96,42 @@
             <p class="text-gray-500 text-sm sm:text-base">Siswa Perempuan</p>
         </div>
 
-        <!-- Attendance Status Card -->
+        <!-- Daily Progress Card (Attendance + Habit Logs) -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5 sm:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 sm:w-14 sm:h-14 bg-green-100 rounded-xl flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-7 sm:w-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <span class="text-green-600 text-sm font-semibold bg-green-50 px-3 py-1.5 rounded-full">7 Hari</span>
+                <span class="text-green-600 text-sm font-semibold bg-green-50 px-3 py-1.5 rounded-full">Hari Ini</span>
             </div>
-            <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                <?php if (isset($attendanceData['summary'])): ?>
-                    <?= $attendanceData['summary']['total_hadir'] ?>
-                <?php else: ?>
-                    0
-                <?php endif; ?>
+            <?php $dp = $dailyProgress ?? null; ?>
+            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                <?= $dp ? $dp['attendance_present'] : 0 ?>/<?= $dp ? $dp['total_students'] : 0 ?> Hadir
             </h3>
-            <p class="text-gray-500 text-sm sm:text-base">Kehadiran 7 Hari</p>
-            <div class="flex items-center mt-2 text-sm sm:text-base">
-                <?php if (isset($attendanceData['summary'])): ?>
-                    <span class="text-green-600 font-semibold">
-                        <?= $attendanceData['summary']['total_records'] > 0 ? 
-                            round(($attendanceData['summary']['total_hadir'] / $attendanceData['summary']['total_records']) * 100) : 0 ?>%
-                    </span>
-                <?php else: ?>
-                    <span class="text-green-600 font-semibold">0%</span>
-                <?php endif; ?>
+            <div class="space-y-3">
+                <!-- Attendance Progress -->
+                <div>
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-600 mb-1">
+                        <span>Kehadiran</span>
+                        <span><?= $dp ? $dp['attendance_percentage'] : 0 ?>%</span>
+                    </div>
+                    <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-3 bg-green-500 rounded-full transition-all" style="width: <?= $dp && $dp['attendance_percentage']>0 ? $dp['attendance_percentage'] : 0 ?>%"></div>
+                    </div>
+                </div>
+                <!-- Habit Log Progress -->
+                <div>
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-600 mb-1">
+                        <span>Kebiasaan</span>
+                        <span><?= $dp ? $dp['habit_percentage'] : 0 ?>%</span>
+                    </div>
+                    <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-3 bg-blue-500 rounded-full transition-all" style="width: <?= $dp && $dp['habit_percentage']>0 ? $dp['habit_percentage'] : 0 ?>%"></div>
+                    </div>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-500">Sudah input kebiasaan <?= $dp ? $dp['habit_logged'] : 0 ?> dari <?= $dp ? $dp['total_students'] : 0 ?></p>
+                </div>
             </div>
         </div>
     </div>

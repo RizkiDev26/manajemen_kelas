@@ -44,28 +44,29 @@ body {
 }
 
 /* Modern Header Section */
-.app-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 2rem 1rem;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border-radius: 20px;
-  color: white;
-  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-}
+/* Compact Header */
+.app-header {margin:-18px 0 1.35rem;position:relative;padding:1.75rem 1rem 2.6rem;border-radius:34px;background:linear-gradient(135deg,#6d5af8 0%,#8f5df5 55%,#9557f2 100%);color:#fff;overflow:hidden;box-shadow:0 18px 40px -12px rgba(109,90,248,.45),0 4px 12px -2px rgba(109,90,248,.35);} 
+.app-header:before,.app-header:after{content:"";position:absolute;border-radius:50%;filter:blur(45px);opacity:.4;mix-blend-mode:overlay;animation:floatBlob 14s ease-in-out infinite;} 
+.app-header:before{width:420px;height:420px;background:radial-gradient(circle at 30% 30%,#ffffff 0%,rgba(255,255,255,0)70%);top:-180px;left:-120px;animation-delay:-4s;} 
+.app-header:after{width:380px;height:380px;background:radial-gradient(circle at 70% 70%,#fff 0%,rgba(255,255,255,0)65%);bottom:-160px;right:-140px;} 
+@keyframes floatBlob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(25px) scale(1.07)}}
+.app-header .header-inner{max-width:1180px;margin:0 auto;position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;gap:1.15rem;} 
+.app-header h1{font-size:clamp(2.4rem,1.9rem+3.2vw,5.6rem);font-weight:700;margin:0;letter-spacing:.75px;text-shadow:0 10px 28px rgba(0,0,0,.25);} 
+.app-header p{font-size:clamp(.78rem,.7rem+.35vw,.95rem);opacity:.9;margin:0;font-weight:500;letter-spacing:.35px;} 
+/* date-panel removed visually; outside selector below header */
+@media (max-width:620px){.app-header{padding:1.85rem .9rem 3rem;border-radius:28px;}}
 
-.app-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+/* Outside Date Selector */
+.outside-date-selector{display:flex;justify-content:center;align-items:center;gap:.75rem;margin:-0.9rem auto 1.4rem;max-width:960px;padding:.25rem .35rem;}
+.outside-date-selector label{font-weight:700;font-size:.8rem;letter-spacing:.55px;text-transform:uppercase;color:#4b5563;display:flex;align-items:center;gap:.45rem;padding:.65rem 1.05rem;border-radius:16px;background:#ffffff;border:1px solid #e0d9ff;box-shadow:0 4px 10px -4px rgba(109,90,248,.25);} 
+.outside-date-selector label svg{opacity:.85;}
+.outside-date-selector input[type=date]{padding:.7rem 1.1rem;border:1px solid #d9d2ff;background:#f5f3ff;color:#1e293b;font-weight:500;font-size:.92rem;border-radius:16px;min-width:210px;outline:none;transition:.25s;background-clip:padding-box;}
+.outside-date-selector input[type=date]:focus{background:#fff;border-color:#8b75ff;box-shadow:0 0 0 3px rgba(139,117,255,.25);} 
+.outside-date-selector button{padding:.75rem 1.3rem;border:none;border-radius:16px;cursor:pointer;font-weight:600;letter-spacing:.45px;font-size:.9rem;background:linear-gradient(135deg,#5d8df8 0%,#6b59f8 100%);color:#fff;box-shadow:0 6px 16px -6px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.65) inset;transition:transform .25s,box-shadow .25s;} 
+.outside-date-selector button:hover{transform:translateY(-3px);box-shadow:0 12px 26px -10px rgba(0,0,0,.45);} 
+.outside-date-selector button:active{transform:translateY(-1px);} 
 
-.app-header p {
-  font-size: 1.1rem;
-  opacity: 0.9;
-  margin: 0;
-}
+/* Outside date selector removed (reverted) */
 
 /* Navigation Tabs */
 .nav-tabs {
@@ -103,31 +104,9 @@ body {
 }
 
 /* Grid Responsif Modern */
-.habits-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-@media (min-width: 640px) {
-  .habits-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-  }
-}
-
-@media (min-width: 1280px) {
-  .habits-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1536px) {
-  .habits-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
+.habits-grid {display:grid;grid-template-columns:1fr;gap:1.25rem;margin-bottom:2rem;}
+@media (min-width:640px){.habits-grid{grid-template-columns:repeat(2,1fr);gap:1.75rem;}}
+@media (min-width:1280px){.habits-grid{grid-template-columns:repeat(3,minmax(360px,1fr));gap:2rem;}}
 
 /* Modal styles - Simple and direct */
 .modal-overlay {
@@ -198,20 +177,17 @@ body {
   background: #e5e7eb;
 }
 
-.habit-card {
-  position: relative;
-  border-radius: 16px;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  width: 100%;
-  overflow: hidden;
-  background: white;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  display: block;
-  backdrop-filter: blur(10px);
-}
+/* Flip Card Base */
+.habit-card {position:relative;border-radius:18px;padding:0;cursor:pointer;transition:transform .5s cubic-bezier(.68,-.55,.27,1.55);width:100%;background:transparent;border:none;perspective:1200px;height:230px;}
+@media (min-width:768px){.habit-card{height:250px;}}
+.habit-card .habit-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.55,.12,.24,.99);border-radius:inherit;box-shadow:0 4px 24px -6px rgba(0,0,0,.12);}
+.habit-card:hover .habit-inner{transform:rotateY(180deg);} 
+.habit-card .habit-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.9rem .85rem 1rem;text-align:center;background:#fff;border:1px solid #e2e8f0;overflow:hidden;}
+.habit-card .habit-front{background:linear-gradient(135deg,#ffffff 0%,#f1f5f9 100%);} 
+.habit-card .habit-back{transform:rotateY(180deg);background:#fff;padding:1.15rem 1.05rem 1.25rem;justify-content:flex-start;align-items:flex-start;}
+.habit-card .habit-back .habit-description{font-size:.78rem;line-height:1.45;margin:0 0 .55rem;text-align:left;color:#475569;}
+.habit-card .habit-back .habit-status{background:#f8fafc;border:1px dashed #e2e8f0;padding:.55rem .65rem;border-radius:10px;margin-top:.35rem;width:100%;}
+.habit-card:hover{transform:translateY(-6px);} 
 
 @media (min-width: 768px) {
   .habit-card {
@@ -343,54 +319,27 @@ body {
 }
 
 /* Icon Container dengan Float untuk Text Wrapping - Compact Size */
-.habit-image {
-  float: left;
-  width: 3rem;
-  height: 3rem;
-  margin: 0 0.75rem 0.25rem 0;
-  border-radius: 8px;
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  transition: transform 0.2s ease;
-  flex-shrink: 0;
-}
+/* Icon container (front face) */
+.habit-image {width:86px;height:86px;border-radius:18px;background:linear-gradient(145deg,#f8fafc,#e9eef5);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.08),0 0 0 1px #e2e8f0 inset;margin:0 0 .6rem;transition:transform .4s ease, box-shadow .4s ease;}
+.habit-image img{transform:translateZ(0);} 
+.habit-card:hover .habit-front .habit-image{transform:scale(1.07) rotate(2deg);} 
+.habit-card:hover .habit-front .habit-image{transform:scale(1.08) rotate(3deg);box-shadow:0 6px 14px -2px rgba(0,0,0,.15),0 0 0 1px #d0d7e2 inset;}
 
 .habit-card:hover .habit-image {
   transform: scale(1.1);
 }
 
-.habit-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
+.habit-image img { width:100%; height:100%; object-fit:contain; image-rendering: -webkit-optimize-contrast; }
 
 /* Text Content - Compact and Clean */
-.habit-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  color: #2d3748;
-  margin: 0 0 0.25rem 0;
-  line-height: 1.2;
-  /* Text akan wrap naturally di sekitar float */
-}
+ .habit-title {font-size:1.05rem;font-weight:600;letter-spacing:-.015em;color:#1e293b;margin:0 0 .2rem;line-height:1.25;}
+.habit-front .habit-title{font-size:1rem;margin-top:.15rem;}
+@media (min-width:768px){.habit-front .habit-title{font-size:1.05rem;}}
 
-@media (min-width: 768px) {
-  .habit-title {
-    font-size: 1rem;
-  }
-}
+@media (min-width: 768px){ .habit-title{ font-size:1.15rem; } }
 
-.habit-description {
-  margin: 0;
-  font-size: 0.7rem;
-  line-height: 1.3;
-  color: #718096;
-  text-align: justify;
-  /* Text akan wrap naturally di sekitar float */
-}
+ .habit-description { margin:0 0 .4rem 0; font-size:.8rem; line-height:1.45; color:#475569; text-align:justify; }
+ @media (min-width: 768px){ .habit-description{ font-size:.82rem; } }
 
 /* Status Area dengan Clear Float - Modern and Compact */
 .habit-status {
@@ -561,109 +510,19 @@ body {
   }
 }
 
-@media (max-width: 768px) {
-  /* Habit Cards Grid */
-  div[style*="grid-template-columns: repeat(3, 1fr)"] {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 15px !important;
-  }
-  
-  .habit-card {
-    padding: 18px 20px;
-    min-height: 140px;
-    margin: 8px;
-  }
-  
-  .habit-image {
-    height: 100px;
-  }
-  
-  .habit-title {
-    font-size: 1.1rem;
-  }
-  
-  .habit-description {
-    font-size: 0.75rem;
-  }
-  
-  .habit-status {
-    font-size: 0.7rem;
-  }
+@media (max-width: 768px){
+  .habit-card{height:210px;}
+  .habit-image{width:78px;height:78px;margin:0 0 .55rem;}
+  .habit-card .habit-back .habit-description{font-size:.75rem;}
 }
 
-@media (max-width: 480px) {
-  /* Habit Cards Grid */
-  .habits-grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  
-  .habit-card {
-    padding: 0.75rem;
-    min-height: 80px;
-    margin: 3px;
-  }
-  
-  .habit-content {
-    min-height: 40px;
-  }
-  
-  .habit-image {
-    width: 7.5rem;
-    height: 7.5rem;
-    margin: 0 0.5rem 0.25rem 0;
-  }
-  
-  .habit-image img {
-    width: 100%;
-    height: 100%;
-  }
-  
-  .habit-title {
-    font-size: 0.8rem;
-    margin-bottom: 2px;
-  }
-  
-  .habit-description {
-    font-size: 0.65rem;
-    line-height: 1.2;
-  }
-  
-  .habit-status {
-    padding: 0.4rem;
-    margin-top: 0.4rem;
-  }
-  
-  /* Progress Section Mobile - Ultra Compact */
-  .progress-section {
-    padding: 0.5rem;
-    margin-bottom: 0.75rem;
-  }
-  
-  .progress-card {
-    padding: 0.4rem 0.5rem;
-  }
-  
-  .progress-card h3 {
-    font-size: 0.65rem !important;
-    margin-bottom: 2px !important;
-  }
-  
-  .progress-card p {
-    font-size: 1rem !important;
-  }
-  
-  /* Header Mobile */
-  .progress-section h1 {
-    font-size: 1.4em !important;
-    margin-bottom: 5px !important;
-  }
-  
-  .progress-section p {
-    font-size: 0.8rem !important;
-    margin-bottom: 10px !important;
-  }
+@media (max-width:480px){
+  .habits-grid{ grid-template-columns:1fr !important; gap:12px !important; }
+  .habit-card{height:200px;}
+  .habit-front .habit-title{font-size:1rem;}
+  .habit-card .habit-back{padding:.85rem .75rem .85rem;}
+  .habit-card .habit-back .habit-description{font-size:.72rem;}
+  .habit-image{width:74px;height:74px;}
 }
 
 /* Additional Utility Classes */
@@ -775,42 +634,34 @@ input[type="checkbox"] {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-  .habit-card {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    text-align: left;
-    min-height: 160px;
-  }
-  
-  .habit-content {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding-left: 0;
-    gap: 10px;
-  }
-  
-  .habit-image {
-    margin-right: 0;
-    margin-bottom: 10px;
-  }
-  
-  .habit-image img {
-    width:1000px;
-    height:1000px;
-  }
-  
-  .habit-text {
-    text-align: center;
-  }
-  
-  .habit-status {
-    grid-column: 1;
-    grid-row: 2;
-    margin-top: 15px;
-  }
+@media (max-width:768px){
+  .habit-card{ text-align:left; }
+  .habit-image{ margin-right:.85rem; margin-bottom:.35rem; }
 }
+
+/* ================= Modern Monthly Recap Table ================= */
+.modern-table-wrapper{position:relative;overflow:auto;border-radius:18px;background:#ffffff;padding:.35rem .35rem .6rem;box-shadow:0 4px 16px -4px rgba(0,0,0,.06),0 2px 6px -2px rgba(0,0,0,.04);border:1px solid #e2e8f0;}
+.modern-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.72rem;line-height:1.15;}
+.modern-table thead th{background:linear-gradient(145deg,#f1f5f9 0%,#e2e8f0 100%);color:#334155;font-weight:600;letter-spacing:.5px;position:sticky;top:0;z-index:3;padding:8px 10px;border-bottom:1px solid #d9e1ec;box-shadow:0 1px 0 rgba(255,255,255,.6) inset;white-space:nowrap;}
+.modern-table th:first-child{left:0;z-index:4;border-right:1px solid #dce3ec;}
+.modern-table tbody td{padding:6px 6px;border-bottom:1px solid #eef2f7;border-right:1px solid #eef2f7;text-align:center;font-weight:500;min-width:30px;transition:background .18s,color .18s;}
+.modern-table tbody tr:last-child td{border-bottom:none;}
+.modern-table td:first-child{position:sticky;left:0;background:#f8fafc;font-weight:600;color:#334155;z-index:2;box-shadow:1px 0 0 #e5e9ef;}
+.modern-table td.cell-done{background:#dcfce7;color:#065f46;font-weight:600;}
+.modern-table td.cell-empty{background:#f1f5f9;color:#94a3b8;}
+.modern-table tbody tr:hover td:not(.cell-done){background:#f8fafc;}
+.modern-table tbody tr:hover td.cell-done{filter:brightness(1.03);}
+.modern-table thead th:first-child{border-top-left-radius:14px;}
+.modern-table thead th:last-child{border-top-right-radius:14px;}
+.modern-table tbody tr:last-child td:first-child{border-bottom-left-radius:14px;}
+.modern-table tbody tr:last-child td:last-child{border-bottom-right-radius:14px;}
+.modern-table caption{caption-side:top;padding:4px 8px;font-weight:600;color:#475569;text-align:left;}
+.modern-table::-webkit-scrollbar{height:10px;width:10px;}
+.modern-table-wrapper::-webkit-scrollbar{height:10px;width:10px;}
+.modern-table-wrapper::-webkit-scrollbar-track{background:transparent;}
+.modern-table-wrapper::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:20px;border:2px solid #ffffff;}
+.modern-table-wrapper::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
+@media (max-width:640px){.modern-table thead th{padding:6px 6px;font-size:.65rem;} .modern-table tbody td{padding:5px 4px;font-size:.65rem;}}
 </style>
 
 <div id="habitApp" x-data="habitApp()" x-init="init()">
@@ -819,54 +670,35 @@ input[type="checkbox"] {
     <div style="position:fixed; inset:0; background:rgba(255,255,255,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:9999; font-family:Inter,system-ui,sans-serif;">
       <div class="custom-loader" aria-label="Memuat data"></div>
       <div style="font-size:0.9rem; color:#334155; font-weight:600;" x-text="'Memuat data ' + selectedDate"></div>
-      <div style="font-size:0.75rem; color:#64748b; letter-spacing:.5px;" x-text="dateLoadingProgress + '%'" aria-live="polite"></div>
+  <!-- Persentase dihilangkan sesuai permintaan -->
     </div>
   </template>
-  <!-- Modern Header -->
+  <!-- Modern Header Redesigned -->
   <div class="app-header">
-    <h1>7 Kebiasaan Anak Indonesia Hebat</h1>
-    <p>Bangun karakter hebat melalui kebiasaan positif setiap hari</p>
+    <div class="header-inner">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.55rem;">
+        <h1>7 Kebiasaan Anak Indonesia Hebat</h1>
+        <p>Bangun karakter hebat melalui kebiasaan positif setiap hari</p>
+      </div>
+  <div class="date-panel"><!-- intentionally empty (date controls moved outside) --></div>
+      </div>
+  <!-- Outside Date Selector -->
+  <div class="outside-date-selector">
+    <label>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Tanggal
+    </label>
+    <input type="date" x-model="selectedDate" :max="getCurrentDate()" @change="loadDataForDate()" />
+    <button @click="goToToday()">Hari Ini</button>
+  </div>
   </div>
 
   <!-- Tabs removed: focusing only on daily view -->
 
-  <!-- Daily View -->
+  <!-- Daily View (header now includes date selector) -->
   <div x-show="currentView === 'daily'" class="daily-view">
-    <h1 style="margin: 0 0 8px 0; font-size: 1.8em; color: #1f2937; text-align: center;">7 Kebiasaan Anak Indonesia Hebat</h1>
-    <p style="margin: 0 0 15px 0; color: #6b7280; text-align: center; font-size: 0.9rem;">Bangun karakter hebat melalui kebiasaan positif setiap hari</p>
-    
-    <!-- Date Selector - Modern -->
-    <div style="background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-        <label style="font-weight: 600; color: #1e293b; font-size: 1rem;">Pilih Tanggal:</label>
-        <input type="date" 
-               x-model="selectedDate" 
-               :max="getCurrentDate()"
-               @change="console.log('📅 Date changed to:', selectedDate); loadDataForDate()"
-               style="padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; cursor: pointer; transition: border-color 0.3s ease;">
-        <button @click="goToToday()" 
-                style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: transform 0.2s ease;"
-                onmouseover="this.style.transform='scale(1.05)'"
-                onmouseout="this.style.transform='scale(1)'">
-          Hari Ini
-        </button>
-      </div>
-      <div style="text-align: center; margin-top: 1rem;">
-        <span style="color: #64748b; font-size: 1rem; font-weight: 500;" x-text="getDateDisplayText()"></span>
-      </div>
-    </div>
-    
-    <!-- Progress Summary - Modern Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-      <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);">
-        <h3 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 600; opacity: 0.9;">Progress Hari Ini</h3>
-        <p style="margin: 0; font-size: 2rem; font-weight: 700;" x-text="getProgressPercentage() + '%'"></p>
-      </div>
-      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);">
-        <h3 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 600; opacity: 0.9;">Kegiatan Selesai</h3>
-        <p style="margin: 0; font-size: 2rem; font-weight: 700;" x-text="getCompletedCount() + ' dari ' + getTotalCount()"></p>
-      </div>
-    </div>
+    <!-- Date panel moved into header -->
+  <!-- Progress summary removed as requested -->
   </div>
 
   <!-- Habit Cards Grid -->
@@ -874,220 +706,157 @@ input[type="checkbox"] {
     <div class="habits-grid">
     
     <!-- 1. Bangun Pagi -->
-    <div class="habit-card card-wake-up" 
-         :class="[habits.wakeUp.completed ? 'completed' : '']" 
-         @click="openWakeUpModal()">
-      <!-- Konten Kartu Modern -->
-      <div class="habit-content">
-        <!-- Icon Container Modern -->
-        <div class="habit-image">
-          <img src="<?= base_url('assets/images/habits/bangun_pagi.png') ?>" alt="Bangun Pagi">
+    <div class="habit-card card-wake-up" :class="[habits.wakeUp.completed ? 'completed' : '']" @click="openWakeUpModal()">
+      <div class="habit-inner">
+        <div class="habit-face habit-front">
+          <div class="habit-image"><img src="<?= base_url('assets/images/habits/bangun_pagi.png') ?>" alt="Bangun Pagi"></div>
+          <h3 class="habit-title">Bangun Pagi</h3>
         </div>
-        
-        <!-- Text langsung wrap di sekitar float -->
-        <h3 class="habit-title">Bangun Pagi</h3>
-        <p class="habit-description">
-          Memulai hari dengan semangat dan disiplin. Kebiasaan bangun pagi membantu menciptakan rutinitas yang sehat.
-        </p>
-        <p class="habit-description">
-          Waktu pagi adalah momen terbaik untuk mempersiapkan diri menghadapi hari yang produktif dan penuh prestasi.
-        </p>
-      </div>
-      
-      <!-- Status Area Modern -->
-      <div class="habit-status">
-        <div x-show="habits.wakeUp.time">
-          <span class="tag">✅ Bangun jam: <span x-text="habits.wakeUp.time"></span></span>
-        </div>
-        <div x-show="!habits.wakeUp.time">
-          <span style="color: #64748b; font-size: 0.875rem; font-style: italic;">Klik untuk set waktu bangun pagi</span>
+        <div class="habit-face habit-back">
+          <h3 class="habit-title" style="margin-bottom:.4rem">Bangun Pagi</h3>
+          <p class="habit-description">Memulai hari dengan semangat dan disiplin. Kebiasaan bangun pagi membantu menciptakan rutinitas yang sehat.</p>
+          <p class="habit-description">Waktu pagi adalah momen terbaik untuk mempersiapkan diri menghadapi hari yang produktif dan penuh prestasi.</p>
+          <div class="habit-status" style="font-size:.7rem;">
+            <template x-if="habits.wakeUp.time">
+              <span class="tag">✅ Bangun jam: <span x-text="habits.wakeUp.time"></span></span>
+            </template>
+            <template x-if="!habits.wakeUp.time">
+              <span style="color:#64748b;font-style:italic;">Klik untuk set waktu bangun pagi</span>
+            </template>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- 2. Beribadah -->
-    <div class="habit-card card-worship" 
-         :class="[habits.worship.completed ? 'completed' : '']" 
-         @click="openWorshipModal()">
-      <!-- Konten Kartu Modern -->
-      <div class="habit-content">
-        <!-- Icon Container Modern -->
-        <div class="habit-image">
-          <img src="<?= base_url('assets/images/habits/rajin_beribadah.png') ?>" alt="Beribadah">
+    <div class="habit-card card-worship" :class="[habits.worship.completed ? 'completed' : '']" @click="openWorshipModal()">
+      <div class="habit-inner">
+        <div class="habit-face habit-front">
+          <div class="habit-image"><img src="<?= base_url('assets/images/habits/rajin_beribadah.png') ?>" alt="Beribadah"></div>
+          <h3 class="habit-title">Beribadah</h3>
         </div>
-        
-        <!-- Text langsung wrap di sekitar float -->
-        <h3 class="habit-title">Beribadah</h3>
-        <p class="habit-description">
-          Membentuk pribadi yang memiliki nilai spiritual kuat. Kebiasaan beribadah secara rutin membantu mengembangkan karakter yang baik.
-        </p>
-        <p class="habit-description">
-          Memberikan ketenangan batin dan memperkuat hubungan dengan Tuhan Yang Maha Esa dalam kehidupan sehari-hari.
-        </p>
-      </div>
-      
-      <!-- Status Area Modern -->
-      <div class="habit-status">
-        <div x-show="habits.worship.completed">
-          <span class="tag">✅ Sudah beribadah hari ini</span>
-          <div x-show="habits.worship.activities.length > 0" style="margin-top: 10px;">
-            <template x-for="activity in habits.worship.activities" :key="activity">
-              <div style="color: #374151; font-size: 0.875rem; margin: 3px 0; font-weight: 500;" x-text="activity"></div>
+        <div class="habit-face habit-back">
+          <h3 class="habit-title" style="margin-bottom:.4rem">Beribadah</h3>
+          <p class="habit-description">Membentuk pribadi yang memiliki nilai spiritual kuat. Kebiasaan beribadah secara rutin membantu mengembangkan karakter yang baik.</p>
+            <p class="habit-description">Memberikan ketenangan batin dan memperkuat hubungan dengan Tuhan Yang Maha Esa dalam kehidupan sehari-hari.</p>
+          <div class="habit-status" style="font-size:.68rem;">
+            <template x-if="habits.worship.completed">
+              <span class="tag">✅ Sudah beribadah hari ini</span>
+            </template>
+            <template x-if="!habits.worship.completed">
+              <span style="color:#64748b;font-style:italic;">Klik untuk mencatat ibadah</span>
             </template>
           </div>
-        </div>
-        <div x-show="!habits.worship.completed">
-          <span style="color: #64748b; font-size: 0.875rem; font-style: italic;">Klik untuk mencatat ibadah</span>
         </div>
       </div>
     </div>
 
     <!-- 3. Berolahraga -->
-    <div class="habit-card card-exercise" 
-         :class="[habits.exercise.completed ? 'completed' : '']" 
-         @click="openExerciseModal()">
-      <!-- Row 1: Konten dengan text wrapping -->
-      <div class="habit-content">
-        <div class="habit-image">
-          <img src="<?= base_url('assets/images/habits/berolahraga.png') ?>" alt="Berolahraga">
+    <div class="habit-card card-exercise" :class="[habits.exercise.completed ? 'completed' : '']" @click="openExerciseModal()">
+      <div class="habit-inner">
+        <div class="habit-face habit-front">
+          <div class="habit-image"><img src="<?= base_url('assets/images/habits/berolahraga.png') ?>" alt="Berolahraga"></div>
+          <h3 class="habit-title">Berolahraga</h3>
         </div>
-        
-        <!-- Text langsung wrap di sekitar float -->
-        <h3 class="habit-title">Berolahraga</h3>
-        <p class="habit-description">Mendorong kebugaran fisik dan kesehatan mental. Aktivitas fisik yang teratur membantu menjaga stamina tubuh, meningkatkan daya tahan, dan memberikan efek positif bagi kesehatan mental serta emosional dalam kehidupan sehari-hari.</p>
-      </div>
-      
-      <!-- Row 2: Status/Input Area -->
-      <div class="habit-status">
-        <div x-show="habits.exercise.completed">
-          <span class="tag" x-text="'Olahraga: ' + habits.exercise.duration + ' menit'"></span>
-          <div x-show="habits.exercise.activities && habits.exercise.activities.length > 0" style="margin-top: 10px;">
-            <template x-for="activity in habits.exercise.activities" :key="activity">
-              <div style="color: #374151; font-size: 0.9rem; margin: 3px 0; font-weight: 500;" x-text="activity"></div>
+        <div class="habit-face habit-back">
+          <h3 class="habit-title" style="margin-bottom:.4rem">Berolahraga</h3>
+          <p class="habit-description">Mendorong kebugaran fisik dan kesehatan mental. Aktivitas fisik yang teratur membantu menjaga stamina tubuh dan memberikan efek positif bagi suasana hati.</p>
+          <div class="habit-status" style="font-size:.68rem;">
+            <template x-if="habits.exercise.completed">
+              <span class="tag">✅: <template x-if="habits.exercise.duration"><span x-text="habits.exercise.duration"></span>m </template><template x-if="habits.exercise.activities && habits.exercise.activities.length">• <span x-text="habits.exercise.activities.join(', ')"></span></template></span>
+            </template>
+            <template x-if="!habits.exercise.completed">
+              <span style="color:#64748b;font-style:italic;">Klik untuk catat olahraga</span>
             </template>
           </div>
-        </div>
-        <div x-show="!habits.exercise.completed">
-          <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat olahraga</span>
         </div>
       </div>
     </div>
 
-    <!-- 4. Makan Sehat dan Bergizi -->
-    <div class="habit-card card-healthy-food" 
-         :class="[habits.healthyFood.completed ? 'completed' : '']" 
-         @click="openHealthyFoodModal()">
-      <!-- Row 1: Konten dengan text wrapping -->
-      <div class="habit-content">
-        <div class="habit-image">
-          <img src="<?= base_url('assets/images/habits/makan_bergizi.png') ?>" alt="Makan Sehat dan Bergizi">
+    <!-- 4. Makan Sehat -->
+    <div class="habit-card card-healthy-food" :class="[habits.healthyFood.items.length ? 'completed' : '']" @click="openHealthyFoodModal()">
+      <div class="habit-inner">
+        <div class="habit-face habit-front">
+          <div class="habit-image"><img src="<?= base_url('assets/images/habits/makan_bergizi.png') ?>" alt="Makan Sehat"></div>
+          <h3 class="habit-title">Makan Sehat</h3>
         </div>
-        
-        <!-- Text langsung wrap di sekitar float -->
-        <h3 class="habit-title">Makan Sehat dan Bergizi</h3>
-        <p class="habit-description">Menunjang pertumbuhan dan kecerdasan. Pola makan yang sehat dan bergizi sangat penting untuk mendukung perkembangan fisik dan mental yang optimal, serta memberikan energi yang diperlukan untuk beraktivitas sehari-hari dengan optimal.</p>
-      </div>
-      
-      <!-- Row 2: Status/Input Area -->
-      <div class="habit-status">
-        <div x-show="habits.healthyFood.items.length > 0">
-          <span class="tag">✅ Sudah makan sehat hari ini</span>
-          <div style="margin-top: 10px;">
-            <template x-for="item in habits.healthyFood.items" :key="item">
-              <div style="color: #374151; font-size: 0.9rem; margin: 3px 0; font-weight: 500;" x-text="item"></div>
+        <div class="habit-face habit-back">
+          <h3 class="habit-title" style="margin-bottom:.4rem">Makan Sehat & Bergizi</h3>
+          <p class="habit-description">Menunjang pertumbuhan dan kecerdasan. Pola makan sehat memberi energi untuk aktivitas dan belajar.</p>
+          <div class="habit-status" style="font-size:.68rem;">
+            <template x-if="habits.healthyFood.items.length">
+              <span class="tag">✅: <span x-text="habits.healthyFood.items.join(', ')"></span></span>
+            </template>
+            <template x-if="!habits.healthyFood.items.length">
+              <span style="color:#64748b;font-style:italic;">Klik untuk catat makanan sehat</span>
             </template>
           </div>
-        </div>
-        <div x-show="habits.healthyFood.items.length === 0">
-          <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat makanan sehat</span>
         </div>
       </div>
     </div>
 
     <!-- 5. Gemar Belajar -->
-    <div class="habit-card card-learning" 
-         :class="[habits.learning.completed ? 'completed' : '']" 
-         @click="openLearningModal()">
-      <!-- Row 1: Konten dengan text wrapping -->
-      <div class="habit-content">
-        <div class="habit-image">
-          <img src="<?= base_url('assets/images/habits/gemar_belajar.png') ?>" alt="Gemar Belajar">
+    <div class="habit-card card-learning" :class="[habits.learning.items.length ? 'completed' : '']" @click="openLearningModal()">
+      <div class="habit-inner">
+        <div class="habit-face habit-front">
+          <div class="habit-image"><img src="<?= base_url('assets/images/habits/gemar_belajar.png') ?>" alt="Gemar Belajar"></div>
+          <h3 class="habit-title">Belajar</h3>
         </div>
-        
-        <!-- Text langsung wrap di sekitar float -->
-        <h3 class="habit-title">Gemar Belajar</h3>
-        <p class="habit-description">Menumbuhkan rasa ingin tahu dan kreativitas. Kebiasaan belajar yang konsisten membantu mengembangkan potensi diri, memperluas wawasan, dan meningkatkan kemampuan berpikir kritis untuk mencapai prestasi akademik yang optimal.</p>
-      </div>
-      
-      <!-- Row 2: Status/Input Area -->
-      <div class="habit-status">
-        <div x-show="habits.learning.items.length > 0">
-          <span class="tag">✅ Sudah belajar hari ini</span>
-          <div style="margin-top: 10px;">
-            <template x-for="item in habits.learning.items" :key="item">
-              <div style="color: #374151; font-size: 0.9rem; margin: 3px 0; font-weight: 500;" x-text="item"></div>
+        <div class="habit-face habit-back">
+          <h3 class="habit-title" style="margin-bottom:.4rem">Gemar Belajar</h3>
+          <p class="habit-description">Menumbuhkan rasa ingin tahu & kreativitas. Belajar konsisten memperluas wawasan dan kemampuan berpikir kritis.</p>
+          <div class="habit-status" style="font-size:.68rem;">
+            <template x-if="habits.learning.items.length">
+              <span class="tag">✅: <span x-text="habits.learning.items.join(', ')"></span></span>
+            </template>
+            <template x-if="!habits.learning.items.length">
+              <span style="color:#64748b;font-style:italic;">Klik untuk catat belajar</span>
             </template>
           </div>
-        </div>
-        <div x-show="habits.learning.items.length === 0">
-          <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat pembelajaran hari ini</span>
         </div>
       </div>
     </div>
 
     <!-- 6. Bermasyarakat -->
-    <div class="habit-card card-social" 
-         :class="[habits.social.completed ? 'completed' : '']" 
-         @click="openSocialModal()">
-      <!-- Row 1: Konten dengan text wrapping -->
-      <div class="habit-content">
-        <div class="habit-image">
-          <img src="<?= base_url('assets/images/habits/bermasyarakat.png') ?>" alt="Bermasyarakat">
+    <div class="habit-card card-social" :class="[habits.social.items.length ? 'completed' : '']" @click="openSocialModal()">
+      <div class="habit-inner">
+        <div class="habit-face habit-front">
+          <div class="habit-image"><img src="<?= base_url('assets/images/habits/bermasyarakat.png') ?>" alt="Bermasyarakat"></div>
+          <h3 class="habit-title">Sosial</h3>
         </div>
-        
-        <!-- Text langsung wrap di sekitar float -->
-        <h3 class="habit-title">Bermasyarakat</h3>
-        <p class="habit-description">Mengajarkan kepedulian dan tanggung jawab sosial. Kegiatan sosial membantu mengembangkan empati, kerjasama, dan rasa tanggung jawab terhadap lingkungan sekitar sehingga menjadi pribadi yang berguna bagi masyarakat.</p>
-      </div>
-      
-      <!-- Row 2: Status/Input Area -->
-      <div class="habit-status">
-        <div x-show="habits.social.items.length > 0">
-          <span class="tag">✅ Sudah berkegiatan sosial hari ini</span>
-          <div style="margin-top: 10px;">
-            <template x-for="item in habits.social.items" :key="item">
-              <div style="color: #374151; font-size: 0.9rem; margin: 3px 0; font-weight: 500;" x-text="item"></div>
+        <div class="habit-face habit-back">
+          <h3 class="habit-title" style="margin-bottom:.4rem">Bermasyarakat</h3>
+          <p class="habit-description">Mengajarkan kepedulian & tanggung jawab. Kegiatan sosial menumbuhkan empati dan kerjasama.</p>
+          <div class="habit-status" style="font-size:.68rem;">
+            <template x-if="habits.social.items.length">
+              <span class="tag">✅: <span x-text="habits.social.items.join(', ')"></span></span>
+            </template>
+            <template x-if="!habits.social.items.length">
+              <span style="color:#64748b;font-style:italic;">Klik untuk catat sosial</span>
             </template>
           </div>
-        </div>
-        <div x-show="habits.social.items.length === 0">
-          <span style="color: #6b7280; font-style: italic;">Klik untuk mencatat kegiatan sosial</span>
         </div>
       </div>
     </div>
 
     <!-- 7. Tidur Cepat -->
-    <div class="habit-card card-sleep" 
-         :class="[habits.sleep.completed ? 'completed' : '']" 
-         @click="openSleepModal()">
-      <!-- Row 1: Konten dengan text wrapping -->
-      <div class="habit-content">
-        <div class="habit-image">
-          <img src="<?= base_url('assets/images/habits/tidur_cepat.png') ?>" alt="Tidur Cepat">
+    <div class="habit-card card-sleep" :class="[habits.sleep.time ? 'completed' : '']" @click="openSleepModal()">
+      <div class="habit-inner">
+        <div class="habit-face habit-front">
+          <div class="habit-image"><img src="<?= base_url('assets/images/habits/tidur_cepat.png') ?>" alt="Tidur Cepat"></div>
+          <h3 class="habit-title">Tidur Cepat</h3>
         </div>
-        
-        <!-- Text langsung wrap di sekitar float -->
-        <h3 class="habit-title">Tidur Cepat</h3>
-        <p class="habit-description">Memastikan kualitas istirahat yang baik. Tidur yang cukup dan berkualitas sangat penting untuk pemulihan tubuh, konsentrasi belajar, dan pertumbuhan optimal sehingga siap menghadapi aktivitas keesokan harinya dengan prima.</p>
-      </div>
-      
-      <!-- Row 2: Status/Input Area -->
-      <div class="habit-status">
-        <div x-show="habits.sleep.time">
-          <span class="tag" x-text="'Tidur jam: ' + habits.sleep.time"></span>
-        </div>
-        <div x-show="!habits.sleep.time">
-          <span style="color: #6b7280; font-style: italic;">Klik untuk set waktu tidur</span>
+        <div class="habit-face habit-back">
+          <h3 class="habit-title" style="margin-bottom:.4rem">Tidur Cepat</h3>
+          <p class="habit-description">Istirahat cukup penting untuk pemulihan tubuh & fokus belajar. Tidur berkualitas menyiapkan energi esok hari.</p>
+          <div class="habit-status" style="font-size:.68rem;">
+            <template x-if="habits.sleep.time">
+              <span class="tag">✅: <span x-text="habits.sleep.time"></span></span>
+            </template>
+            <template x-if="!habits.sleep.time">
+              <span style="color:#64748b;font-style:italic;">Klik untuk set waktu tidur</span>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -1419,6 +1188,54 @@ input[type="checkbox"] {
       </div>
     </div>
 
+    <!-- Per-Category Monthly Recap -->
+    <div style="background: white; border-radius: 16px; padding: 1.5rem 1.5rem 1.25rem; box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 2rem;">
+      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <h2 style="margin:0; font-size:1.2rem; font-weight:700; color:#1e293b;">📊 Rekap Bulanan per Kategori</h2>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <label style="font-weight:600; color:#334155; font-size:0.9rem;">Kategori:</label>
+          <select x-model="selectedRecapCategory" @change="updateCategoryRecap()" style="padding:0.55rem 0.85rem; border:2px solid #e2e8f0; border-radius:10px; font-size:0.85rem; background:#f8fafc; cursor:pointer;">
+            <option value="all">Semua Kebiasaan</option>
+            <option value="wakeUp">Bangun Pagi</option>
+            <option value="worship">Beribadah</option>
+            <option value="exercise">Olahraga</option>
+            <option value="healthyFood">Makan Sehat</option>
+            <option value="learning">Belajar</option>
+            <option value="social">Bersosialisasi</option>
+            <option value="sleep">Tidur Teratur</option>
+          </select>
+        </div>
+      </div>
+      <div x-show="monthlyRecapDays.length > 0" class="modern-table-wrapper">
+        <table class="modern-table" role="table" aria-label="Rekap Bulanan">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th role="columnheader">Hari</th>
+              <template x-for="day in monthlyRecapDays" :key="'h'+day">
+                <th role="columnheader" x-text="day"></th>
+              </template>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
+            <tr role="row">
+              <td role="cell">Data</td>
+              <template x-for="item in monthlyRecap" :key="'d'+item.day">
+                <td role="cell" :class="item.completed ? 'cell-done' : 'cell-empty'" :title="item.tooltip" x-text="item.display"></td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:.55rem; font-size:0.63rem; color:#64748b; display:flex; gap:.85rem; flex-wrap:wrap; padding:0 .4rem;">
+          <template x-if="selectedRecapCategory==='all'"><span>Angka menunjukkan jumlah kebiasaan selesai (0-7) tiap hari.</span></template>
+          <template x-if="selectedRecapCategory==='wakeUp'"><span>Tampilkan jam bangun (✓ bila hanya status tanpa jam).</span></template>
+          <template x-if="selectedRecapCategory==='exercise'"><span>Tampilkan durasi menit olahraga.</span></template>
+          <template x-if="['learning','social','healthyFood','worship'].includes(selectedRecapCategory)"><span>Tampilkan jumlah item/aktivitas (✓ bila hanya status).</span></template>
+          <template x-if="selectedRecapCategory==='sleep'"><span>Tampilkan jam tidur.</span></template>
+        </div>
+      </div>
+      <div x-show="monthlyRecapDays.length === 0" style="text-align:center; color:#64748b; font-size:0.85rem; padding:0.75rem 0;">Belum ada data bulan ini.</div>
+    </div>
+
     <!-- Journal-style Daily Records -->
     <div style="background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
       <h2 style="margin: 0 0 1.5rem 0; color: #1e293b; font-size: 1.5rem; font-weight: 700; text-align: center;">📖 Jurnal Harian Kebiasaan</h2>
@@ -1552,6 +1369,10 @@ function habitApp() {
       averageCompletion: 0,
       longestStreak: 0
     },
+  // Monthly per-category recap
+  selectedRecapCategory: 'all',
+  monthlyRecapDays: [],
+  monthlyRecap: [],
     
     // Modal states
     showWakeUpModal: false,
@@ -1632,9 +1453,20 @@ function habitApp() {
       
       console.log(`📅 Initial date set to: ${this.selectedDate}`);
       this.loadDataForDate();
+      // Preload monthly report & recap
+      this.loadMonthlyReport();
       
       // Bind escape key handler to this context
       this.handleEscapeKey = this.handleEscapeKey.bind(this);
+    },
+
+    switchView(view) {
+      if (this.currentView === view) return;
+      this.currentView = view;
+      if (view === 'monthly') {
+        // Ensure latest monthly data
+        this.loadMonthlyReport();
+      }
     },
     
     // Date management functions
@@ -1661,7 +1493,7 @@ function habitApp() {
       today.setHours(0, 0, 0, 0);
       
       if (selected.getTime() === today.getTime()) {
-        return 'Kebiasaan Hari Ini';
+  return '';
       } else if (selected.getTime() < today.getTime()) {
         return 'Riwayat Kebiasaan - ' + this.formatDate(this.selectedDate);
       }
@@ -1749,7 +1581,7 @@ function habitApp() {
     
     saveWakeUp() {
       if (this.wakeUpInput) {
-        this.habits.wakeUp.time = this.wakeUpInput;
+  this.habits.wakeUp.time = this.normalizeTime(this.wakeUpInput);
         this.habits.wakeUp.completed = true;
         this.closeWakeUpModal();
         this.saveData();
@@ -2038,7 +1870,7 @@ function habitApp() {
     
     saveSleep() {
       if (this.sleepInput) {
-        this.habits.sleep.time = this.sleepInput;
+  this.habits.sleep.time = this.normalizeTime(this.sleepInput);
         this.habits.sleep.completed = true;
         this.closeSleepModal();
         this.saveData();
@@ -2306,7 +2138,7 @@ function habitApp() {
           case 1: // Wake Up - uses value_time
             if (item.value_time && item.value_time.trim() !== '') {
               this.habits.wakeUp.completed = true;
-              this.habits.wakeUp.time = item.value_time;
+              this.habits.wakeUp.time = this.normalizeTime(item.value_time);
               console.log('✅ Wake Up set to completed with time:', item.value_time);
             } else {
               console.log('❌ Wake Up - no valid value_time');
@@ -2410,7 +2242,7 @@ function habitApp() {
           case 7: // Sleep - uses value_time
             if (item.value_time && item.value_time.trim() !== '') {
               this.habits.sleep.completed = true;
-              this.habits.sleep.time = item.value_time;
+              this.habits.sleep.time = this.normalizeTime(item.value_time);
               console.log('✅ Sleep set to completed with time:', item.value_time);
             } else {
               console.log('❌ Sleep - no valid value_time');
@@ -2577,6 +2409,79 @@ function habitApp() {
       this.monthlyStats.longestStreak = longestStreak;
 
       console.log('📊 Monthly stats calculated:', this.monthlyStats);
+
+      // Build per-category recap after data loaded
+      this.updateCategoryRecap();
+    },
+
+    // Build per-category recap data
+    updateCategoryRecap() {
+      if (!this.selectedMonth) return;
+      const [yearStr, monthStr] = this.selectedMonth.split('-');
+      const year = parseInt(yearStr);
+      const month = parseInt(monthStr); // 1-based
+      const daysInMonth = new Date(year, month, 0).getDate();
+      this.monthlyRecapDays = Array.from({length: daysInMonth}, (_, i) => i + 1);
+      this.monthlyRecap = this.monthlyRecapDays.map(day => {
+        const date = `${yearStr}-${monthStr}-${day.toString().padStart(2,'0')}`;
+        const dayData = this.monthlyData[date];
+        return this.extractRecapValue(this.selectedRecapCategory, day, dayData);
+      });
+    },
+
+    extractRecapValue(category, day, dayData) {
+      if (!dayData) {
+        return { day, completed: false, display: '-', tooltip: 'Tidak ada data' };
+      }
+      const completedCount = this.getCompletedCountForDay(dayData);
+      if (category === 'all') {
+        return { day, completed: completedCount > 0, display: completedCount.toString(), tooltip: `${completedCount} dari 7 kebiasaan selesai` };
+      }
+      let display = '✓';
+      let completed = false;
+      let tooltip = '';
+      switch(category) {
+        case 'wakeUp':
+          completed = !!(dayData.wakeUp && dayData.wakeUp.completed);
+          display = completed ? (dayData.wakeUp.time || '✓') : '-';
+          tooltip = completed ? `Bangun ${dayData.wakeUp.time || ''}` : 'Belum dicatat';
+          break;
+        case 'worship':
+          completed = !!(dayData.worship && dayData.worship.completed);
+          const worshipCount = completed ? (dayData.worship.activities ? dayData.worship.activities.length : 1) : 0;
+          display = completed ? (worshipCount > 1 ? worshipCount : '✓') : '-';
+          tooltip = completed ? `${worshipCount} aktivitas ibadah` : 'Belum dicatat';
+          break;
+        case 'exercise':
+          completed = !!(dayData.exercise && dayData.exercise.completed);
+            display = completed ? (dayData.exercise.duration ? dayData.exercise.duration + 'm' : '✓') : '-';
+            tooltip = completed ? `Olahraga ${dayData.exercise.duration || ''} menit` : 'Belum dicatat';
+          break;
+        case 'healthyFood':
+          completed = !!(dayData.healthyFood && dayData.healthyFood.completed);
+          const hfCount = completed ? (dayData.healthyFood.items ? dayData.healthyFood.items.length : 1) : 0;
+          display = completed ? (hfCount > 1 ? hfCount : '✓') : '-';
+          tooltip = completed ? `${hfCount} makanan sehat` : 'Belum dicatat';
+          break;
+        case 'learning':
+          completed = !!(dayData.learning && dayData.learning.completed);
+          const learnCount = completed ? (dayData.learning.items ? dayData.learning.items.length : 1) : 0;
+          display = completed ? (learnCount > 1 ? learnCount : '✓') : '-';
+          tooltip = completed ? `${learnCount} aktivitas belajar` : 'Belum dicatat';
+          break;
+        case 'social':
+          completed = !!(dayData.social && dayData.social.completed);
+          const socialCount = completed ? (dayData.social.items ? dayData.social.items.length : 1) : 0;
+          display = completed ? (socialCount > 1 ? socialCount : '✓') : '-';
+          tooltip = completed ? `${socialCount} aktivitas sosial` : 'Belum dicatat';
+          break;
+        case 'sleep':
+          completed = !!(dayData.sleep && dayData.sleep.completed);
+          display = completed ? (dayData.sleep.time || '✓') : '-';
+          tooltip = completed ? `Tidur ${dayData.sleep.time || ''}` : 'Belum dicatat';
+          break;
+      }
+      return { day, completed, display, tooltip };
     },
 
     // Helper functions for monthly report
@@ -2719,6 +2624,20 @@ function habitApp() {
       }
       
       console.log('✅ Activities parsing completed');
+    }
+    ,normalizeTime(val){
+      if(!val) return '';
+      // Accept formats HH:MM, HH.MM, H:MM, HHMM
+      let v=val.trim();
+      if(/^\d{4}$/.test(v)){ v=v.slice(0,2)+':'+v.slice(2); }
+      v=v.replace('.',':');
+      const m=v.match(/^(\d{1,2}):(\d{2})/);
+      if(m){
+        let hh=parseInt(m[1],10); let mm=parseInt(m[2],10);
+        if(hh>23) hh=23; if(mm>59) mm=59;
+        return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+      }
+      return v.substring(0,5);
     }
   }
 }

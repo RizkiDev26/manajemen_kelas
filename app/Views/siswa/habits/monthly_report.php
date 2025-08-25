@@ -12,11 +12,7 @@ body {
   color: #1e293b;
 }
 
-.monthly-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 1rem;
-}
+.monthly-container {max-width:1900px; margin:0 auto; padding:1rem 2rem;}
 
 /* Header */
 .monthly-header {
@@ -94,58 +90,11 @@ body {
   transform: scale(1.05);
 }
 
-/* Summary Stats */
-.summary-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  padding: 1.5rem;
-  border-radius: 16px;
-  color: white;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.stat-card.total-days {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-}
-
-.stat-card.average-completion {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.stat-card.perfect-days {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.stat-card.consistency {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-}
-
-.stat-card h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-.stat-card .stat-value {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-}
 
 /* Table Container */
-.table-container {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  overflow-x: auto;
-}
+.table-container {background:white; border-radius:16px; padding:2rem 2.5rem; box-shadow:0 4px 20px rgba(0,0,0,0.08); width:100%; max-width:1700px; margin:0 auto 2rem;}
+/* Scroll wrapper for sticky header/first col */
+.monthly-table-scroll{max-height:72vh; overflow:auto; border-radius:14px; position:relative; box-shadow:inset 0 0 0 1px #e2e8f0;}
 
 .table-title {
   text-align: center;
@@ -155,46 +104,93 @@ body {
   font-weight: 700;
 }
 
-/* Monthly Report Table */
-.monthly-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  min-width: 900px;
+/* Monthly Report Table - Spreadsheet Style */
+.monthly-table {width:100%; border-collapse:separate; border-spacing:0; font-size:.7rem; min-width:1280px; margin:0 auto; table-layout:auto; --topHeaderH:44px; --subHeaderH:28px;}
+.monthly-table th,.monthly-table td {padding:8px 8px; text-align:center; vertical-align:middle; position:relative; font-size:.7rem; line-height:1.15; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+.monthly-table thead tr.top-header th {background:linear-gradient(135deg,#d3f1ff 0%,#b9e7fb 60%,#afe0f6 100%); font-weight:700; color:#0f172a; letter-spacing:.4px; height:var(--topHeaderH);}
+.monthly-table thead tr.sub-header th {background:#e6f7ff; font-weight:600; color:#334155; height:var(--subHeaderH); padding-top:4px; padding-bottom:4px;}
+/* Soft grid lines */
+.monthly-table tbody td {border-top:1px solid #e2e8f0; border-right:1px solid #eef2f7;}
+.monthly-table tbody tr:last-child td {border-bottom:1px solid #e2e8f0;}
+.monthly-table tbody td:last-child {border-right:1px solid #e2e8f0;}
+.monthly-table thead th {border-right:1px solid #cbd5e1;}
+.monthly-table thead th:last-child {border-right:1px solid #cbd5e1;}
+/* Rounded corners */
+.monthly-table thead tr.top-header th:first-child {border-top-left-radius:14px;}
+.monthly-table thead tr.top-header th:last-child {border-top-right-radius:14px;}
+.monthly-table tbody tr:last-child td:first-child {border-bottom-left-radius:14px;}
+.monthly-table tbody tr:last-child td:last-child {border-bottom-right-radius:14px;}
+/* Zebra & hover */
+.monthly-table tbody tr:nth-child(even) td {background:#f8fafc;}
+.monthly-table tbody tr:nth-child(odd) td {background:#ffffff;}
+.monthly-table tbody tr:hover td {background:#eef6ff;}
+/* Strong full-row hover effect overriding individual cell backgrounds */
+.monthly-table tbody tr:hover td,
+.monthly-table tbody tr:hover td.simple-habit.completed,
+.monthly-table tbody tr:hover td.simple-habit.not-completed,
+.monthly-table tbody tr:hover td.simple-habit.no-data,
+.monthly-table tbody tr:hover td.time-habit.good,
+.monthly-table tbody tr:hover td.time-habit.bad,
+.monthly-table tbody tr:hover td.time-habit.no-data,
+.monthly-table tbody tr:hover td.pray-cell.done,
+.monthly-table tbody tr:hover td.pray-cell.miss,
+.monthly-table tbody tr:hover td.worship-others {
+  background:#f0f7ff !important;
+  color:#0f172a !important;
 }
-
-.monthly-table th,
-.monthly-table td {
-  border: 1px solid #e2e8f0;
-  padding: 0.6rem 0.4rem;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.monthly-table th {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  font-weight: 600;
-  color: #475569;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.monthly-table th.date-header {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  min-width: 90px;
-  font-size: 0.8rem;
-}
-
-.monthly-table th.habit-header {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  min-width: 100px;
-  font-size: 0.75rem;
-  line-height: 1.2;
-  padding: 0.5rem 0.3rem;
-}
+.monthly-table tbody tr:hover td.status-cell .status-bar {background:#e3f1ff;}
+/* Sticky first column */
+.monthly-table td.date-cell, .monthly-table th.date-header {position:sticky; left:0; z-index:6; box-shadow:2px 0 0 0 #f1f5f9;}
+.monthly-table th.date-header {z-index:8;}
+/* Sticky header (multi-row) */
+/* First header row */
+.monthly-table thead tr.top-header th {position:sticky; top:0; z-index:12;}
+/* Second header row sits below first */
+.monthly-table thead tr.sub-header th {position:sticky; top:var(--topHeaderH); z-index:11; border-top:1px solid #c7dfe9;}
+/* Ensure left sticky date header (rowspan) stays above others */
+.monthly-table thead tr.top-header th.date-header{z-index:15;}
+/* Reserve space so content starts below double header when printing (optional) */
+/* Status cell with progress bar */
+.status-cell {padding:0 4px; min-width:70px;}
+.status-bar {position:relative; width:100%; height:26px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; font-weight:600; font-size:.65rem; display:flex; align-items:center; justify-content:center; color:#334155;}
+.status-bar-fill {position:absolute; inset:0; background:linear-gradient(90deg,#34d399,#10b981); width:0%; transition:width .5s ease; opacity:.18;}
+.status-bar[data-pct="0"] .status-bar-fill {display:none;}
+.status-bar .status-text {position:relative; z-index:2; letter-spacing:.4px;}
+/* Future & today accents */
+.monthly-table td.date-cell.today {box-shadow:inset 0 0 0 2px #1d4ed8;}
+.monthly-table td.date-cell.weekend {font-weight:700;}
+/* Prayer cells refine */
+.monthly-table td.pray-cell {font-size:.58rem; font-weight:700; letter-spacing:.5px;}
+.monthly-table td.pray-cell.done {color:#059669; background:#ecfdf5;}
+.monthly-table td.pray-cell.miss {color:#94a3b8;}
+/* Transition for interactive cells */
+.monthly-table td {transition:background .25s, color .25s, box-shadow .25s;}
+.monthly-table th.date-header {min-width:140px; font-size:.7rem;}
+.monthly-table th.status-header {min-width:60px;}
+.monthly-table th.pray-header {width:20px !important; padding:1px 0; font-size:.5rem;}
+.monthly-table td.pray-cell {width:10px !important; padding:0;}
+.monthly-table col.pray-col {width:10px !important;}
+.monthly-table th.lainnya-header {min-width:130px;}
+.monthly-table td {height:34px;}
+.monthly-table td.date-cell {font-weight:600; text-align:left; padding:4px 6px; font-size:.7rem;}
+.monthly-table td.status-cell {font-weight:700;}
+.monthly-table td.pray-cell {font-size:.6rem; font-weight:700; cursor:pointer;}
+.monthly-table td.pray-cell.done {color:#059669;}
+.monthly-table td.pray-cell.miss {color:#94a3b8;}
+.monthly-table td.worship-others {text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;}
+.monthly-table td.worship-others.has-data {background:linear-gradient(90deg,#ecfdf5,#d1fae5); color:#065f46; font-weight:500;}
+.monthly-table td.pray-cell.miss .miss-x {background:#fee2e2!important; color:#b91c1c!important;}
+.monthly-table td.pray-cell.miss {color:#b91c1c;}
+.monthly-table td.simple-habit {cursor:pointer; font-weight:600; font-size:.7rem;}
+.monthly-table td.simple-habit.completed {background:#dcfce7; color:#166534;}
+.monthly-table td.simple-habit.not-completed {background:#fef2f2; color:#b91c1c;}
+.monthly-table td.simple-habit.no-data {background:#f8fafc; color:#94a3b8;}
+.monthly-table td.time-habit {font-size:.65rem; font-weight:600; letter-spacing:.5px; cursor:pointer;}
+.monthly-table td.time-habit.good {background:#dcfce7; color:#166534;}
+.monthly-table td.time-habit.bad {background:#fef2f2; color:#b91c1c;}
+.monthly-table td.time-habit.no-data {background:#f8fafc; color:#94a3b8;}
+.monthly-table td.date-cell.weekend {background:#fef2f2; color:#dc2626;}
+.monthly-table td.date-cell.today {background:#dbeafe; color:#1d4ed8;}
 
 /* Date column */
 .date-cell {
@@ -379,18 +375,6 @@ body {
     font-size: 0.8rem;
   }
   
-  .summary-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-  
-  .stat-card {
-    padding: 1rem;
-  }
-  
-  .stat-card .stat-value {
-    font-size: 1.5rem;
-  }
   
   .export-buttons {
     gap: 0.5rem;
@@ -437,9 +421,6 @@ body {
     font-size: 0.8rem;
   }
   
-  .summary-stats {
-    grid-template-columns: 1fr;
-  }
   
   .export-buttons {
     flex-direction: column;
@@ -908,40 +889,43 @@ body {
   animation: slideInRight 0.5s ease-out, slideOutRight 0.5s ease-in 2.5s forwards;
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+/* Recap cards */
+.recap-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;}
+.recap-card {border:1px solid #e2e8f0;border-radius:10px;padding:6px 6px 8px;position:relative;background:#f8fafc;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;min-height:70px;transition:.2s box-shadow,.2s transform;cursor:default;}
+.recap-card.completed{background:#dcfce7;border-color:#bbf7d0;}
+.recap-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08);transform:translateY(-2px);}
+.recap-day {font-size:.65rem;font-weight:600;color:#334155;line-height:1; padding:2px 6px; border-radius:12px; background:#e2e8f0; margin-bottom:4px;}
+.recap-card.completed .recap-day{background:#86efac;color:#065f46;}
+.recap-value {font-size:.85rem;font-weight:700;color:#1e293b;line-height:1;margin-bottom:2px;}
+.recap-card.completed .recap-value{color:#065f46;}
+.recap-detail {font-size:.55rem;color:#64748b;line-height:1.05;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;width:100%;}
+.recap-category-badge{font-size:.6rem;padding:4px 8px;border-radius:20px;background:#f1f5f9;color:#334155;font-weight:600;}
+.recap-category-badge strong{color:#6366f1;}
+/* Daily cards grid (5 columns desktop, responsive) */
+.daily-cards-wrapper {background: #fff; border-radius: 18px; padding: 1.75rem 1.5rem 1.9rem; box-shadow: 0 4px 18px rgba(0,0,0,0.06); margin-bottom:2.2rem;}
+.daily-cards-grid {display:grid;grid-template-columns:repeat(5,1fr);gap:18px;}
+@media (max-width:1200px){.daily-cards-grid{grid-template-columns:repeat(4,1fr);} }
+@media (max-width:950px){.daily-cards-grid{grid-template-columns:repeat(3,1fr);} }
+@media (max-width:680px){.daily-cards-grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:420px){.daily-cards-grid{grid-template-columns:repeat(1,1fr);} }
+.day-card {position:relative; background:#fbe4d4; border-radius:32px; padding:16px 16px 18px; display:flex; flex-direction:column; min-height:165px; box-shadow:0 6px 14px -4px rgba(0,0,0,0.08); transition:.25s transform,.25s box-shadow;}
+.day-card:hover {transform:translateY(-4px); box-shadow:0 10px 22px -6px rgba(0,0,0,0.12);} 
+.day-card-inner {flex:1; background:#ffffff; border-radius:18px; padding:14px 14px 16px; display:flex; flex-direction:column; overflow:visible;}
+.day-number {position:absolute; top:8px; left:50%; transform:translateX(-50%); font-weight:700; font-size:1.05rem; color:#1e293b; letter-spacing:.5px;}
+.day-empty .day-card-inner {justify-content:center; align-items:center; color:#94a3b8; font-size:.7rem;}
+.habit-line {display:flex; align-items:flex-start; gap:6px; font-size:.78rem; line-height:1.25; margin-bottom:6px; color:#334155; font-weight:500; word-break:break-word;}
+.habit-line:last-child {margin-bottom:0;}
+.habit-line .h-icon {font-size:.85rem; line-height:1;}
+.habit-line .h-label {font-weight:600; color:#111827; font-size:.8rem;}
+.day-complete-indicator {position:absolute; top:6px; right:10px; font-size:.7rem; font-weight:600; background:#dcfce7; color:#065f46; padding:2px 7px; border-radius:12px; box-shadow:0 0 0 2px #f0fdf4;}
+.day-partial-indicator {position:absolute; top:6px; right:10px; font-size:.7rem; font-weight:600; background:#ffeaa7; color:#92400e; padding:2px 7px; border-radius:12px; box-shadow:0 0 0 2px #fff7ed;}
+.day-none-indicator {position:absolute; top:6px; right:10px; font-size:.7rem; font-weight:600; background:#e2e8f0; color:#475569; padding:2px 7px; border-radius:12px;}
+.day-card.completed {background:#d9fbe7;}
 
-@keyframes slideOutRight {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
+.day-card.completed .day-card-inner {background:#ffffff;}
 </style>
 
-<div id="monthlyReportApp" x-data="monthlyReportApp()" x-init="init()">
-  <!-- Header -->
-  <div class="monthly-header">
-    <h1>📊 Rekap Bulanan 7 Kebiasaan</h1>
-    <p>Laporan Progress Kebiasaan Harian dalam Bentuk Tabel</p>
-    <div style="margin-top: 1rem;">
-      <a href="<?= base_url('siswa/habits') ?>" style="display: inline-flex; align-items: center; gap: 0.5rem; color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 8px; backdrop-filter: blur(10px);">
-        ← Kembali ke Habits
-      </a>
-    </div>
-  </div>
+<div class="monthly-container" x-data="monthlyReportApp()" x-init="init()">
 
   <!-- Month Selector -->
   <div class="month-selector">
@@ -954,51 +938,25 @@ body {
       <button class="btn-current-month" @click="goToCurrentMonth()">
         Bulan Ini
       </button>
-    </div>
-  </div>
-
-  <!-- Summary Statistics -->
-  <div class="summary-stats">
-    <div class="stat-card total-days">
-      <h3>Total Hari Aktif</h3>
-      <p class="stat-value" x-text="stats.totalActiveDays + ' hari'"></p>
-    </div>
-    <div class="stat-card average-completion">
-      <h3>Rata-rata Penyelesaian</h3>
-      <p class="stat-value" x-text="stats.averageCompletion + '%'"></p>
-    </div>
-    <div class="stat-card perfect-days">
-      <h3>Hari Sempurna (7/7)</h3>
-      <p class="stat-value" x-text="stats.perfectDays + ' hari'"></p>
-    </div>
-    <div class="stat-card consistency">
-      <h3>Tingkat Konsistensi</h3>
-      <p class="stat-value" x-text="stats.consistency + '%'"></p>
-    </div>
-  </div>
-
-  <!-- Habit Statistics -->
-  <div style="background: white; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-    <h3 style="text-align: center; margin-bottom: 1.5rem; color: #1e293b; font-size: 1.3rem; font-weight: 700;">📈 Statistik Per Kebiasaan</h3>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
-      <template x-for="(habit, index) in habits" :key="index">
-        <div style="background: #f8fafc; border-radius: 12px; padding: 1rem; border-left: 4px solid #6366f1;">
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <span style="font-size: 1.2rem;" x-text="habit.icon"></span>
-            <h4 style="margin: 0; color: #1e293b; font-size: 0.9rem; font-weight: 600;" x-text="habit.name"></h4>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: #64748b; font-size: 0.8rem;">Tingkat Keberhasilan</span>
-            <span style="color: #059669; font-weight: 700; font-size: 1rem;" x-text="getHabitSuccessRate(habit.id) + '%'"></span>
-          </div>
-          <div style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 0.5rem; overflow: hidden;">
-            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); height: 100%; border-radius: 3px; transition: width 0.5s ease;" :style="`width: ${getHabitSuccessRate(habit.id)}%`"></div>
-          </div>
+      <?php if (!empty($students)): ?>
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+          <label for="studentSelect" style="font-weight:600;">Siswa:</label>
+          <select id="studentSelect" x-model="selectedStudentId" @change="loadMonthlyData()" style="padding:.55rem .8rem;border:2px solid #e2e8f0;border-radius:8px;min-width:220px;">
+            <option value="">-- Pilih Siswa --</option>
+            <?php foreach ($students as $s): ?>
+              <?php 
+                $labelNama = $s['nama'] ?: ($s['nisn'] ?? $s['nis']);
+                $labelKelas = $s['kelas_nama'] ?? ($s['kelas'] ?? ($s['kelas_id'] ?? '-'));
+              ?>
+              <option value="<?= $s['id'] ?>"><?= esc($labelNama) ?> (<?= esc($labelKelas) ?>)</option>
+            <?php endforeach; ?>
+          </select>
         </div>
-      </template>
+      <?php endif; ?>
     </div>
   </div>
+
+
 
   <!-- Export Buttons -->
   <div class="export-buttons">
@@ -1035,67 +993,78 @@ body {
   <!-- Table Container -->
   <div x-show="!loading" class="table-container">
     <h2 class="table-title" x-text="getTableTitle()"></h2>
+    <template x-if="!selectedStudentId && document.getElementById('studentSelect')">
+      <div style="text-align:center;padding:1.2rem;border:2px dashed #cbd5e1;border-radius:12px;margin-bottom:1rem;color:#475569;font-weight:500;">
+        Pilih siswa terlebih dahulu untuk menampilkan data kebiasaan.
+      </div>
+    </template>
     
-    <div style="overflow-x: auto;">
-      <table class="monthly-table" id="monthlyTable">
+  <div class="monthly-table-scroll">
+  <table class="monthly-table" id="monthlyTable" x-show="!document.getElementById('studentSelect') || selectedStudentId">
+        <colgroup>
+          <col span="1">
+          <col span="1">
+          <col span="1">
+          <col span="1">
+          <col class="pray-col">
+          <col class="pray-col">
+          <col class="pray-col">
+            <col class="pray-col">
+            <col class="pray-col">
+          <col span="1">
+          <col span="1">
+          <col span="1">
+          <col span="1">
+          <col span="1">
+        </colgroup>
         <thead>
-          <tr>
-            <th class="date-header">Tanggal</th>
-            <th class="habit-header">
-              <span class="habit-icon">🌅</span>
-              Bangun Pagi
-            </th>
-            <th class="habit-header">
-              <span class="habit-icon">🤲</span>
-              Beribadah
-            </th>
-            <th class="habit-header">
-              <span class="habit-icon">⚽</span>
-              Berolahraga
-            </th>
-            <th class="habit-header">
-              <span class="habit-icon">🥗</span>
-              Makan Sehat
-            </th>
-            <th class="habit-header">
-              <span class="habit-icon">📚</span>
-              Gemar Belajar
-            </th>
-            <th class="habit-header">
-              <span class="habit-icon">🤝</span>
-              Bermasyarakat
-            </th>
-            <th class="habit-header">
-              <span class="habit-icon">🌙</span>
-              Tidur Cepat
-            </th>
+          <tr class="top-header">
+            <th rowspan="2" class="date-header">HARI TANGGAL</th>
+            <th rowspan="2" class="status-header">STATUS</th>
+            <th rowspan="2">BANGUN PAGI</th>
+            <th colspan="6" class="worship-group">BERIBADAH</th>
+            <th rowspan="2">BEROLAHRAGA</th>
+            <th rowspan="2">MAKAN SEHAT</th>
+            <th rowspan="2">GEMAR BELAJAR</th>
+            <th rowspan="2">BERMASYARAKAT</th>
+            <th rowspan="2">TIDUR CEPAT</th>
+          </tr>
+          <tr class="sub-header">
+            <th class="pray-header">S</th>
+            <th class="pray-header">D</th>
+            <th class="pray-header">A</th>
+            <th class="pray-header">M</th>
+            <th class="pray-header">I</th>
+            <th class="lainnya-header">Ibadah Lainnya</th>
           </tr>
         </thead>
         <tbody>
           <template x-for="day in daysInMonth" :key="day">
             <tr>
-              <!-- Date Column -->
-              <td class="date-cell" 
-                  :class="[
-                    isWeekend(day) ? 'weekend' : '',
-                    isToday(day) ? 'today' : ''
-                  ]"
-                  x-text="formatDateForTable(day)">
+              <td class="date-cell" :class="[isWeekend(day)?'weekend':'', isToday(day)?'today':'']" x-text="formatDateForDetail(day)"></td>
+              <td class="status-cell">
+                <div class="status-bar" :data-pct="getDailyPercent(day)">
+                  <div class="status-bar-fill" :style="'width:'+getDailyPercent(day)+'%'" :aria-valuenow="getDailyPercent(day)" aria-valuemin="0" aria-valuemax="100"></div>
+                  <span class="status-text" x-text="getDailyStatus(day)"></span>
+                </div>
               </td>
-              
-              <!-- Habit Columns -->
-              <template x-for="(habit, habitIndex) in habits" :key="habitIndex">
-                <td class="habit-cell" 
-                    :class="getHabitCellClass(day, habitIndex + 1)"
-                    :title="getHabitCellTitle(day, habitIndex + 1)"
-                    @click="showHabitDetail(day, habitIndex + 1)">
-                </td>
-              </template>
+              <td :class="getBangunCellClass(day)" @click="showHabitDetail(day,1)" x-html="getBangunCellContent(day)"></td>
+              <td class="pray-cell" :class="getPrayerClass(day,'subuh')" @click="showHabitDetail(day,2)" x-html="getPrayerMark(day,'subuh')"></td>
+              <td class="pray-cell" :class="getPrayerClass(day,'dzuhur')" @click="showHabitDetail(day,2)" x-html="getPrayerMark(day,'dzuhur')"></td>
+              <td class="pray-cell" :class="getPrayerClass(day,'ashar')" @click="showHabitDetail(day,2)" x-html="getPrayerMark(day,'ashar')"></td>
+              <td class="pray-cell" :class="getPrayerClass(day,'maghrib')" @click="showHabitDetail(day,2)" x-html="getPrayerMark(day,'maghrib')"></td>
+              <td class="pray-cell" :class="getPrayerClass(day,'isya')" @click="showHabitDetail(day,2)" x-html="getPrayerMark(day,'isya')"></td>
+              <td class="worship-others" :class="getWorshipOthersClass(day)" @click="showHabitDetail(day,2)" x-text="getWorshipOthers(day)"></td>
+              <td :class="getHabitSimpleClass(day,3)" @click="showHabitDetail(day,3)" x-html="getHabitSimpleMark(day,3)"></td>
+              <td :class="getHabitSimpleClass(day,4)" @click="showHabitDetail(day,4)" x-html="getHabitSimpleMark(day,4)"></td>
+              <td :class="getHabitSimpleClass(day,5)" @click="showHabitDetail(day,5)" x-html="getHabitSimpleMark(day,5)"></td>
+              <td :class="getHabitSimpleClass(day,6)" @click="showHabitDetail(day,6)" x-html="getHabitSimpleMark(day,6)"></td>
+              <td :class="getTidurCellClass(day)" @click="showHabitDetail(day,7)" x-html="getTidurCellContent(day)"></td>
             </tr>
           </template>
         </tbody>
       </table>
-    </div>
+  </div>
 
     <!-- Legend -->
     <div class="legend">
@@ -1265,6 +1234,7 @@ function monthlyReportApp() {
     // Data properties
     selectedMonth: '',
     monthlyData: {},
+  selectedStudentId: '<?php if (!empty($students)) { echo ''; } ?>', // default kosong (admin pilih siswa)
     loading: false,
     daysInMonth: [],
     habits: [
@@ -1276,14 +1246,7 @@ function monthlyReportApp() {
       { id: 6, name: 'Bermasyarakat', icon: '🤝' },
       { id: 7, name: 'Tidur Cepat', icon: '🌙' }
     ],
-    
-    // Statistics
-    stats: {
-      totalActiveDays: 0,
-      averageCompletion: 0,
-      perfectDays: 0,
-      consistency: 0
-    },
+  // Removed category recap & statistics properties
     
     // Modal for habit details
     showDetailModal: false,
@@ -1333,7 +1296,14 @@ function monthlyReportApp() {
     init() {
       console.log('📊 Monthly Report App initialized');
       this.selectedMonth = this.getCurrentMonth();
-      this.loadMonthlyData();
+      // Jika ada dropdown siswa (admin mode) dan belum pilih, jangan fetch dulu
+      const hasStudentDropdown = !!document.getElementById('studentSelect');
+      if (hasStudentDropdown) {
+        console.log('🛈 Mode admin/walikelas: menunggu pemilihan siswa sebelum load data');
+        this.loading = false;
+      } else {
+        this.loadMonthlyData();
+      }
     },
     
     // Get current month in YYYY-MM format
@@ -1375,7 +1345,10 @@ function monthlyReportApp() {
         await this.simulateLoadingProgress();
         
         // Fetch data from server
-        const url = `<?= base_url('siswa/habits/monthly-data') ?>?month=${this.selectedMonth}`;
+        let url = `<?= base_url('siswa/habits/monthly-data') ?>?month=${this.selectedMonth}`;
+        if (this.selectedStudentId) {
+          url += `&student_id=${this.selectedStudentId}`;
+        }
         console.log('🔄 Fetching monthly data from:', url);
         
         const response = await fetch(url, {
@@ -1401,6 +1374,9 @@ function monthlyReportApp() {
         console.log('✅ API Response received:', result);
         
         this.monthlyData = result.data || {};
+        if (Object.keys(this.monthlyData).length === 0) {
+          console.log('ℹ️ Tidak ada data kebiasaan untuk parameter ini.');
+        }
         
         console.log('📊 Monthly data loaded:', this.monthlyData);
         console.log('📅 Available date keys:', Object.keys(this.monthlyData));
@@ -1410,9 +1386,7 @@ function monthlyReportApp() {
         if ('2025-08-21' in this.monthlyData) {
           console.log('📋 Data for 2025-08-21:', this.monthlyData['2025-08-21']);
         }
-        
-        // Calculate statistics
-        this.calculateStatistics();
+  // Category recap removed
         
         // Add small delay for smooth UX
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -1429,11 +1403,12 @@ function monthlyReportApp() {
         alert(`Gagal memuat data kebiasaan untuk bulan ${this.selectedMonth}.\nError: ${error.message}\n\nSilakan refresh halaman atau hubungi administrator.`);
         
         this.monthlyData = {};
-        this.calculateStatistics();
+  // stats removed
       } finally {
         this.loading = false;
       }
     },
+  // Category recap functions removed
     
     // Simulate loading progress for better UX
     async simulateLoadingProgress() {
@@ -1558,6 +1533,142 @@ function monthlyReportApp() {
       
       return `${habitName} - ${status}${details}`;
     },
+
+    // NEW TABLE HELPERS
+    getDailyStatus(day){
+      if(this.isFuture(day)) return '-';
+      const dateKey=this.getDateKey(day); const dd=this.monthlyData[dateKey];
+      let done=0;
+      if(dd){
+        for(let i=1;i<=7;i++){
+          const h=dd[`habit_${i}`];
+            if(h && h.completed) done++;
+        }
+      }
+      return `${done}/7`;
+    },
+    getDailyPercent(day){
+      if(this.isFuture(day)) return 0;
+      const dateKey=this.getDateKey(day); const dd=this.monthlyData[dateKey];
+      let done=0;
+      if(dd){
+        for(let i=1;i<=7;i++){
+          const h=dd[`habit_${i}`];
+          if(h && h.completed) done++;
+        }
+      }
+      return Math.round((done/7)*100);
+    },
+    // Bangun Pagi cell: show time if exists & mark good/bad
+    getBangunCellContent(day){
+      if(this.isFuture(day)) return '';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.habit_1; if(!h||!h.time){
+        return this.isPast(day)? this.getRedXIcon():'';
+      }
+      return h.time<= '06:00'? `<span>${h.time}</span>`: `<span style='color:#dc2626;'>${h.time}</span>`;
+    },
+    getBangunCellClass(day){
+      if(this.isFuture(day)) return 'time-habit no-data';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.habit_1; if(!h||!h.time) return 'time-habit no-data';
+      return h.time<= '06:00'? 'time-habit good':'time-habit bad';
+    },
+    // Tidur Cepat cell
+    getTidurCellContent(day){
+      if(this.isFuture(day)) return '';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.habit_7; if(!h||!h.time){
+        return this.isPast(day)? this.getRedXIcon():'';
+      }
+      return h.time<= '21:00'? `<span>${h.time}</span>`: `<span style='color:#dc2626;'>${h.time}</span>`;
+    },
+    getTidurCellClass(day){
+      if(this.isFuture(day)) return 'time-habit no-data';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.habit_7; if(!h||!h.time) return 'time-habit no-data';
+      return h.time<= '21:00'? 'time-habit good':'time-habit bad';
+    },
+    // Worship prayer mark (S D A M I)
+    getPrayerMark(day, prayer){
+      if(this.isFuture(day)) return '';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.habit_2; if(!h||!h.notes) {
+        // show red X icon for past days with missing prayer data
+        return this.isPast(day)? this.getRedXIcon():'';
+      }
+      const txt=h.notes.toLowerCase();
+      if(txt.includes(prayer)) return '✓';
+      // Past day and not done -> red X
+      return this.isPast(day)? this.getRedXIcon():'';
+    },
+    getRedXIcon(){
+      return `<span class='miss-x' style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;background:#fecaca;color:#b91c1c;font-size:11px;font-weight:600;">×</span>`;
+    },
+    isPast(day){
+      const today=new Date();
+      const [y,m]=this.selectedMonth.split('-');
+      const currentMonthKey=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+      const todayDay = today.getDate();
+      if(this.selectedMonth<currentMonthKey) return true; // previous month entirely past
+      if(this.selectedMonth>currentMonthKey) return false; // future month
+      return day < todayDay; // same month, earlier day
+    },
+    getPrayerClass(day, prayer){
+      if(this.isFuture(day)) return 'pray-cell';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.habit_2; const txt=(h?.notes||'').toLowerCase();
+      if(txt.includes(prayer)) return 'pray-cell done';
+      return 'pray-cell '+(this.isPast(day)? 'miss':'');
+    },
+    getWorshipOthersClass(day){
+      if(this.isFuture(day)) return 'worship-others no-data';
+      const content=this.getWorshipOthers(day);
+      if(content) return 'worship-others has-data';
+      return 'worship-others no-data';
+    },
+  getWorshipOthers(day){
+      if(this.isFuture(day)) return '';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.habit_2; if(!h||!h.notes) return '';
+      let txt=h.notes;
+      ['subuh','dzuhur','ashar','maghrib','isya'].forEach(p=>{txt=txt.replace(new RegExp(p,'ig'),'');});
+  txt=txt.replace(/sholat:?/ig,'');
+  // remove leftover commas and extra spaces
+  txt=txt.split(',').map(s=>s.trim()).filter(s=>s.length>0).join(', ');
+  txt=txt.replace(/\s+/g,' ').trim();
+  return txt;
+    },
+    // Simple habits (3-6) format teks: "Catatan (X menit)" atau hanya salah satunya. Fallback ✓ / ✗.
+    getHabitSimpleMark(day, habitId){
+      if(this.isFuture(day)) return '';
+      const dateKey=this.getDateKey(day);
+      const h=this.monthlyData[dateKey]?.[`habit_${habitId}`];
+      if(!h){
+        return this.isPast(day)? this.getRedXIcon():'';
+      }
+      let notes = (h.notes||'').trim();
+      // Normalisasi pemisah koma (hapus spasi ganda)
+      notes = notes.replace(/\s*,\s*/g, ', ').replace(/\s{2,}/g,' ');
+      let durText = '';
+      if(h.duration){
+        const num = parseFloat(h.duration);
+        if(!isNaN(num)){
+          durText = (Number.isInteger(num)? num.toString(): num.toFixed(1)) + ' menit';
+        } else {
+          // Jika tidak numerik, tampilkan apa adanya tanpa 'm'
+          durText = h.duration.toString().replace(/m$/,'') + ' menit';
+        }
+      }
+      let combined='';
+      if(notes && durText) combined = notes + ' ('+durText+')';
+      else if(notes) combined = notes;
+      else if(durText) combined = durText;
+      if(combined){
+        if(combined.length>50) combined = combined.substring(0,47)+'…';
+        return combined;
+      }
+      if(h.completed) return '✓';
+      return this.isPast(day)? this.getRedXIcon():'✗';
+    },
+    getHabitSimpleClass(day, habitId){
+      if(this.isFuture(day)) return 'simple-habit no-data';
+      const dateKey=this.getDateKey(day); const h=this.monthlyData[dateKey]?.[`habit_${habitId}`]; if(!h) return 'simple-habit no-data';
+      return 'simple-habit '+(h.completed? 'completed':'not-completed');
+    },
     
     // Get date key for data lookup
     getDateKey(day) {
@@ -1637,13 +1748,9 @@ function monthlyReportApp() {
     formatDateForDetail(day) {
       const [year, month] = this.selectedMonth.split('-');
       const date = new Date(year, month - 1, day);
-      const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const monthNames = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-      ];
-      
-      return `${dayNames[date.getDay()]}, ${day} ${monthNames[parseInt(month) - 1]} ${year}`;
+      let dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
+      const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      return `${dayNames[date.getDay()]} ${day} ${monthNames[parseInt(month)-1]} ${year}`;
     },
     
     // Close detail modal
@@ -1867,75 +1974,7 @@ function monthlyReportApp() {
       }, 3000);
     },
     
-    // Calculate statistics
-    calculateStatistics() {
-      let totalDays = 0;
-      let activeDays = 0;
-      let perfectDays = 0;
-      let totalCompletions = 0;
-      let totalPossibleCompletions = 0;
-      
-      this.daysInMonth.forEach(day => {
-        if (this.isFuture(day)) return;
-        
-        totalDays++;
-        const dateKey = this.getDateKey(day);
-        const dayData = this.monthlyData[dateKey];
-        
-        if (!dayData) return;
-        
-        let dayCompletions = 0;
-        let dayHasData = false;
-        
-        for (let habitId = 1; habitId <= 7; habitId++) {
-          const habitData = dayData[`habit_${habitId}`];
-          if (habitData) {
-            dayHasData = true;
-            totalPossibleCompletions++;
-            if (habitData.completed) {
-              dayCompletions++;
-              totalCompletions++;
-            }
-          }
-        }
-        
-        if (dayHasData) {
-          activeDays++;
-          if (dayCompletions === 7) {
-            perfectDays++;
-          }
-        }
-      });
-      
-      this.stats = {
-        totalActiveDays: activeDays,
-        averageCompletion: totalPossibleCompletions > 0 ? Math.round((totalCompletions / totalPossibleCompletions) * 100) : 0,
-        perfectDays: perfectDays,
-        consistency: totalDays > 0 ? Math.round((activeDays / totalDays) * 100) : 0
-      };
-    },
-    
-    // Get habit success rate
-    getHabitSuccessRate(habitId) {
-      let completedCount = 0;
-      let totalCount = 0;
-      
-      this.daysInMonth.forEach(day => {
-        if (this.isFuture(day)) return;
-        
-        const dateKey = this.getDateKey(day);
-        const dayData = this.monthlyData[dateKey];
-        
-        if (dayData && dayData[`habit_${habitId}`]) {
-          totalCount++;
-          if (dayData[`habit_${habitId}`].completed) {
-            completedCount++;
-          }
-        }
-      });
-      
-      return totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-    },
+  // Removed statistics & category recap helper functions
     
     // Generate mock data for demonstration
     generateMockData() {

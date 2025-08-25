@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         :root {
             --sidebar-width-expanded: 220px;
@@ -347,47 +349,24 @@
                     <?php endif; ?>
                     <?php endif; // end if not siswa ?>
 
-                    <!-- Kebiasaan (7 Kebiasaan) -->
-                    <li class="menu-item-with-submenu">
-                        <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'guru/dashboard') !== false || strpos(uri_string(), 'guru/logs') !== false || uri_string() === 'siswa' || strpos(uri_string(), 'siswa/') === 0 ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 cursor-pointer submenu-toggle">
+                    <!-- Menu Kebiasaan dihapus sesuai permintaan user -->
+                    <!-- Rekap Bulanan 7 Kebiasaan (Admin & Walikelas) -->
+                    <?php if ($userRole !== 'siswa'): ?>
+                    <li>
+                        <a href="<?= $baseUrl ?>/habits/monthly" title="Rekap 7 Kebiasaan" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= (strpos(uri_string(), 'habits/monthly') !== false) ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
                             <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
-                                <i class="fas fa-heart text-sm"></i>
+                                <i class="fas fa-calendar-check text-sm"></i>
                             </div>
                             <div class="menu-text flex-1">
-                                <span class="font-semibold text-sm block">Kebiasaan</span>
+                                <span class="font-semibold text-sm block">Rekap 7 Kebiasaan</span>
+                                <span class="text-xs text-white/70">Bulanan</span>
                             </div>
-                            <i class="fas fa-chevron-down text-xs transition-transform duration-300 submenu-chevron"></i>
-                        </div>
-                        <div class="submenu pl-4 mt-2 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
-                            <?php if ($userRole === 'siswa'): ?>
-                            <a href="/siswa" title="Input Harian" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= uri_string() === 'siswa' || strpos(uri_string(), 'siswa/') === 0 ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
-                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
-                                    <i class="fas fa-check-circle text-xs"></i>
-                                </div>
-                                <div class="menu-text">
-                                    <span class="text-sm font-medium">Input Harian</span>
-                                </div>
-                            </a>
-                            <?php else: ?>
-                            <a href="/guru/dashboard" title="Dashboard Kebiasaan" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'guru/dashboard') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
-                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
-                                    <i class="fas fa-chart-line text-xs"></i>
-                                </div>
-                                <div class="menu-text">
-                                    <span class="text-sm font-medium">Dashboard</span>
-                                </div>
-                            </a>
-                            <a href="/guru/logs" title="Data Kebiasaan" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'guru/logs') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
-                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
-                                    <i class="fas fa-table text-xs"></i>
-                                </div>
-                                <div class="menu-text">
-                                    <span class="text-sm font-medium">Data</span>
-                                </div>
-                            </a>
+                            <?php if(strpos(uri_string(), 'habits/monthly') !== false): ?>
+                                <div class="w-1 h-8 bg-white rounded-full"></div>
                             <?php endif; ?>
-                        </div>
+                        </a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </div>
 

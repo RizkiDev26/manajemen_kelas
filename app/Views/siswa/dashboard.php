@@ -28,7 +28,8 @@
 
         <!-- Progress Pills Column -->
         <div class="w-full flex lg:justify-start">
-            <div class="relative rounded-3xl p-8 pt-10 bg-gradient-to-br from-white via-indigo-50/60 to-fuchsia-50/60 border border-slate-200 shadow-sm overflow-hidden flex flex-col w-[720px] h-[400px]" x-ref="progressBox">
+            <!-- Progress container: remove fixed height & overflow to avoid clipping; make responsive -->
+            <div class="relative rounded-3xl p-8 pt-10 bg-gradient-to-br from-white via-indigo-50/60 to-fuchsia-50/60 border border-slate-200 shadow-sm flex flex-col w-full max-w-[720px] min-h-[400px]" x-ref="progressBox">
                 <div class="absolute -top-16 -right-10 w-64 h-64 bg-gradient-to-br from-fuchsia-200/40 to-rose-300/40 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="absolute -bottom-20 -left-10 w-72 h-72 bg-gradient-to-tr from-indigo-200/40 to-emerald-200/30 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="relative text-center mb-6">

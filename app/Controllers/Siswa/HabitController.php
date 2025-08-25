@@ -107,7 +107,29 @@ class HabitController extends BaseController
 
         // Detect religion (Islam) for special UI in "Beribadah"
         $isIslam = false;
-    $student = $this->siswaModel->find($studentId);
+        // $studentId adalah id di tabel siswa (legacy). Untuk data kanonik (tb_siswa) gunakan nisn dari session username.
+        $student = null;
+        $username = session('username');
+        if ($username) {
+            $student = $this->siswaModel->where('nisn', $username)->first();
+        }
+        if (!$student) {
+            // fallback: coba mapping tb_siswa.id tersimpan di session
+            $tbId = session('student_tb_id');
+            if ($tbId) {
+                $student = $this->siswaModel->find($tbId);
+            }
+        }
+        if (!$student) {
+            // fallback terakhir: cari melalui legacy siswa table untuk set nama (tidak dipakai untuk data lain)
+            try {
+                $legacy = db_connect()->table('siswa')->select('nama, nisn')
+                    ->where('id', $studentId)->get()->getFirstRow('array');
+                if ($legacy) {
+                    $student = ['nama' => $legacy['nama'], 'nisn' => $legacy['nisn']];
+                }
+            } catch (\Throwable $e) {}
+        }
         if ($student && !empty($student['nama']) && session('student_name') !== $student['nama']) {
             session()->set('student_name', $student['nama']);
         }
@@ -352,6 +374,15 @@ class HabitController extends BaseController
                 $students = $builder->get()->getResultArray();
             } catch (\Exception $e) {
                 log_message('error', 'Gagal mengambil daftar siswa: '.$e->getMessage());
+            }
+        } else {
+            // Siswa view: pastikan session student_name di-set dari tb_siswa menggunakan nisn
+            $username = session('username');
+            if ($username) {
+                $tb = $this->siswaModel->where('nisn', $username)->first();
+                if ($tb && !empty($tb['nama']) && session('student_name') !== $tb['nama']) {
+                    session()->set('student_name', $tb['nama']);
+                }
             }
         }
         return view('siswa/habits/monthly_report', [ 'students' => $students ]);

@@ -39,7 +39,7 @@
                 <p class="text-[11px] leading-snug uppercase tracking-wider text-white/70 truncate max-w-[140px]" x-text="'<?= esc($nm) ?>'"></p>
             </div>
             <button @click="nav=false" class="md:hidden ml-auto text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded-lg p-1"><i class="fas fa-times text-sm"></i></button>
-            <button @click="mini=!mini" class="hidden md:inline-flex ml-auto text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded-lg p-1" :class="mini ? 'rotate-180' : ''" title="Toggle Sidebar"><i class="fas fa-angles-left"></i></button>
+            <button @click="mini = !mini; if($screen('md')===false){ nav=false }" class="hidden md:inline-flex ml-auto text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded-lg p-1 transition-transform" :class="mini ? 'rotate-180' : ''" title="Toggle Sidebar"><i class="fas fa-angles-left"></i></button>
         </div>
         <nav class="flex-1 overflow-y-auto sidebar-scroll px-4 py-5 space-y-2 text-[15px]" :class="(mini && !hoverOpen) ? 'px-2' : ''">
             <a href="<?= base_url('siswa') ?>" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/40 <?= current_url()==base_url('siswa') ? 'bg-white/20 text-white shadow-inner' : 'text-white/80 hover:text-white hover:bg-white/10 active:scale-[0.97]' ?>">
@@ -92,7 +92,11 @@
                 </h2>
             </div>
             <?php $displayName = session('student_name') ?? session('username') ?? 'Siswa'; $initial = strtoupper(substr($displayName,0,1)); ?>
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-fuchsia-600 text-white flex items-center justify-center font-semibold shadow ring-1 ring-white/40" title="User">
+            <div class="hidden sm:flex flex-col items-end leading-tight mr-2 max-w-[180px]">
+                <span class="text-[11px] uppercase tracking-wide text-slate-400">Siswa</span>
+                <span class="text-sm font-medium text-slate-700 truncate" title="<?= esc($displayName) ?>"><?= esc($displayName) ?></span>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-fuchsia-600 text-white flex items-center justify-center font-semibold shadow ring-1 ring-white/40" title="<?= esc($displayName) ?>">
                 <?= esc($initial) ?>
             </div>
         </header>

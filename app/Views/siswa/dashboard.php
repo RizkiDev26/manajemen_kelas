@@ -5,15 +5,15 @@
     <!-- Header Title (plain white like screenshot) -->
     <h1 class="text-3xl md:text-4xl font-bold leading-tight">Selamat Datang, <span x-text="studentName"></span></h1>
 
-    <!-- Video + Progress Pills Layout -->
-    <section class="grid lg:grid-cols-2 gap-10 items-start">
+    <!-- Video + Progress Pills Layout (Single Row) -->
+    <section class="flex flex-col xl:flex-row gap-8 items-stretch">
         <!-- Video Column -->
-    <div class="space-y-4" x-ref="videoColumn">
-            <div class="relative rounded-xl border border-slate-200 bg-white shadow overflow-hidden flex items-center justify-center p-2">
+        <div class="flex flex-col flex-1 space-y-4" x-ref="videoColumn">
+            <div class="relative rounded-xl border border-slate-200 bg-white shadow p-2 flex items-center justify-center aspect-[16/9] w-full" x-ref="videoWrapper" :style="videoHeight ? 'height:'+videoHeight+'px' : ''">
                 <!-- Skeleton while video loading -->
-                <div x-show="!videoLoaded" class="w-[720px] h-[400px] max-w-full bg-slate-200/70 animate-pulse flex items-center justify-center text-slate-500 text-lg select-none rounded-lg">Memuat Video...</div>
-                <div class="w-[720px] h-[400px] max-w-full" x-show="videoLoaded" x-cloak x-ref="videoFrame">
-                    <iframe :src="videoSrc" width="720" height="400" class="w-full h-full rounded-lg" title="Video Kebiasaan" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen @load="videoLoaded=true; measureVideo()"></iframe>
+                <div x-show="!videoLoaded" class="absolute inset-0 bg-slate-200/70 animate-pulse flex items-center justify-center text-slate-500 text-lg select-none rounded-lg">Memuat Video...</div>
+                <div class="w-full h-full" x-show="videoLoaded" x-cloak x-ref="videoFrame">
+                    <iframe :src="videoSrc" class="w-full h-full rounded-lg" title="Video Kebiasaan" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen @load="videoLoaded=true; measureVideo()"></iframe>
                 </div>
                 <!-- Fallback frame if no video ID configured -->
                 <template x-if="!videoId">
@@ -23,13 +23,12 @@
                     </div>
                 </template>
             </div>
-            <p class="text-xl font-medium tracking-tight">7 Kebiasaan Anak Indonesia Hebat</p>
+            <p class="text-xl font-medium tracking-tight text-center">7 Kebiasaan Anak Indonesia Hebat</p>
         </div>
 
         <!-- Progress Pills Column -->
-        <div class="w-full flex lg:justify-start">
-            <!-- Progress container: remove fixed height & overflow to avoid clipping; make responsive -->
-            <div class="relative rounded-3xl p-8 pt-10 bg-gradient-to-br from-white via-indigo-50/60 to-fuchsia-50/60 border border-slate-200 shadow-sm flex flex-col w-full max-w-[720px] min-h-[400px]" x-ref="progressBox">
+        <div class="flex flex-1">
+            <div class="relative rounded-3xl p-8 pt-10 bg-gradient-to-br from-white via-indigo-50/60 to-fuchsia-50/60 border border-slate-200 shadow-sm flex flex-col flex-1" x-ref="progressBox" :style="videoHeight ? 'height:'+videoHeight+'px' : 'min-height:400px'">
                 <div class="absolute -top-16 -right-10 w-64 h-64 bg-gradient-to-br from-fuchsia-200/40 to-rose-300/40 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="absolute -bottom-20 -left-10 w-72 h-72 bg-gradient-to-tr from-indigo-200/40 to-emerald-200/30 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="relative text-center mb-6">
@@ -43,41 +42,48 @@
                     <div class="mt-4 flex justify-center" x-show="loadingProgress" x-cloak>
                         <div class="h-4 w-40 rounded bg-amber-200/60 animate-pulse"></div>
                     </div>
-                    <!-- Action Buttons moved here -->
-                    <div class="mt-5 flex flex-wrap justify-center gap-3">
-                        <a href="<?= base_url('siswa/habits') ?>" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white font-semibold shadow hover:shadow-lg hover:-translate-y-0.5 transition">
-                            <i class="fa-solid fa-pen-to-square"></i> <span>Input Hari Ini</span>
-                        </a>
-                        <a href="<?= base_url('siswa/habits/monthly-report') ?>" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold shadow-sm hover:bg-slate-50 transition">
-                            <i class="fa-solid fa-calendar-days"></i> <span>Rekap Bulanan</span>
-                        </a>
-                    </div>
                 </div>
-                <!-- Skeleton Pills 3x3 -->
-                <div x-show="loadingProgress" class="grid grid-cols-3 gap-4 flex-1" x-cloak>
+                <!-- Skeleton Pills 3x3 (compact) -->
+                <div x-show="loadingProgress" class="grid grid-cols-3 gap-3 flex-1" x-cloak>
                     <template x-for="i in 9" :key="'skel-'+i">
-                        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100/70 animate-pulse h-20"></div>
+                        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-100/70 animate-pulse h-16"></div>
                     </template>
                 </div>
-                <!-- Actual Pills: 3 x 3 grid (last 2 empty slots) -->
-                <div x-show="!loadingProgress" class="grid grid-cols-3 gap-4 relative flex-1" x-cloak>
+                <!-- Actual Pills: compact 3 x 3 grid (buttons occupy last 2 slots) -->
+                <div x-show="!loadingProgress" class="grid grid-cols-3 gap-x-2 gap-y-1 relative flex-1" x-cloak>
                     <template x-for="i in 9" :key="'pill-'+i">
+                        <!-- Habit pills (1..7) -->
                         <template x-if="habitStatus[i-1]">
-                            <button @click="goInput()" class="group relative w-full h-20 rounded-2xl px-4 py-3 text-[13px] font-semibold tracking-tight flex flex-col items-start justify-center gap-2 border transition shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                            <button @click="goInput()" class="group relative w-full h-[4.5rem] rounded-lg px-3 py-2 text-[13px] md:text-[14px] font-semibold tracking-tight flex flex-col items-start justify-center gap-1 border transition shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                                     :class="habitStatus[i-1].done ? 'bg-emerald-500/10 border-emerald-300 text-emerald-700 hover:bg-emerald-500/15' : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400'" :aria-pressed="habitStatus[i-1].done">
-                                <div class="flex items-center gap-3 w-full">
-                                    <span class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-base shadow-inner" :class="habitStatus[i-1].done ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'">
+                                <div class="flex items-center gap-1 w-full">
+                                    <span class="flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-[11px] shadow-inner" :class="habitStatus[i-1].done ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'">
                                         <i class="fa-solid" :class="iconFor(habitStatus[i-1].id)"></i>
                                     </span>
-                                    <span class="flex-1 text-left" x-text="habitStatus[i-1].name"></span>
+                                    <span class="flex-1 text-left leading-snug text-[13px] md:text-[15px]" x-text="habitStatus[i-1].name"></span>
                                     <span x-show="habitStatus[i-1].done" x-cloak class="relative inline-flex items-center justify-center ml-auto">
-                                        <span class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow">✓</span>
+                                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] shadow">✓</span>
                                     </span>
                                 </div>
                             </button>
                         </template>
-                        <template x-if="!habitStatus[i-1]">
-                            <div class="w-full h-20 rounded-2xl border border-dashed border-slate-300 bg-white/40 flex items-center justify-center text-slate-300 text-sm select-none">—</div>
+                        <!-- Slot 8: Input Hari Ini button -->
+                        <template x-if="!habitStatus[i-1] && habitStatus.length === 7 && i === 8">
+                            <a href="<?= base_url('siswa/habits') ?>" class="w-full h-[4.5rem] rounded-lg px-3 py-2 flex items-center justify-center gap-2 font-semibold text-[13px] bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white shadow hover:shadow-lg hover:-translate-y-0.5 transition">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                <span>Input Hari Ini</span>
+                            </a>
+                        </template>
+                        <!-- Slot 9: Rekap Bulanan button -->
+                        <template x-if="!habitStatus[i-1] && habitStatus.length === 7 && i === 9">
+                            <a href="<?= base_url('siswa/habits/monthly-report') ?>" class="w-full h-[4.5rem] rounded-lg px-3 py-2 flex items-center justify-center gap-2 font-semibold text-[13px] bg-white border border-slate-300 text-slate-700 shadow-sm hover:bg-slate-50 transition">
+                                <i class="fa-solid fa-calendar-days"></i>
+                                <span>Rekap Bulanan</span>
+                            </a>
+                        </template>
+                        <!-- Placeholder for other empty slots -->
+                        <template x-if="!habitStatus[i-1] && !(habitStatus.length === 7 && (i===8 || i===9))">
+                            <div class="w-full h-[4.5rem] rounded-lg border border-dashed border-slate-300 bg-white/40 flex items-center justify-center text-slate-300 text-[10px] select-none">—</div>
                         </template>
                     </template>
                 </div>
@@ -132,24 +138,24 @@
         </div>
     </section>
 
-    <!-- Progress Hari Ini Pills -->
-    <section class="rounded-3xl p-6 md:p-8 bg-white border border-slate-200 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <h2 class="text-xl font-semibold tracking-tight flex items-center gap-2"><i class="fa-solid fa-circle-check text-indigo-600"></i> Progress Hari Ini</h2>
-            <a href="<?= base_url('siswa/habits') ?>" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1"><i class="fa-solid fa-pen"></i> Input Sekarang</a>
+    <!-- Progress Hari Ini Pills (compact list) -->
+    <section class="rounded-3xl p-5 md:p-6 bg-white border border-slate-200 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+            <h2 class="text-lg font-semibold tracking-tight flex items-center gap-2"><i class="fa-solid fa-circle-check text-indigo-600 text-base"></i> Progress Hari Ini</h2>
+            <a href="<?= base_url('siswa/habits') ?>" class="text-xs md:text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1"><i class="fa-solid fa-pen"></i> Input</a>
         </div>
-                <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             <template x-for="h in habitStatus" :key="'grid-'+h.id">
-                <div @click="goInput()" class="group cursor-pointer rounded-2xl p-4 border flex flex-col gap-3 transition hover:shadow-md"
+                <div @click="goInput()" class="group cursor-pointer rounded-xl p-3 border flex flex-col gap-2 transition hover:shadow-sm"
                      :class="h.done ? 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200' : 'bg-slate-50 border-slate-200 hover:bg-white'">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow"
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow text-xs"
                              :class="h.done ? 'bg-emerald-500' : 'bg-slate-300 text-slate-600'">
                             <i class="fa-solid" :class="h.done ? 'fa-check' : 'fa-minus'"></i>
                         </div>
-                        <div class="font-medium text-sm leading-snug" x-text="h.name"></div>
+                        <div class="font-medium text-xs leading-tight" x-text="h.name"></div>
                     </div>
-                    <div class="pl-1 text-[11px] tracking-wide uppercase font-semibold"
+                    <div class="pl-0.5 text-[10px] tracking-wide uppercase font-semibold"
                          :class="h.done ? 'text-emerald-600' : 'text-slate-400'"
                          x-text="h.done ? 'SELESAI' : 'BELUM'"></div>
                 </div>

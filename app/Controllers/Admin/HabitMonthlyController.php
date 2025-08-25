@@ -146,44 +146,90 @@ class HabitMonthlyController extends BaseController
         ];
         $students = [];
         try {
+                        // Normalisasi nama kelas agar variasi seperti "Kelas 5A", "5 A", "KELAS 5 A" cocok.
+                        $normalize = function($s){
+                            $s = strtoupper($s);
+                            // Hilangkan kata KELAS jika ada
+                            $s = preg_replace('/\bKELAS\b/','',$s);
+                            // Hilangkan semua karakter non alfanumerik (spasi, strip, dsb)
+                            $s = preg_replace('/[^A-Z0-9]/','',$s);
+                            return trim($s);
+                        };
+
+                        $targetNorm = $normalize($kelasNama); // contoh: "KELAS 5 A" -> "5A"
+                        $debug['target_norm'] = $targetNorm;
+
                         $rows = [];
+                        $candidateRows = [];
+                        $patternUsed = null;
                         if($token){
-                                // Ambil semua siswa di tb_siswa (LEFT JOIN ke siswa) agar yang belum punya mapping tetap muncul
-                                $sql = "SELECT COALESCE(s.id, -t.id) AS effective_id, s.id AS mapped_id, t.id AS tb_id, t.nama, t.kelas
-                                                FROM tb_siswa t
-                                                LEFT JOIN siswa s ON s.nisn = t.nisn
-                                                WHERE REPLACE(UPPER(t.kelas),' ','') = ?
-                                                    AND UPPER(t.kelas) <> 'LULUS'
-                                                ORDER BY t.nama ASC";
-                                $rows = $db->query($sql, ['KELAS'.$token])->getResultArray();
-                                $debug['query_primary_count'] = count($rows);
+                            // Batasi kandidat berdasar token digit+huruf agar query tidak terlalu luas
+                            $pattern1 = "%$digit%$huruf%";            // misal %5%A%
+                            $pattern2 = "%KELAS%$digit%$huruf%";      // %KELAS%5%A%
+                            $pattern3 = "%$digit$huruf%";             // %5A%
+                            $sqlCandidates = "SELECT COALESCE(s.id, -t.id) AS effective_id, s.id AS mapped_id, t.id AS tb_id, t.nama, t.kelas
+                                    FROM tb_siswa t
+                                    LEFT JOIN siswa s ON s.nisn = t.nisn
+                                    WHERE (UPPER(t.kelas) LIKE ? OR UPPER(t.kelas) LIKE ? OR UPPER(t.kelas) LIKE ?)
+                                      AND UPPER(t.kelas) <> 'LULUS'
+                                    ORDER BY t.nama ASC";
+                            $candidateRows = $db->query($sqlCandidates, [$pattern1,$pattern2,$pattern3])->getResultArray();
+                            $patternUsed = [$pattern1,$pattern2,$pattern3];
+                        } else {
+                            // Jika tidak bisa ekstrak token, ambil seluruh (dibatasi) untuk tetap fungsional.
+                            $sqlAll = "SELECT COALESCE(s.id, -t.id) AS effective_id, s.id AS mapped_id, t.id AS tb_id, t.nama, t.kelas
+                                FROM tb_siswa t
+                                LEFT JOIN siswa s ON s.nisn = t.nisn
+                                WHERE UPPER(t.kelas) <> 'LULUS'
+                                ORDER BY t.nama ASC"; // tidak LIMIT dulu supaya normalisasi tetap bisa memilih semua, asumsikan jumlah manageable
+                            $candidateRows = $db->query($sqlAll)->getResultArray();
+                            $patternUsed = 'FULL';
                         }
+
+                        $debug['candidates_initial'] = count($candidateRows);
+                        $debug['pattern_used'] = $patternUsed;
+
+                        $sampleNorms = [];
+                        foreach($candidateRows as $cr){
+                            $norm = $normalize($cr['kelas']);
+                            if($norm === $targetNorm){
+                                $rows[] = $cr;
+                            }
+                            if(count($sampleNorms) < 5){
+                                $sampleNorms[] = $cr['kelas']."=>".$norm;
+                            }
+                        }
+                        $debug['sample_norms'] = $sampleNorms;
+                        $debug['matched_after_norm'] = count($rows);
+
+                        // Jika tidak ada setelah normalisasi, coba fallback exact (kadang data sudah benar namun token gagal diekstrak)
                         if(!$rows){
-                                // Fallback exact nama kelas penuh
-                                $sql2 = "SELECT COALESCE(s.id, -t.id) AS effective_id, s.id AS mapped_id, t.id AS tb_id, t.nama, t.kelas
-                                                 FROM tb_siswa t
-                                                 LEFT JOIN siswa s ON s.nisn = t.nisn
-                                                 WHERE UPPER(t.kelas) = ?
-                                                     AND UPPER(t.kelas) <> 'LULUS'
-                                                 ORDER BY t.nama ASC";
-                                $rows = $db->query($sql2, [strtoupper($kelasNama)])->getResultArray();
-                                $debug['query_fallback_exact_count'] = count($rows);
+                            $sqlExact = "SELECT COALESCE(s.id, -t.id) AS effective_id, s.id AS mapped_id, t.id AS tb_id, t.nama, t.kelas
+                                FROM tb_siswa t
+                                LEFT JOIN siswa s ON s.nisn = t.nisn
+                                WHERE UPPER(TRIM(t.kelas)) = ? AND UPPER(t.kelas) <> 'LULUS'
+                                ORDER BY t.nama ASC";
+                            $rows = $db->query($sqlExact,[strtoupper(trim($kelasNama))])->getResultArray();
+                            $debug['fallback_exact_used'] = count($rows);
                         }
+
+                        // Fallback terakhir: ambil sebagian daftar untuk dianalisa (limit) bila tetap kosong
                         if(!$rows){
-                                // Fallback generic (dibatasi) – jarang terjadi
-                                $sql3 = "SELECT COALESCE(s.id, -t.id) AS effective_id, s.id AS mapped_id, t.id AS tb_id, t.nama, t.kelas
-                                                 FROM tb_siswa t
-                                                 LEFT JOIN siswa s ON s.nisn = t.nisn
-                                                 WHERE UPPER(t.kelas) <> 'LULUS'
-                                                 ORDER BY t.nama ASC LIMIT 40";
-                                $rows = $db->query($sql3)->getResultArray();
-                                $debug['query_generic_count'] = count($rows);
-                                $debug['generic_used'] = true;
+                            $sqlLast = "SELECT COALESCE(s.id, -t.id) AS effective_id, s.id AS mapped_id, t.id AS tb_id, t.nama, t.kelas
+                                FROM tb_siswa t
+                                LEFT JOIN siswa s ON s.nisn = t.nisn
+                                WHERE UPPER(t.kelas) <> 'LULUS'
+                                ORDER BY t.nama ASC LIMIT 40";
+                            $tmp = $db->query($sqlLast)->getResultArray();
+                            $debug['fallback_sample_count'] = count($tmp);
+                            // Tidak menimpa $rows (tetap kosong) tapi kirim sample untuk debugging front-end
+                            $debug['fallback_sample'] = array_map(function($r){return $r['kelas'];}, $tmp);
                         }
+
                         $mapped=0; $unmapped=0;
                         foreach($rows as $r){
-                                if($r['mapped_id']) $mapped++; else $unmapped++;
-                                $students[] = [ 'id'=>(int)$r['effective_id'], 'nama'=>$r['nama'], 'kelas'=>$r['kelas'] ];
+                            if($r['mapped_id']) $mapped++; else $unmapped++;
+                            $students[] = [ 'id'=>(int)$r['effective_id'], 'nama'=>$r['nama'], 'kelas'=>$r['kelas'] ];
                         }
                         $debug['final_count'] = count($students);
                         $debug['mapped'] = $mapped;

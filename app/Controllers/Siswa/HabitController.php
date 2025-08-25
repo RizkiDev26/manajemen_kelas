@@ -35,17 +35,39 @@ class HabitController extends BaseController
         if ($sid) return (int)$sid;
         $username = session('username');
         if (!$username) return null;
-    $stu = $this->siswaModel->where('nisn', $username)->first();
+    // Ambil dari tb_siswa (kanonik) terlebih dahulu untuk nama
+    $tb = $this->siswaModel->where('nisn', $username)->first();
+    $stu = $tb; // alias agar logika lama tetap bekerja dengan field nama
+    // Jika belum ada di tb_siswa, coba fallback ke tabel siswa (legacy)
+    if (!$stu) {
+        $stu = db_connect()->table('siswa')->where('nisn', $username)->orWhere('nis', $username)->get()->getFirstRow('array');
+    }
         if (!$stu) {
-            $stu = $this->siswaModel->where('nis', $username)->first();
+            // legacy fallback nis pada tb_siswa (jika ada kolom nipd dsb)
+            $stu = $this->siswaModel->where('nipd', $username)->first();
         }
         if ($stu) {
-            session()->set('student_id', (int)$stu['id']);
-            // Simpan nama lengkap agar tampilan tidak menampilkan angka NIS/NISN
-            if (!empty($stu['nama'])) {
+            // student_id yang dibutuhkan habit_logs berasal dari tabel siswa (legacy). Cari jika belum.
+            if (!session()->has('student_id')) {
+                try {
+                    $legacy = db_connect()->table('siswa')->select('id,nama')
+                        ->where('nisn', $username)->orWhere('nis', $username)
+                        ->get()->getFirstRow('array');
+                    if ($legacy) {
+                        session()->set('student_id', (int)$legacy['id']);
+                        if (empty($stu['nama']) && !empty($legacy['nama'])) {
+                            $stu['nama'] = $legacy['nama'];
+                        }
+                    }
+                } catch (\Throwable $e) {}
+            }
+            if (!session()->has('student_id') && isset($stu['id'])) {
+                session()->set('student_id', (int)$stu['id']);
+            }
+            if (!empty($stu['nama']) && session('student_name') !== $stu['nama']) {
                 session()->set('student_name', $stu['nama']);
             }
-            return (int)$stu['id'];
+            return (int)(session('student_id'));
         }
         return null;
     }

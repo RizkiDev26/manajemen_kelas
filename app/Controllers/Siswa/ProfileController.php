@@ -78,9 +78,10 @@ class ProfileController extends BaseController
             return redirect()->to('/login')->with('error', 'Data siswa tidak ditemukan');
         }
 
-        // Pastikan nama lengkap tersedia di session untuk header global
-        if (!empty($student['nama']) && session('student_name') !== $student['nama']) {
-            session()->set('student_name', $student['nama']);
+        // Pastikan nama lengkap tersedia di session untuk header global (prioritas tb_siswa)
+        $canonicalName = $tbRow['nama'] ?? ($student['nama'] ?? null);
+        if ($canonicalName && session('student_name') !== $canonicalName) {
+            session()->set('student_name', $canonicalName);
         }
 
         $class = null;
@@ -115,6 +116,28 @@ class ProfileController extends BaseController
             'agama' => $agama,
             'ttlTempat' => $ttlTempat,
             'ttlTanggal' => $ttlTanggal,
+        ]);
+    }
+
+    /**
+     * Endpoint ringan untuk mengambil nama kanonik siswa (dipakai dashboard refreshName)
+     */
+    public function basicJson()
+    {
+        $username = session('username');
+        if (!$username) {
+            return $this->response->setJSON(['nama' => session('student_name') ?? 'Siswa']);
+        }
+        $db = db_connect();
+        $tb = $db->table('tb_siswa')->select('nama, id')->where('nisn', $username)->get()->getFirstRow('array');
+        $legacy = $db->table('siswa')->select('id, nama')->where('nisn', $username)->orWhere('nis', $username)->get()->getFirstRow('array');
+        $name = $tb['nama'] ?? ($legacy['nama'] ?? (session('student_name') ?? $username));
+        if ($name && session('student_name') !== $name) session()->set('student_name', $name);
+        if ($legacy && !session()->has('student_id')) session()->set('student_id', (int)$legacy['id']);
+        return $this->response->setJSON([
+            'nama' => $name,
+            'student_id' => session('student_id'),
+            'tb_id' => $tb['id'] ?? null
         ]);
     }
 }

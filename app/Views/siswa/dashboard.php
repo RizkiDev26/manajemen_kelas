@@ -173,7 +173,7 @@
 <script>
 function dashboardApp(){
     return {
-        studentName: <?= json_encode(session('student_name') ?? session('username') ?? 'Siswa') ?>,
+    studentName: <?= json_encode(session('student_name') ?? 'Siswa') ?>,
         habits: <?= json_encode(array_map(fn($h)=>['id'=>$h['id'],'name'=>$h['name']], $habits ?? [])) ?>,
         habitStatus: [],
         stats: {current_streak:0, best_streak:0, weekly_progress:{completed:0,total:0}},
@@ -200,6 +200,18 @@ function dashboardApp(){
             this.habitStatus = this.habits.map(h=>({...h, done:false}));
             this.fetchToday();
             this.fetchStats();
+            // Optional refresh student name if session was just populated after initial redirect
+            this.refreshName();
+        },
+        async refreshName(){
+            if(this.studentName && this.studentName !== 'Siswa') return;
+            try {
+                const res = await fetch('<?= base_url('siswa/profile/json-basic') ?>');
+                if(res.ok){
+                    const js = await res.json();
+                    if(js && js.nama){ this.studentName = js.nama; }
+                }
+            } catch(e){}
         },
         get videoSrc(){
             if(!this.videoId) return '';

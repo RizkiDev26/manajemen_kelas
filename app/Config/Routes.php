@@ -253,6 +253,8 @@ $routes->group('siswa', ['filter' => 'role:siswa'], function($routes){
     $routes->get('summary', 'Siswa\\HabitController::summary');
     $routes->get('stats', 'Siswa\\HabitController::getStats');
     $routes->get('profile', 'Siswa\\ProfileController::index');
+    // Basic JSON name endpoint for dashboard lazy refresh
+    $routes->get('profile/json-basic', 'Siswa\\ProfileController::basicJson');
 });
 
 // Admin, Guru & Walikelas share access

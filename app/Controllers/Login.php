@@ -67,15 +67,51 @@ class Login extends BaseController
                 
                     // Jika siswa, map ke siswa.id dari NISN
                     if ($user['role'] === 'siswa') {
+                        // Pastikan nama lengkap siswa tersimpan sekali secara kanonik untuk semua halaman
+                        // Prioritas sumber: tb_siswa.nama > siswa.nama > users.nama > username (NISN)
                         try {
-                            $siswa = db_connect()->table('siswa')
-                                ->select('id')
+                            $db = db_connect();
+                            $canonicalName = null;
+
+                            // Ambil dari tb_siswa (data resmi)
+                            $rowTb = $db->table('tb_siswa')
+                                ->select('nama, id')
                                 ->where('nisn', $user['username'])
                                 ->get()->getFirstRow('array');
-                            if ($siswa) {
-                                session()->set('student_id', (int)$siswa['id']);
+
+                            if ($rowTb && !empty($rowTb['nama'])) {
+                                $canonicalName = $rowTb['nama'];
+                                // Simpan juga id tb_siswa jika dibutuhkan ke depan
+                                session()->set('student_tb_id', (int)$rowTb['id']);
                             }
-                        } catch (\Throwable $e) {}
+
+                            // Ambil dari tabel siswa (legacy / untuk relasi habit_logs)
+                            $rowLegacy = $db->table('siswa')
+                                ->select('id, nama')
+                                ->where('nisn', $user['username'])
+                                ->orWhere('nis', $user['username'])
+                                ->get()->getFirstRow('array');
+                            if ($rowLegacy) {
+                                // Simpan id hubungan habit_logs
+                                session()->set('student_id', (int)$rowLegacy['id']);
+                                if (!$canonicalName && !empty($rowLegacy['nama'])) {
+                                    $canonicalName = $rowLegacy['nama'];
+                                }
+                            }
+
+                            if (!$canonicalName) {
+                                $canonicalName = $user['nama'] ?: $user['username'];
+                            }
+                            // Set hanya jika belum ada atau berbeda agar tidak sering overwrite
+                            if (!session()->has('student_name') || session('student_name') !== $canonicalName) {
+                                session()->set('student_name', $canonicalName);
+                            }
+                        } catch (\Throwable $e) {
+                            // Fallback jika query gagal
+                            if (!session()->has('student_name')) {
+                                session()->set('student_name', $user['nama'] ?: $user['username']);
+                            }
+                        }
                         return redirect()->to('/siswa');
                     }
 

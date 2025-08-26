@@ -573,26 +573,10 @@
                 <!-- Left side - Menu Toggle -->
                 <div class="flex items-center space-x-2">
                     <!-- Mobile Menu Toggle -->
-                    <button id="mobileMenuToggle" class="lg:hidden w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200">
+                    <button id="mobileMenuToggle" class="lg:hidden w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200">
                         <i class="fas fa-bars text-xs"></i>
                     </button>
-                </div>
-
-                <!-- Right side - Notifications and User -->
-                <div class="flex items-center space-x-2">
-                    <!-- Notifications -->
-                    <button class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200 relative">
-                        <i class="fas fa-bell text-xs"></i>
-                        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full text-xs flex items-center justify-center text-white text-xs">3</span>
-                    </button>
-
-                    <!-- Messages -->
-                    <button class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200 relative">
-                        <i class="fas fa-envelope text-xs"></i>
-                        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full text-xs flex items-center justify-center text-white text-xs">5</span>
-                    </button>
-
-                    <!-- User Profile -->
+                    <!-- User Profile (icons removed as requested) -->
                     <?php 
                         $session = session();
                         $displayName = $session->get('nama') ?: 'Pengguna';
@@ -674,7 +658,13 @@
             // Mobile menu toggle
             if (mobileMenuToggle) {
                 mobileMenuToggle.addEventListener('click', function() {
+                    const willOpen = !sidebar.classList.contains('open');
                     sidebar.classList.toggle('open');
+                    if (willOpen && window.innerWidth <= 1023) {
+                        // Pastikan teks menu tampil (hapus collapsed & expanded logic for mobile)
+                        sidebar.classList.remove('collapsed');
+                        sidebar.classList.remove('expanded');
+                    }
                 });
             }
 

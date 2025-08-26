@@ -24,7 +24,7 @@
         .glass { backdrop-filter: blur(14px) saturate(1.2); }
     </style>
     </head>
-<body x-data="{nav:false, openKaih: <?= $isKaihSection ? 'true':'false' ?>, mini:false, hoverOpen:false}" :class="mini ? 'sidebar-mini' : ''">
+<body x-data="{nav:false, openKaih: <?= $isKaihSection ? 'true':'false' ?>, mini:true, hoverOpen:false}" :class="mini ? 'sidebar-mini' : ''">
     <!-- Mobile Overlay -->
     <div x-cloak x-show="nav" @click="nav=false" class="fixed inset-0 bg-slate-900/60 glass md:hidden z-40"></div>
     <!-- Sidebar -->
@@ -39,7 +39,7 @@
                 <p class="text-[11px] leading-snug uppercase tracking-wider text-white/70 truncate max-w-[140px]" x-text="'<?= esc($nm) ?>'"></p>
             </div>
             <button @click="nav=false" class="md:hidden ml-auto text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded-lg p-1"><i class="fas fa-times text-sm"></i></button>
-            <button @click="mini = !mini; if($screen('md')===false){ nav=false }" class="hidden md:inline-flex ml-auto text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded-lg p-1 transition-transform" :class="mini ? 'rotate-180' : ''" title="Toggle Sidebar"><i class="fas fa-angles-left"></i></button>
+            <button class="hidden" aria-hidden="true"><i class="fas fa-angles-left"></i></button>
         </div>
         <nav class="flex-1 overflow-y-auto sidebar-scroll px-4 py-5 space-y-2 text-[15px]" :class="(mini && !hoverOpen) ? 'px-2' : ''">
             <a href="<?= base_url('siswa') ?>" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/40 <?= current_url()==base_url('siswa') ? 'bg-white/20 text-white shadow-inner' : 'text-white/80 hover:text-white hover:bg-white/10 active:scale-[0.97]' ?>">
@@ -82,9 +82,7 @@
             <button @click="nav=!nav" class="md:hidden inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-fuchsia-600 text-white shadow hover:shadow-lg transition focus:outline-none focus:ring-4 focus:ring-indigo-400/40">
                 <i class="fas fa-bars"></i>
             </button>
-            <button @click="mini=!mini" class="hidden md:inline-flex items-center justify-center w-11 h-11 rounded-xl bg-slate-200/60 hover:bg-slate-300/70 text-slate-600 shadow-inner transition focus:outline-none focus:ring-2 focus:ring-indigo-400/40" :title="mini ? 'Perbesar Sidebar' : 'Kecilkan Sidebar'">
-                <i class="fas" :class="mini ? 'fa-angles-right' : 'fa-angles-left'"></i>
-            </button>
+            <button class="hidden" aria-hidden="true"><i class="fas fa-angles-left"></i></button>
             <div class="flex-1 min-w-0">
                 <h2 class="text-lg md:text-xl font-semibold tracking-tight text-slate-800 flex items-center gap-2">
                     <i class="fas fa-layer-group text-indigo-600"></i>

@@ -44,8 +44,8 @@
         .menu-item-with-submenu.open .submenu { max-height: 200px; opacity: 1; }
         .menu-item-with-submenu.open .submenu-chevron { transform: rotate(180deg); }
         
-        /* Enhanced menu item styles */
-        .sidebar nav a:hover, .sidebar nav div:hover { transform: translateX(4px); box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1); }
+    /* Enhanced menu item styles (no horizontal shift on hover) */
+    .sidebar nav a:hover, .sidebar nav div:hover { transform: none !important; box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1); }
         
         /* Badge animations */
         .sidebar nav .bg-blue-400\/30,
@@ -55,7 +55,8 @@
         .sidebar nav a:hover .bg-green-400\/30,
         .sidebar nav a:hover .bg-orange-400\/30 { transform: scale(1.1); box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2); }
         
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); }
+    /* Updated to match siswa (student) purple sidebar gradient */
+    .gradient-bg { background: linear-gradient(140deg, #4338CA 0%, #6D28D9 45%, #A21CAF 100%); box-shadow: 0 8px 32px rgba(109, 40, 217, 0.35); }
         
         /* Fixed Layout Styles */
         .main-container {
@@ -68,49 +69,76 @@
         }
         
         .sidebar {
-            width: var(--sidebar-width-expanded);
+            width: var(--sidebar-width-collapsed);
             flex-shrink: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+            background: linear-gradient(140deg, #4338CA 0%, #6D28D9 45%, #A21CAF 100%);
+            position: fixed; top: 0; left: 0; height: 100vh; z-index: 110;
             overflow-y: auto; display: flex; flex-direction: column;
-            box-shadow: 8px 0 32px rgba(102, 126, 234, 0.25); backdrop-filter: blur(15px);
+            box-shadow: 8px 0 32px rgba(109, 40, 217, 0.30); backdrop-filter: blur(15px);
         }
+        /* Hover expanded appearance overlays content without pushing */
+        .sidebar.expanded { width: var(--sidebar-width-expanded); }
         .sidebar.collapsed { width: var(--sidebar-width-collapsed); }
         .sidebar.collapsed .sidebar-text, .sidebar.collapsed .menu-text, .sidebar.collapsed .menu-label { opacity: 0; pointer-events: none; width: 0; overflow: hidden; position: absolute; visibility: hidden; }
+    /* Hide chevron + active indicator when collapsed */
+    .sidebar.collapsed .submenu-chevron { display: none !important; }
+    .sidebar.collapsed .w-1.bg-white.rounded-full { display: none !important; }
         .sidebar .p-6 { background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(10px); }
-        .sidebar.collapsed nav ul li a { justify-content: center; padding: 0.5rem; min-height: 40px; display: flex; align-items: center; }
-        .sidebar.collapsed nav ul li a svg { margin: 0; opacity: 1; }
+    .sidebar.collapsed nav ul li a { justify-content: center; padding: 0.6rem; min-height: 48px; display: flex; align-items: center; gap:0 !important; }
+    .sidebar.collapsed nav ul li a svg { margin: 0; opacity: 1; }
+    /* Uniform icon container size expanded & collapsed */
+    .sidebar nav a .flex-shrink-0 { width:46px; height:46px; }
+    .sidebar.collapsed nav a .flex-shrink-0 { width:46px; height:46px; }
+    /* Prevent lateral shift when collapsed */
+    .sidebar.collapsed nav a:hover, .sidebar.collapsed nav div:hover { transform:none !important; }
+    /* Hide text gap cleanly */
+    .sidebar.collapsed nav a .menu-text { display:none !important; }
+    /* Hide active vertical bar when collapsed */
+    .sidebar.collapsed nav a > .w-1.h-8 { display:none !important; }
+    /* Remove residual spacing from space-x-* utilities when collapsed */
+    .sidebar.collapsed nav a.space-x-3 > :not(:first-child),
+    .sidebar.collapsed nav div.space-x-3 > :not(:first-child) { margin-left:0 !important; }
+    /* Ensure submenu toggle divs also centered */
+    .sidebar.collapsed nav .submenu-toggle { justify-content:center; padding:0.6rem; }
+    /* Square logo box */
+    .logo-box { width:56px; height:56px; border-radius:14px; }
+    @media (max-width:1023px){ .logo-box { width:54px; height:54px; } }
         
         .content-wrapper {
             flex: 1; display: flex; flex-direction: column; overflow-x: hidden;
-            margin-left: var(--sidebar-width-expanded);
+            margin-left: var(--sidebar-width-collapsed);
             min-height: 100vh; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            height: 100vh; padding-left: 0;
+            height: 100vh; padding-left: 0; transition: margin-left .35s ease;
         }
-    .content-wrapper.sidebar-collapsed { margin-left: var(--sidebar-width-collapsed); padding-left: var(--content-padding-collapsed); }
+        /* Content never shifts on hover; if we later allow pinned expand we can add a class to change margin */
+        .content-wrapper.pinned-expanded { margin-left: var(--sidebar-width-expanded); }
         
         .fixed-header {
-            position: fixed; top: 0; left: var(--sidebar-width-expanded); right: 0; z-index: 50;
-            width: calc(100% - var(--sidebar-width-expanded)); height: 60px;
+            position: fixed; top: 0; left: var(--sidebar-width-collapsed); right: 0; z-index: 50;
+            width: calc(100% - var(--sidebar-width-collapsed)); height: 60px;
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
         }
-        .fixed-header.sidebar-collapsed { left: var(--sidebar-width-collapsed); width: calc(100% - var(--sidebar-width-collapsed)); }
+        .fixed-header.pinned-expanded { left: var(--sidebar-width-expanded); width: calc(100% - var(--sidebar-width-expanded)); transition: left .35s ease,width .35s ease; }
         
         .content-area {
             flex: 1;
             overflow: visible;
-            padding: 2rem; margin-top: 60px;
+            /* Reduced top padding to bring content closer to navbar */
+            padding: 1.1rem 1.6rem 2rem; 
+            margin-top: 60px;
             min-height: calc(100vh - 60px);
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             height: auto;
             scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
             margin-left: 20px;
         }
+        /* Remove unintended extra top margin from first direct child */
+        .content-area > *:first-child { margin-top: 0 !important; }
         .content-area::-webkit-scrollbar { width: 6px; }
         .content-area::-webkit-scrollbar-track { background: transparent; }
-        .content-area::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 3px; }
-        .content-area::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%); }
+    .content-area::-webkit-scrollbar-thumb { background: linear-gradient(140deg, #4338CA 0%, #6D28D9 60%, #A21CAF 100%); border-radius: 3px; }
+    .content-area::-webkit-scrollbar-thumb:hover { background: linear-gradient(140deg, #4f46e5 0%, #7c3aed 55%, #c026d3 100%); }
         
         /* Ensure sidebar content doesn't overflow */
         .sidebar nav { flex: 1; overflow-y: auto; padding: 0; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.3) transparent; }
@@ -120,7 +148,7 @@
         .sidebar nav::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
         
         @media (max-width: 1023px) {
-            .sidebar { position: fixed !important; top: 0 !important; left: 0 !important; width: 320px !important; height: 100vh !important; z-index: 1000 !important; transform: translateX(-100%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; backdrop-filter: blur(10px); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15); overflow-y: auto; }
+            .sidebar { position: fixed !important; top: 0 !important; left: 0 !important; width: 320px !important; height: 100vh !important; z-index: 1000 !important; transform: translateX(-100%); background: linear-gradient(140deg, #4338CA 0%, #6D28D9 45%, #A21CAF 100%) !important; backdrop-filter: blur(10px); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15); overflow-y: auto; }
             .sidebar.open { transform: translateX(0); }
             .sidebar .p-4 { padding: 1.5rem !important; }
             .sidebar nav { padding: 1rem !important; }
@@ -152,7 +180,6 @@
             .fixed-header:not(.sidebar-collapsed) { left: var(--sidebar-width-expanded) !important; width: calc(100% - var(--sidebar-width-expanded)) !important; }
             .fixed-header.sidebar-collapsed { left: var(--sidebar-width-collapsed) !important; width: calc(100% - var(--sidebar-width-collapsed)) !important; }
         }
-        
         @media (max-width: 1023px) {
             .sidebar { transform: translateX(-100%); z-index: 50; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
             .sidebar.open { transform: translateX(0); }
@@ -161,7 +188,11 @@
         }
         
         /* Enhanced hover and focus states */
-        .sidebar nav a:focus, .sidebar nav div:focus { outline: none; transform: translateX(4px); box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15); }
+    .sidebar nav a:focus, .sidebar nav div:focus { outline: none; transform: none !important; box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15); }
+    /* Override Tailwind hover:translate-x-1 from markup to keep items stationary */
+    .sidebar nav a, .sidebar nav div { transition: background-color .3s, color .3s, box-shadow .3s; }
+    .sidebar nav a:hover { --tw-translate-x:0 !important; }
+    .sidebar nav div:hover { --tw-translate-x:0 !important; }
         
         /* Global accessible focus outline helper */
         .a11y-focus:focus, .a11y-focus:focus-visible {
@@ -174,12 +205,13 @@
 </head>
 <body class="main-container bg-gray-50">
     <!-- Sidebar -->
-    <aside class="sidebar gradient-bg shadow-xl flex flex-col relative">
+    <aside class="sidebar gradient-bg shadow-xl flex flex-col relative collapsed" id="mainSidebar">
         <!-- Logo Section -->
-        <div class="p-6 border-b border-white/20 relative bg-gradient-to-r from-white/5 to-transparent">
+    <div class="p-6 border-b border-white/20 relative bg-gradient-to-r from-white/5 to-transparent">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-lg">
+            <!-- Logo icon: changed to perfect square with slightly smaller radius to avoid elongated look -->
+                    <div class="logo-box bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-lg">
                         <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
                     <div class="sidebar-text">
@@ -192,8 +224,9 @@
                     </div>
                 </div>
                 <!-- Sidebar Toggle Button -->
-                <button id="sidebarCollapse" class="sidebar-toggle-btn hidden lg:flex w-10 h-10 bg-white/10 rounded-xl items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-105 border border-white/20" title="Tutup/Buka Sidebar">
-                    <i class="fas fa-chevron-left text-white text-sm"></i>
+                <!-- Improved toggle button with dynamic double-arrow icon -->
+                <button id="sidebarCollapse" class="sidebar-toggle-btn hidden" title="Sidebar hover expand only">
+                    <i class="fas fa-angles-left text-white text-base"></i>
                 </button>
             </div>
         </div>
@@ -533,9 +566,9 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="content-wrapper">
+    <div class="content-wrapper" id="contentWrapper">
         <!-- Fixed Header -->
-        <header class="fixed-header">
+    <header class="fixed-header" id="fixedHeader">
             <div class="flex items-center justify-between h-full px-4">
                 <!-- Left side - Menu Toggle -->
                 <div class="flex items-center space-x-2">
@@ -594,11 +627,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const contentWrapper = document.querySelector('.content-wrapper');
-            const fixedHeader = document.querySelector('.fixed-header');
+            const sidebar = document.getElementById('mainSidebar');
+            const contentWrapper = document.getElementById('contentWrapper');
+            const fixedHeader = document.getElementById('fixedHeader');
             const sidebarCollapseBtn = document.getElementById('sidebarCollapse');
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            let hoverExpanded = false;
+
+            function updateToggleIcon() {
+                if (!sidebarCollapseBtn) return;
+                const icon = sidebarCollapseBtn.querySelector('i');
+                if (!icon) return;
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.classList.remove('fa-angles-left');
+                    icon.classList.add('fa-angles-right');
+                } else {
+                    icon.classList.remove('fa-angles-right');
+                    icon.classList.add('fa-angles-left');
+                }
+            }
 
         // Desktop sidebar toggle
             if (sidebarCollapseBtn) {
@@ -606,8 +653,23 @@
             const isCollapsed = sidebar.classList.toggle('collapsed');
             contentWrapper.classList.toggle('sidebar-collapsed', isCollapsed);
             fixedHeader.classList.toggle('sidebar-collapsed', isCollapsed);
+            updateToggleIcon();
                 });
             }
+
+            // Hover expand/collapse (only on desktop widths)
+            sidebar.addEventListener('mouseenter', function() {
+                if (window.innerWidth >= 1024) {
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.add('expanded');
+                }
+            });
+            sidebar.addEventListener('mouseleave', function() {
+                if (window.innerWidth >= 1024) {
+                    sidebar.classList.remove('expanded');
+                    sidebar.classList.add('collapsed');
+                }
+            });
 
             // Mobile menu toggle
             if (mobileMenuToggle) {
@@ -688,11 +750,8 @@
             });
 
             // Ensure correct alignment on initial load (desktop)
-            if (window.innerWidth > 1023) {
-                const isCollapsed = sidebar.classList.contains('collapsed');
-                contentWrapper.classList.toggle('sidebar-collapsed', isCollapsed);
-                fixedHeader.classList.toggle('sidebar-collapsed', isCollapsed);
-            }
+            // On load we keep content static; no need to adjust wrapper
+            if (window.innerWidth > 1023) { updateToggleIcon(); }
 
             // Add smooth scrolling for sidebar when menu item is clicked
             const menuLinks = document.querySelectorAll('.sidebar nav a');

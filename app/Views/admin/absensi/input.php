@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <!-- Simple and Clean Attendance Input -->
-<div class="container-fluid py-4" style="padding-top: 6rem;">
+<div class="container-fluid py-4" style="padding-top: 1rem;">
     <div class="row">
         <div class="col-12">
             <!-- Header Card -->

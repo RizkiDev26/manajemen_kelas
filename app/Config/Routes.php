@@ -177,6 +177,7 @@ $routes->group('admin', function($routes) {
     $routes->get('habits/monthly/students/(:num)', 'Admin\HabitMonthlyController::students/$1');
     $routes->get('habits/monthly/data', 'Admin\HabitMonthlyController::data');
     $routes->get('habits/monthly/export', 'Admin\HabitMonthlyController::export');
+    $routes->get('habits/monthly/export-pdf', 'Admin\HabitMonthlyController::exportPdf');
 });
 
 // Walikelas Routes Group (without /admin prefix)
@@ -225,6 +226,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('habits/monthly/students/(:num)', 'Admin\HabitMonthlyController::students/$1');
     $routes->get('habits/monthly/data', 'Admin\HabitMonthlyController::data');
     $routes->get('habits/monthly/export', 'Admin\HabitMonthlyController::export');
+    $routes->get('habits/monthly/export-pdf', 'Admin\HabitMonthlyController::exportPdf');
 });
 
 // Logout Route (accessible from anywhere)

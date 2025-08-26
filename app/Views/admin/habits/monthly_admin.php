@@ -1,7 +1,7 @@
 <?= $this->extend('admin/layout') ?>
 <?= $this->section('content') ?>
 <?php $restricted = $restricted ?? false; ?>
-<div class="space-y-8" x-data="adminMonthly()" x-init="init()">
+<div class="space-y-8 bg-gradient-to-b from-[#F8F9FF] to-white min-h-screen -mx-4 px-4 py-4 md:py-8" x-data="adminMonthly()" x-init="init()">
     <style>
     .monthly-table {border-collapse:separate;border-spacing:0;font-size:.65rem;}
     .monthly-table th,.monthly-table td{padding:6px 6px;text-align:center;vertical-align:middle;position:relative;}
@@ -40,50 +40,48 @@
     .monthly-table thead tr.top-header th{box-shadow:0 2px 3px -1px rgba(0,0,0,.08);}    
     </style>
     <div class="text-center">
-        <h1 class="text-3xl font-extrabold bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent tracking-tight">Rekapitulasi 7 Kebiasaan Anak Indonesia Hebat</h1>
-        <p class="text-slate-500 mt-2 text-sm">Pilih kelas, siswa, dan bulan kemudian tekan Terapkan.</p>
+        <h1 class="text-3xl font-extrabold bg-gradient-to-r from-[#6C63FF] via-[#8A6CFF] to-[#C77DFF] bg-clip-text text-transparent tracking-tight">Rekapitulasi 7 Kebiasaan Anak Indonesia Hebat</h1>
+    <p class="mt-2 text-sm text-[#555]">Pilih kelas, siswa, dan bulan untuk menampilkan data (otomatis tampil tanpa tombol terapkan).</p>
     </div>
-    <div class="rounded-2xl p-6 shadow-xl border border-purple-700/40 text-slate-100" style="background:linear-gradient(135deg,#8637dc,#5b1fa3 60%,#2c124e);">
-        <div class="grid lg:grid-cols-5 gap-5">
+    <div class="max-w-6xl mx-auto rounded-2xl bg-white shadow-lg ring-1 ring-[#e3e6ef] p-5 md:p-7">
+        <div class="grid lg:grid-cols-5 gap-6">
+            <!-- Kelas -->
             <div class="space-y-1">
-                <label class="block text-xs font-semibold tracking-wide text-indigo-300">KELAS</label>
+                <label class="block text-xs font-semibold tracking-wide text-[#6C63FF] uppercase">Kelas</label>
                 <div class="relative">
-                    <template x-if="!restricted">
-                        <select x-model="filters.kelas" @change="loadStudents()" class="w-full rounded-xl bg-slate-800/70 border border-slate-600/50 text-slate-100 text-sm px-3 py-2 focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-400 transition disabled:opacity-60">
-                            <option value="" class="bg-slate-900">-- Pilih Kelas --</option>
-                            <?php foreach($classes as $c): ?>
-                                <option value="<?= $c['id'] ?>" class="bg-slate-900"><?= esc($c['nama']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </template>
-                    <template x-if="restricted">
-                        <div class="w-full px-3 py-2 rounded-xl bg-slate-700/60 border border-slate-600/50 text-slate-200 text-sm font-semibold tracking-wide">
-                            <?php if(!empty($classes)): ?><?= esc($classes[0]['nama']) ?><?php else: ?>Kelas Tidak Ditemukan<?php endif; ?>
-                        </div>
-                    </template>
+                    <select x-model="filters.kelas" @change="loadStudents()" class="w-full rounded-xl border border-[#ddd] bg-white/80 text-[#212529] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] transition disabled:opacity-60">
+                        <option value="">-- Pilih Kelas --</option>
+                        <?php foreach($classes as $c): ?>
+                            <option value="<?= $c['id'] ?>"><?= esc($c['nama']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
+            <!-- Siswa -->
             <div class="space-y-1 lg:col-span-2">
-                <label class="block text-xs font-semibold tracking-wide text-indigo-300">SISWA</label>
+                <label class="block text-xs font-semibold tracking-wide text-[#6C63FF] uppercase">Siswa</label>
                 <div class="relative">
-                    <select x-model="filters.student" @change="maybeAutoLoad()" class="w-full rounded-xl bg-slate-800/70 border border-slate-600/50 text-slate-100 text-sm px-3 py-2 focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-400 transition">
-                        <option value="" class="bg-slate-900">-- Pilih Siswa --</option>
+                    <select x-model="filters.student" @change="maybeAutoLoad()" class="w-full rounded-xl border border-[#ddd] bg-white/80 text-[#212529] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] transition">
+                        <option value="">-- Pilih Siswa --</option>
                         <template x-for="s in students" :key="s.id">
-                            <option :value="s.id" class="bg-slate-900" x-text="s.nama || s.Nama || ('ID:'+s.id)"></option>
+                            <option :value="s.id" x-text="s.nama || s.Nama || ('ID:'+s.id)"></option>
                         </template>
                     </select>
                 </div>
-                <div class="text-[10px] mt-1 text-slate-400" x-show="students.length">Total <span x-text="students.length"></span> siswa</div>
+                <div class="text-[10px] mt-1 text-[#6C757D]" x-show="students.length">Total <span x-text="students.length"></span> siswa</div>
             </div>
+            <!-- Bulan -->
             <div class="space-y-1">
-                <label class="block text-xs font-semibold tracking-wide text-indigo-300">BULAN</label>
-                <input type="month" x-model="filters.month" @change="maybeAutoLoad()" class="w-full rounded-xl bg-slate-800/70 border border-slate-600/50 text-slate-100 text-sm px-3 py-2 focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-400" />
+                <label class="block text-xs font-semibold tracking-wide text-[#6C63FF] uppercase">Bulan</label>
+                <input type="month" x-model="filters.month" @change="maybeAutoLoad()" class="w-full rounded-xl border border-[#ddd] bg-white/80 text-[#212529] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] transition" />
             </div>
-            <div class="flex flex-col gap-2 justify-end">
-                <button @click="apply()" class="w-full px-4 py-2 rounded-xl bg-indigo-600/90 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-900/40 transition disabled:opacity-40" :disabled="!filters.student">Terapkan</button>
-                <button @click="exportExcel()" class="w-full px-4 py-2 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-900/40 transition disabled:opacity-30" :disabled="!filters.student || !hasAnyData">Export</button>
+            <!-- Tombol -->
+            <div class="flex flex-col gap-3 justify-end">
+                <button @click="exportExcel()" class="w-full px-4 py-2 rounded-xl font-semibold text-white text-sm tracking-wide shadow-md bg-[#00C49A] hover:bg-[#00af88] hover:scale-[1.02] active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00C49A] disabled:opacity-30" :disabled="!filters.student || !hasAnyData">Export Excel</button>
+                <button @click="exportPdf()" class="w-full px-4 py-2 rounded-xl font-semibold text-white text-sm tracking-wide shadow-md bg-[#F97316] hover:bg-[#ea6505] hover:scale-[1.02] active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#fb923c] disabled:opacity-30" :disabled="!filters.student || !hasAnyData">Export PDF</button>
             </div>
         </div>
+        
     </div>
     <template x-if="loading">
         <div class="rounded-2xl bg-white p-10 text-center text-slate-500 border border-slate-200 animate-pulse">Memuat data...</div>
@@ -191,7 +189,7 @@ function adminMonthly(){
                 }
                 finally{ this.loading=false; }
             },
-            maybeAutoLoad(){ if(this.filters.student) this.apply(); },
+            maybeAutoLoad(){ if(this.filters.student && this.filters.month) this.apply(); },
             async apply(){
                 if(!this.filters.student) return; this.loading=true; this.monthly={};
                 const qs=new URLSearchParams({month:this.filters.month, student_id:this.filters.student});
@@ -200,6 +198,7 @@ function adminMonthly(){
                 const j=await r.json(); this.monthly=j.data||{}; this.loading=false; this.title='Rekap Kebiasaan '+this.formatMonth(this.filters.month);
             },
             exportExcel(){ if(!this.filters.student) return; const qs=new URLSearchParams({month:this.filters.month, student_id:this.filters.student}); const exportUrl='<?= (session()->get('role')==='walikelas')? base_url('habits/monthly/export') : base_url('admin/habits/monthly/export') ?>'; window.location=exportUrl+'?'+qs.toString(); },
+            exportPdf(){ if(!this.filters.student) return; const qs=new URLSearchParams({month:this.filters.month, student_id:this.filters.student}); const pdfUrl='<?= (session()->get('role')==='walikelas')? base_url('habits/monthly/export-pdf') : base_url('admin/habits/monthly/export-pdf') ?>'; window.location=pdfUrl+'?'+qs.toString(); },
             get hasAnyData(){ return Object.keys(this.monthly).length>0; },
             get daysInMonth(){ const m=this.filters.month; if(!m) return []; const [y,mo]=m.split('-'); const year=parseInt(y),month=parseInt(mo); const last=new Date(year,month,0).getDate(); const out=[]; for(let d=1; d<=last; d++){ const ds=('0'+d).slice(-2); out.push(`${y}-${mo}-${ds}`);} return out; },
     statusText(date){ const day=this.monthly[date]||{}; let done=0; for(let i=1;i<=7;i++){ const h=day['habit_'+i]; if(h&&h.completed) done++; } return done+'/7'; },

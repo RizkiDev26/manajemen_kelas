@@ -449,6 +449,18 @@
                         </a>
                     </li>
 
+                    <!-- Mata Pelajaran -->
+                    <li>
+                        <a href="/admin/mapel" title="Mata Pelajaran" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'admin/mapel') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-book-open text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Mata Pelajaran</span>
+                            </div>
+                        </a>
+                    </li>
+
                     <!-- Naik Kelas -->
                     <li>
                         <a href="/admin/naik-kelas" title="Naik Kelas" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/naik-kelas' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">

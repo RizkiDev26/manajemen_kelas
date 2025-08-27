@@ -181,7 +181,11 @@ $routes->group('admin', function($routes) {
 
     // Mapel (Subjects) Management
     $routes->get('mapel', 'Admin\MapelController::index');
+    $routes->get('mapel/json', 'Admin\MapelController::json'); // list for AJAX duplicate disable
     $routes->post('mapel/store', 'Admin\MapelController::store');
+    $routes->get('mapel/edit/(:num)', 'Admin\MapelController::edit/$1');
+    $routes->post('mapel/update/(:num)', 'Admin\MapelController::update/$1');
+    $routes->post('mapel/delete/(:num)', 'Admin\MapelController::delete/$1');
 });
 
 // Walikelas Routes Group (without /admin prefix)

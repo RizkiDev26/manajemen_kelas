@@ -46,4 +46,48 @@ class MapelController extends BaseController
             return $this->response->setStatusCode(500)->setJSON(['status'=>'error','message'=>$e->getMessage()]);
         }
     }
+
+    public function json()
+    {
+        $subjects = $this->subjectModel->select('id,name,grades')->orderBy('name','ASC')->findAll();
+        return $this->response->setJSON(['data'=>$subjects]);
+    }
+
+    public function edit($id)
+    {
+        $subject = $this->subjectModel->find($id);
+        if(!$subject){ return redirect()->to('/admin/mapel')->with('error','Data tidak ditemukan'); }
+        $subjects = $this->subjectModel->listAll();
+        return view('admin/nilai/mapel_index',[ 'subjects'=>$subjects, 'master'=>$this->masterSubjects, 'editing'=>$subject ]);
+    }
+
+    public function update($id)
+    {
+        $subject = $this->subjectModel->find($id);
+        if(!$subject){ return $this->response->setStatusCode(404)->setJSON(['status'=>'error','message'=>'Data tidak ditemukan']); }
+        $name = trim($this->request->getPost('name'));
+        $grades = $this->request->getPost('grades');
+        if(!is_array($grades)) $grades=[];
+        if(!$name || !in_array($name,$this->masterSubjects)){
+            return $this->response->setStatusCode(422)->setJSON(['status'=>'error','message'=>'Nama mapel tidak valid']);
+        }
+        // prevent rename to existing different id
+        $exists = $this->subjectModel->where('name',$name)->where('id !=',$id)->first();
+        if($exists){
+            return $this->response->setStatusCode(422)->setJSON(['status'=>'error','message'=>'Mapel sudah ada']);
+        }
+        $grades = array_values(array_unique(array_filter($grades, fn($g)=>in_array($g,[1,2,3,4,5,6]))));
+        sort($grades);
+        $this->subjectModel->update($id,[ 'name'=>$name, 'grades'=>implode(',', $grades) ]);
+        return $this->response->setJSON(['status'=>'success']);
+    }
+
+    public function delete($id)
+    {
+        $subject = $this->subjectModel->find($id);
+        if(!$subject){ return $this->response->setStatusCode(404)->setJSON(['status'=>'error','message'=>'Data tidak ditemukan']); }
+        // TODO: check relation with nilai table before delete (soft delete allowed)
+        $this->subjectModel->delete($id);
+        return $this->response->setJSON(['status'=>'success']);
+    }
 }

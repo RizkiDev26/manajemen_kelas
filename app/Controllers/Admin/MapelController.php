@@ -28,6 +28,11 @@ class MapelController extends BaseController
     public function index()
     {
         $subjects = $this->subjectModel->listAll();
+        if(empty($subjects)){
+            // Fallback auto inisialisasi jika seeder belum dijalankan di server
+            $this->autoInitializeDefaults();
+            $subjects = $this->subjectModel->listAll();
+        }
         return view('admin/nilai/mapel_index',[ 'subjects'=>$subjects, 'master'=>$this->masterSubjects ]);
     }
 
@@ -89,5 +94,29 @@ class MapelController extends BaseController
         // TODO: check relation with nilai table before delete (soft delete allowed)
         $this->subjectModel->delete($id);
         return $this->response->setJSON(['status'=>'success']);
+    }
+
+    private function autoInitializeDefaults(): void
+    {
+        $defaults = [
+            ['name'=>'Pendidikan Agama','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Pendidikan Pancasila','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Bahasa Indonesia','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Matematika','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Ilmu Pengetahuan Alam dan Sosial','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Seni Rupa','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Pendidikan Jasmani Olahraga dan Kesehatan','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Pendidikan Lingkungan dan BUdaya Jakarta','grades'=>[1,2,3,4,5,6]],
+            ['name'=>'Coding','grades'=>[4,5,6]],
+            ['name'=>'Bahasa Inggris','grades'=>[4,5,6]],
+        ];
+        foreach($defaults as $d){
+            if(!$this->subjectModel->where('name',$d['name'])->first()){
+                $this->subjectModel->insert([
+                    'name'=>$d['name'],
+                    'grades'=>implode(',', $d['grades'])
+                ]);
+            }
+        }
     }
 }

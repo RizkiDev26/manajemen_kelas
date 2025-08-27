@@ -9,11 +9,23 @@ class NilaiModel extends Model
     protected $primaryKey = 'id';
     protected $useTimestamps = true;
     protected $useSoftDeletes = true;
-    protected $allowedFields = ['student_id','subject_id','jenis','nilai','semester','tahun_ajar'];
+    // Legacy + new columns
+    protected $allowedFields = [
+        'siswa_id',        // existing
+        'subject_id',      // new FK to subjects
+        'mata_pelajaran',  // existing text subject
+        'jenis_nilai',     // harian|pts|pas
+        'nilai',
+        'tp_materi',
+        'tanggal',
+        'kelas',
+        'semester',        // optional future
+        'tahun_ajar'
+    ];
 
-    public function byStudentAndSubject($studentId, $subjectId)
+    public function byStudentAndSubject($siswaId, $subjectId)
     {
-        return $this->where('student_id',$studentId)->where('subject_id',$subjectId)->findAll();
+        return $this->where('siswa_id',$siswaId)->where('subject_id',$subjectId)->findAll();
     }
 
     public function averageBySubject($subjectId)

@@ -169,9 +169,23 @@
             <!-- Form atas -->
             <form id="bulkInputForm">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Kode Penilaian</label>
-                        <input type="text" id="kode_penilaian" readonly class="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700" value="Memuat...">
+                    <div class="md:col-span-2 grid grid-cols-5 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis</label>
+                            <select id="kode_prefix" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
+                                <option value="PH" selected>PH</option>
+                                <option value="PTS">PTS</option>
+                                <option value="PAS">PAS</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor</label>
+                            <select id="kode_number" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"></select>
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Kode</label>
+                            <input type="text" id="kode_penilaian" readonly class="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700" value="Memuat...">
+                        </div>
                     </div>
                     <div class="md:col-span-2">
                         <label for="deskripsi_penilaian" class="block text-sm font-semibold text-gray-700 mb-2">Topik Penilaian</label>
@@ -590,18 +604,51 @@ document.addEventListener('DOMContentLoaded', function () {
 async function fetchNextKode(){
     const kelas = '<?= isset($_GET['kelas']) ? esc($_GET['kelas']) : '' ?>';
     const mapel = '<?= isset($_GET['mapel']) ? esc($_GET['mapel']) : '' ?>';
+    const prefixSel = document.getElementById('kode_prefix');
+    const numberSel = document.getElementById('kode_number');
     const kodeInput = document.getElementById('kode_penilaian');
-    if(!kodeInput) return;
-    if(!kelas || !mapel){ kodeInput.value='-'; return; }
+    if(!kelas || !mapel){ if(kodeInput) kodeInput.value='-'; return; }
+    const prefix = prefixSel.value;
+    // Load used numbers to disable
     try {
-        kodeInput.value='...';
-        const resp = await fetch(`<?= base_url('admin/nilai/next-kode-harian') ?>?kelas=${encodeURIComponent(kelas)}&mapel=${encodeURIComponent(mapel)}`);
-        const data = await resp.json();
-        if(resp.ok && data.status==='ok'){
-            kodeInput.value = data.kode;
-        } else { kodeInput.value='PH-?'; }
-    } catch(e){ kodeInput.value='PH-?'; }
+        const usedResp = await fetch(`<?= base_url('admin/nilai/used-kode-harian') ?>?kelas=${encodeURIComponent(kelas)}&mapel=${encodeURIComponent(mapel)}&jenis=${prefix==='PH'?'harian':prefix.toLowerCase()}&prefix=${prefix}`);
+        const usedData = await usedResp.json();
+        const used = (usedData.status==='ok') ? usedData.used : [];
+        // Build number options 1..15
+        numberSel.innerHTML='';
+        for(let i=1;i<=15;i++){
+            const opt=document.createElement('option');
+            opt.value=i; opt.textContent=i;
+            if(used.includes(i)){ opt.disabled=true; opt.textContent = i + ' (terpakai)'; }
+            numberSel.appendChild(opt);
+        }
+        // Auto select first available not used
+        let selected = null;
+        for(const o of numberSel.options){ if(!o.disabled){ selected=o.value; break; } }
+        if(selected){ numberSel.value=selected; }
+        updateKodeCombined();
+    } catch(e){ if(kodeInput) kodeInput.value=prefix+'-?'; }
 }
+
+function updateKodeCombined(){
+    const prefixSel = document.getElementById('kode_prefix');
+    const numberSel = document.getElementById('kode_number');
+    const kodeInput = document.getElementById('kode_penilaian');
+    if(kodeInput){
+        if(prefixSel.value && numberSel.value){
+            kodeInput.value = prefixSel.value + '-' + numberSel.value;
+        }
+    }
+}
+
+document.addEventListener('change', function(e){
+    if(e.target && (e.target.id==='kode_prefix')){
+        fetchNextKode();
+    }
+    if(e.target && e.target.id==='kode_number'){
+        updateKodeCombined();
+    }
+});
 
 // Close modal when clicking backdrop
 document.getElementById('studentInputModal')?.addEventListener('click', function(e) {

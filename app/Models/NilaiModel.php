@@ -58,6 +58,39 @@ class NilaiModel extends Model
         return 'PH-' . $next;
     }
 
+    /**
+     * List nomor yang sudah dipakai untuk kode penilaian (PH/PTS/PAS) per kelas + mapel + jenis.
+     * Return array of integers e.g. [1,2,3]. Jika kolom belum ada -> []
+     */
+    public function listUsedKodeNumbers(string $kelas, string $mapel, string $jenis = 'harian', string $prefix = 'PH'): array
+    {
+        try {
+            $db = \Config\Database::connect();
+            if (! $db->fieldExists('kode_penilaian', $this->table)) {
+                return [];
+            }
+            $rows = $db->table($this->table)
+                ->select('DISTINCT kode_penilaian')
+                ->where('kelas', $kelas)
+                ->where('mata_pelajaran', $mapel)
+                ->where('jenis_nilai', $jenis)
+                ->where('deleted_at IS NULL')
+                ->get()->getResultArray();
+            $used = [];
+            foreach ($rows as $r) {
+                $kp = $r['kode_penilaian'] ?? '';
+                if (!$kp) continue;
+                if (stripos($kp, $prefix.'-') === 0) {
+                    $num = (int)substr($kp, strlen($prefix)+1);
+                    if ($num > 0) $used[$num] = true;
+                }
+            }
+            return array_keys($used);
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
     /* ================= Helper Methods referenced by Controller ================= */
 
     public function canAccessClass($userId, $kelas, $userRole): bool

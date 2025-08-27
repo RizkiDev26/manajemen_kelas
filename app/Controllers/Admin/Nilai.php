@@ -807,6 +807,26 @@ class Nilai extends BaseController
     }
 
     /**
+     * Daftar nomor kode penilaian yang sudah terpakai (untuk disable dropdown).
+     * GET params: kelas, mapel, jenis (harian|pts|pas), prefix (PH|PTS|PAS)
+     */
+    public function usedKodeHarian()
+    {
+        if (!session()->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+        $kelas = $this->request->getGet('kelas');
+        $mapel = $this->request->getGet('mapel');
+        $jenis = $this->request->getGet('jenis') ?: 'harian';
+        $prefix = $this->request->getGet('prefix') ?: ($jenis === 'harian' ? 'PH' : strtoupper($jenis));
+        if (!$kelas || !$mapel) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Parameter kelas & mapel wajib']);
+        }
+        $used = $this->nilaiModel->listUsedKodeNumbers($kelas, $mapel, $jenis, $prefix);
+        return $this->response->setJSON(['status' => 'ok', 'used' => $used]);
+    }
+
+    /**
      * Show PTS input page
      */
     public function pts()

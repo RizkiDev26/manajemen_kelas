@@ -27,6 +27,9 @@ class MapelController extends BaseController
 
     public function index()
     {
+    // Pastikan tabel 'subjects' sudah ada. Jika belum (misal lupa jalankan migrate)
+    // kita coba jalankan migrasi sekali secara otomatis hanya di environment development.
+    $this->ensureSubjectsTable();
         $subjects = $this->subjectModel->listAll();
         if(empty($subjects)){
             // Fallback auto inisialisasi jika seeder belum dijalankan di server
@@ -117,6 +120,26 @@ class MapelController extends BaseController
                     'grades'=>implode(',', $d['grades'])
                 ]);
             }
+        }
+    }
+
+    private function ensureSubjectsTable(): void
+    {
+        try {
+            $db = \Config\Database::connect();
+            if(! $db->tableExists('subjects')){
+                if(defined('ENVIRONMENT') && ENVIRONMENT === 'development'){
+                    // Jalankan seluruh migrasi (akan membuat tabel subjects & nilai)
+                    try {
+                        \Config\Services::migrations()->latest();
+                    } catch(\Throwable $e){
+                        log_message('error','Gagal auto-migrate subjects: '.$e->getMessage());
+                    }
+                }
+            }
+        } catch(\Throwable $e){
+            // Diamkan saja agar pesan error asli tetap muncul; hanya dicatat di log
+            log_message('error','ensureSubjectsTable error: '.$e->getMessage());
         }
     }
 }

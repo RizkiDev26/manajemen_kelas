@@ -132,6 +132,7 @@ $routes->group('admin', function($routes) {
     $routes->get('nilai/cetak', 'Admin\Nilai::cetakNilai');
     $routes->post('nilai/store-bulk-harian', 'Admin\Nilai::storeBulkHarian');
     $routes->post('nilai/update-bulk-harian', 'Admin\Nilai::updateBulkHarian');
+    $routes->get('nilai/next-kode-harian', 'Admin\Nilai::nextKodeHarian');
     // PTS & PAS pages
     $routes->get('nilai/pts', 'Admin\Nilai::pts');
     $routes->get('nilai/pas', 'Admin\Nilai::pas');

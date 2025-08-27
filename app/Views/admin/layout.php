@@ -327,20 +327,20 @@
                         
                         <!-- Submenu -->
                         <div class="submenu pl-4 mt-2 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
-                            <a href="<?= $baseUrl ?>/nilai/input" title="Penilaian Harian" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'nilai/input') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
-                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
-                                    <i class="fas fa-clipboard-check text-xs"></i>
-                                </div>
-                                <div class="menu-text">
-                                    <span class="text-sm font-medium">Penilaian Harian</span>
-                                </div>
-                            </a>
                             <a href="<?= $baseUrl ?>/mapel" title="Mata Pelajaran" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'mapel') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
                                 <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
                                     <i class="fas fa-book-open text-xs"></i>
                                 </div>
                                 <div class="menu-text">
                                     <span class="text-sm font-medium">Mata Pelajaran</span>
+                                </div>
+                            </a>
+                            <a href="<?= $baseUrl ?>/nilai/input" title="Penilaian Harian" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'nilai/input') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-clipboard-check text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Penilaian Harian</span>
                                 </div>
                             </a>
                             <a href="<?= $baseUrl ?>/nilai/pts" title="PTS" class="group flex items-center space-x-3 py-2 px-4 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 transform hover:translate-x-1">

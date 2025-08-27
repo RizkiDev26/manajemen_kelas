@@ -35,12 +35,15 @@
                     <option value="">Pilih Kelas</option>
                     <?php if ($userRole === 'admin'): ?>
                         <?php foreach ($availableClasses as $class): ?>
+                            <?php if (strtolower($class['kelas']) === 'lulus') continue; ?>
                             <option value="<?= $class['kelas'] ?>" <?= (isset($_GET['kelas']) && $_GET['kelas'] == $class['kelas']) ? 'selected' : '' ?>>
-                                Kelas <?= $class['kelas'] ?>
+                                <?= $class['kelas'] ?>
                             </option>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <option value="<?= $userKelas ?>" selected>Kelas <?= $userKelas ?></option>
+                        <?php if ($userKelas && strtolower($userKelas) !== 'lulus'): ?>
+                            <option value="<?= $userKelas ?>" selected><?= $userKelas ?></option>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </select>
             </div>
@@ -51,15 +54,11 @@
                 <select name="mapel" id="mapel" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base">
                     <option value="">Pilih Mapel</option>
                     <?php $selMapel = $_GET['mapel'] ?? ''; ?>
-                    <option value="Matematika" <?= ($selMapel==='Matematika'?'selected':'') ?>>Matematika</option>
-                    <option value="Bahasa Indonesia" <?= ($selMapel==='Bahasa Indonesia'?'selected':'') ?>>Bahasa Indonesia</option>
-                    <option value="IPA" <?= ($selMapel==='IPA'?'selected':'') ?>>IPA</option>
-                    <option value="IPS" <?= ($selMapel==='IPS'?'selected':'') ?>>IPS</option>
-                    <option value="PKn" <?= ($selMapel==='PKn'?'selected':'') ?>>PKn</option>
-                    <option value="Bahasa Inggris" <?= ($selMapel==='Bahasa Inggris'?'selected':'') ?>>Bahasa Inggris</option>
-                    <option value="Agama" <?= ($selMapel==='Agama'?'selected':'') ?>>Agama</option>
-                    <option value="Olahraga" <?= ($selMapel==='Olahraga'?'selected':'') ?>>Olahraga</option>
-                    <option value="Seni Budaya" <?= ($selMapel==='Seni Budaya'?'selected':'') ?>>Seni Budaya</option>
+                    <?php if (!empty($subjectsDynamic)): ?>
+                        <?php foreach ($subjectsDynamic as $subj): ?>
+                            <option value="<?= esc($subj) ?>" <?= ($selMapel === $subj ? 'selected':'') ?>><?= esc($subj) ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </select>
             </div>
 
@@ -169,10 +168,14 @@
         <div class="p-6 space-y-6">
             <!-- Form atas -->
             <form id="bulkInputForm">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Kode Penilaian</label>
+                        <input type="text" id="kode_penilaian" readonly class="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700" value="Memuat...">
+                    </div>
                     <div class="md:col-span-2">
-                        <label for="deskripsi_penilaian" class="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Penilaian</label>
-                        <textarea id="deskripsi_penilaian" name="deskripsi_penilaian" rows="2" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Masukan deskripsi penilaian mis:  Materi atau tujuan pembelajaran yang diujikan"></textarea>
+                        <label for="deskripsi_penilaian" class="block text-sm font-semibold text-gray-700 mb-2">Topik Penilaian</label>
+                        <textarea id="deskripsi_penilaian" name="deskripsi_penilaian" rows="2" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Contoh: Bab Pecahan / Tema 3 Subtema 1"></textarea>
                     </div>
                     <div>
                         <label for="tanggal" class="block text-sm font-semibold text-gray-700 mb-2">Tanggal</label>
@@ -191,10 +194,8 @@
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
                             <th class="px-4 sm:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">No</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">NISN</th>
                             <th class="px-4 sm:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Nama Siswa</th>
-                            <th class="px-4 sm:px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Nilai</th>
-                            <th class="px-4 sm:px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Keterangan</th>
+                            <th class="px-4 sm:px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Nilai (1-100)</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -202,24 +203,18 @@
                             <?php foreach ($students as $index => $student): ?>
                             <tr class="hover:bg-gray-50 transition-colors duration-200">
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $index + 1 ?></td>
-                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600"><?= esc($student['nisn']) ?></td>
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium"><?= esc($student['nama']) ?></td>
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">
                                     <input type="number" min="0" max="100" step="1"
-                                           name="nilai[<?= $student['id'] ?>]"
                                            data-siswa-id="<?= $student['id'] ?>"
-                                           onchange="updateGrade(this, 'grade-<?= $student['id'] ?>')"
-                                           class="w-20 px-2 py-1.5 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                           class="w-24 px-2 py-1.5 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                            placeholder="0-100">
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">
-                                    <span id="grade-<?= $student['id'] ?>" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">-</span>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="5" class="px-4 sm:px-6 py-8 text-center text-gray-500">Tidak ada siswa ditemukan atau belum memilih kelas & mapel</td>
+                                <td colspan="3" class="px-4 sm:px-6 py-8 text-center text-gray-500">Tidak ada siswa ditemukan atau belum memilih kelas & mapel</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -332,6 +327,7 @@ function openStudentModal() {
     if (modal) {
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        fetchNextKode();
     }
 }
 
@@ -512,6 +508,7 @@ async function saveAllGrades() {
                 mapel,
                 tanggal,
                 deskripsi,
+                kode_penilaian: document.getElementById('kode_penilaian')?.value || '',
                 grades
             })
         });
@@ -589,6 +586,22 @@ document.addEventListener('DOMContentLoaded', function () {
     if (kelasSel) kelasSel.addEventListener('change', trySubmit);
     if (mapelSel) mapelSel.addEventListener('change', trySubmit);
 });
+
+async function fetchNextKode(){
+    const kelas = '<?= isset($_GET['kelas']) ? esc($_GET['kelas']) : '' ?>';
+    const mapel = '<?= isset($_GET['mapel']) ? esc($_GET['mapel']) : '' ?>';
+    const kodeInput = document.getElementById('kode_penilaian');
+    if(!kodeInput) return;
+    if(!kelas || !mapel){ kodeInput.value='-'; return; }
+    try {
+        kodeInput.value='...';
+        const resp = await fetch(`<?= base_url('admin/nilai/next-kode-harian') ?>?kelas=${encodeURIComponent(kelas)}&mapel=${encodeURIComponent(mapel)}`);
+        const data = await resp.json();
+        if(resp.ok && data.status==='ok'){
+            kodeInput.value = data.kode;
+        } else { kodeInput.value='PH-?'; }
+    } catch(e){ kodeInput.value='PH-?'; }
+}
 
 // Close modal when clicking backdrop
 document.getElementById('studentInputModal')?.addEventListener('click', function(e) {

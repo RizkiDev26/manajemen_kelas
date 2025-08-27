@@ -484,17 +484,16 @@ class Nilai extends BaseController
             }
         }
 
-        // Get available classes
+        // Get available classes (exclude 'Lulus')
         $availableClasses = [];
         if ($userRole === 'admin') {
             $availableClasses = $this->tbSiswaModel->select('kelas')
-                                                  ->distinct()
-                                                  ->orderBy('kelas', 'ASC')
-                                                  ->findAll();
-        } else {
-            if ($userKelas) {
-                $availableClasses = [['kelas' => $userKelas]];
-            }
+                ->distinct()
+                ->where('kelas !=', 'Lulus')
+                ->orderBy('kelas', 'ASC')
+                ->findAll();
+        } else if ($userKelas && $userKelas !== 'Lulus') {
+            $availableClasses = [['kelas' => $userKelas]];
         }
 
         // Get students for selected class
@@ -513,6 +512,29 @@ class Nilai extends BaseController
             }
         }
 
+        // Dynamic subjects (mapel) from subjects table filtered by grade level if possible
+        $subjectsDynamic = [];
+        try {
+            $subjectModel = new \App\Models\SubjectModel();
+            $allSubjects = $subjectModel->listAll();
+            // If selected class like "5 A" ambil angka awal sebagai grade
+            $gradeNumber = null;
+            if ($selectedKelas) {
+                if (preg_match('/^(\d+)/', $selectedKelas, $m)) {
+                    $gradeNumber = (int)$m[1];
+                }
+            }
+            foreach ($allSubjects as $s) {
+                if (!empty($s['grades']) && $gradeNumber) {
+                    $grades = array_filter(array_map('intval', explode(',', $s['grades'])));
+                    if ($grades && !in_array($gradeNumber, $grades)) {
+                        continue; // skip not for this grade
+                    }
+                }
+                $subjectsDynamic[] = $s['name'];
+            }
+        } catch(\Throwable $e) {}
+
         $data = [
             'title' => 'Input Nilai Siswa',
             'userRole' => $userRole,
@@ -522,6 +544,7 @@ class Nilai extends BaseController
             'selectedKelas' => $selectedKelas,
             'selectedMapel' => $selectedMapel,
             'harianMatrix' => $harianMatrix,
+            'subjectsDynamic' => $subjectsDynamic,
             'currentUser' => [
                 'nama' => session()->get('nama'),
                 'role' => session()->get('role')
@@ -620,7 +643,8 @@ class Nilai extends BaseController
         $kelas  = $payload['kelas'] ?? null;
         $mapel  = $payload['mapel'] ?? null;
         $tanggal = $payload['tanggal'] ?? null;
-        $deskripsi = $payload['deskripsi'] ?? null;
+    $deskripsi = $payload['deskripsi'] ?? null; // topik / TP
+    $kode = $payload['kode_penilaian'] ?? null;
         $grades = $payload['grades'] ?? null; // array of ['siswa_id' => int, 'nilai' => number]
 
         if (!$kelas || !$mapel || !$tanggal || !is_array($grades)) {
@@ -634,6 +658,10 @@ class Nilai extends BaseController
         $db = \Config\Database::connect();
         $db->transStart();
         $inserted = 0;
+        if (!$kode) {
+            // generate once
+            $kode = $this->nilaiModel->getNextKodeHarian($kelas, $mapel);
+        }
         foreach ($grades as $g) {
             if (!isset($g['siswa_id']) || $g['siswa_id'] === '' || $g['nilai'] === '' || $g['nilai'] === null) {
                 continue;
@@ -644,6 +672,7 @@ class Nilai extends BaseController
                 'siswa_id' => (int)$g['siswa_id'],
                 'mata_pelajaran' => $mapel,
                 'jenis_nilai' => 'harian',
+                'kode_penilaian' => $kode,
                 'nilai' => $val,
                 'tp_materi' => $deskripsi,
                 'tanggal' => $tanggal,
@@ -663,7 +692,8 @@ class Nilai extends BaseController
         return $this->response->setJSON([
             'status' => 'ok',
             'message' => 'Nilai berhasil disimpan',
-            'inserted' => $inserted
+            'inserted' => $inserted,
+            'kode_penilaian' => $kode
         ]);
     }
 
@@ -694,7 +724,8 @@ class Nilai extends BaseController
         $kelas  = $payload['kelas'] ?? null;
         $mapel  = $payload['mapel'] ?? null;
         $tanggal = $payload['tanggal'] ?? null; // updating target date
-        $deskripsi = $payload['deskripsi'] ?? '';
+    $deskripsi = $payload['deskripsi'] ?? '';
+    $kode = $payload['kode_penilaian'] ?? null;
         $grades = $payload['grades'] ?? null; // [{siswa_id, nilai}]
 
         if (!$kelas || !$mapel || !$tanggal || !is_array($grades)) {
@@ -725,10 +756,11 @@ class Nilai extends BaseController
                 ->where('DATE(tanggal)', $tanggal)
                 ->first();
 
-            if ($row) {
+        if ($row) {
                 $this->nilaiModel->update($row['id'], [
                     'nilai' => $val,
                     'tp_materi' => $deskripsi,
+            'kode_penilaian' => $kode ?: ($row['kode_penilaian'] ?? null),
                     'updated_by' => $userId,
                 ]);
                 $updated++;
@@ -737,6 +769,7 @@ class Nilai extends BaseController
                     'siswa_id' => $sid,
                     'mata_pelajaran' => $mapel,
                     'jenis_nilai' => 'harian',
+            'kode_penilaian' => $kode ?: $this->nilaiModel->getNextKodeHarian($kelas, $mapel),
                     'nilai' => $val,
                     'tp_materi' => $deskripsi,
                     'tanggal' => $tanggal,
@@ -754,6 +787,23 @@ class Nilai extends BaseController
         }
 
         return $this->response->setJSON(['status' => 'ok', 'updated' => $updated]);
+    }
+
+    /**
+     * Dapatkan kode penilaian harian berikutnya (AJAX)
+     */
+    public function nextKodeHarian()
+    {
+        if (!session()->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+        $kelas = $this->request->getGet('kelas');
+        $mapel = $this->request->getGet('mapel');
+        if (!$kelas || !$mapel) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Parameter kelas & mapel wajib']);
+        }
+        $kode = $this->nilaiModel->getNextKodeHarian($kelas, $mapel);
+        return $this->response->setJSON(['status' => 'ok', 'kode' => $kode]);
     }
 
     /**

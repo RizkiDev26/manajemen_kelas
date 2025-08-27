@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -15,29 +17,23 @@
             --sidebar-width-collapsed: 100px;
             --content-padding-expanded: 0;
             --content-padding-collapsed: 0;
+            --scrollbar-width: 0px;
         }
+    /* Hilangkan reservasi ruang di sisi kiri yang menimbulkan strip putih */
+    html { scrollbar-gutter: stable; }
+        body.modal-open { overflow:hidden; padding-right: var(--scrollbar-width); }
         
         body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
+            margin: 0 !important;
+            padding: 0 !important;
             overflow-x: hidden;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
         
-        /* Disable all transitions globally */
-        *, *::before, *::after {
-            transition: none !important;
-            animation: none !important;
-        }
-        
-        /* Re-enable specific smooth transitions for sidebar and menu items */
-        .sidebar { transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
-        .sidebar nav a, .sidebar nav div { transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
-        .content-wrapper, .fixed-header { transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
-        .sidebar nav .submenu { transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
-        .sidebar nav .submenu-chevron { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
-        .sidebar-text, .menu-text, .menu-label { transition: opacity 0.3s ease, visibility 0.3s ease !important; }
+    /* Matikan animasi & transisi untuk kurangi lag */
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+    .sidebar, .sidebar nav a, .sidebar nav div, .content-wrapper, .fixed-header, .sidebar nav .submenu, .sidebar nav .submenu-chevron, .sidebar-text, .menu-text, .menu-label { transition: none !important; }
         
         /* Submenu functionality */
         .menu-item-with-submenu .submenu { max-height: 0; opacity: 0; overflow: hidden; }
@@ -66,18 +62,20 @@
             position: relative;
             overflow-x: hidden;
             overflow-y: visible;
+            margin:0 !important; padding:0 !important; border:0 !important;
         }
         
         .sidebar {
             width: var(--sidebar-width-collapsed);
             flex-shrink: 0;
             background: linear-gradient(140deg, #4338CA 0%, #6D28D9 45%, #A21CAF 100%);
-            position: fixed; top: 0; left: 0; height: 100vh; z-index: 110;
+            position: fixed; top: 0; left: 0; height: 100vh; z-index: 99999999999999; /* elevated overlay */
             overflow-y: auto; display: flex; flex-direction: column;
             box-shadow: 8px 0 32px rgba(109, 40, 217, 0.30); backdrop-filter: blur(15px);
+            transition: width .15s ease; /* minimal smoothness */
         }
         /* Hover expanded appearance overlays content without pushing */
-        .sidebar.expanded { width: var(--sidebar-width-expanded); }
+    .sidebar.expanded { width: var(--sidebar-width-expanded); }
         .sidebar.collapsed { width: var(--sidebar-width-collapsed); }
         .sidebar.collapsed .sidebar-text, .sidebar.collapsed .menu-text, .sidebar.collapsed .menu-label { opacity: 0; pointer-events: none; width: 0; overflow: hidden; position: absolute; visibility: hidden; }
     /* Hide chevron + active indicator when collapsed */
@@ -88,6 +86,9 @@
     .sidebar.collapsed nav ul li a svg { margin: 0; opacity: 1; }
     /* Uniform icon container size expanded & collapsed */
     .sidebar nav a .flex-shrink-0 { width:46px; height:46px; }
+    /* Saat sidebar expanded overlay, bisa tambahkan kelas helper (JS optional) untuk menonaktifkan interaksi konten di bawahnya */
+    .sidebar.expanded ~ .content-wrapper { pointer-events: none; }
+    .sidebar.expanded ~ .content-wrapper .fixed-header { pointer-events: none; }
     .sidebar.collapsed nav a .flex-shrink-0 { width:46px; height:46px; }
     /* Prevent lateral shift when collapsed */
     .sidebar.collapsed nav a:hover, .sidebar.collapsed nav div:hover { transform:none !important; }
@@ -106,32 +107,34 @@
         
         .content-wrapper {
             flex: 1; display: flex; flex-direction: column; overflow-x: hidden;
-            margin-left: var(--sidebar-width-collapsed);
+            margin-left: 0 !important;
+            padding-left: 0 !important; /* sidebar benar-benar overlay, tidak sisakan ruang */
             min-height: 100vh; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            height: 100vh; padding-left: 0; transition: margin-left .35s ease;
+            height: 100vh; width: 100%; box-sizing: border-box;
         }
-        /* Content never shifts on hover; if we later allow pinned expand we can add a class to change margin */
-        .content-wrapper.pinned-expanded { margin-left: var(--sidebar-width-expanded); }
+    /* Hapus kelas pinned-expanded (tidak dipakai lagi) */
+    .content-wrapper.pinned-expanded { margin-left: 0 !important; padding-left:0 !important; }
         
         .fixed-header {
-            position: fixed; top: 0; left: var(--sidebar-width-collapsed); right: 0; z-index: 50;
-            width: calc(100% - var(--sidebar-width-collapsed)); height: 60px;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+            width: 100%; height: 60px;
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
         }
-        .fixed-header.pinned-expanded { left: var(--sidebar-width-expanded); width: calc(100% - var(--sidebar-width-expanded)); transition: left .35s ease,width .35s ease; }
+        .fixed-header.pinned-expanded { /* tidak mengubah offset lagi */ }
         
         .content-area {
             flex: 1;
             overflow: visible;
-            /* Reduced top padding to bring content closer to navbar */
             padding: 1.1rem 1.6rem 2rem; 
             margin-top: 60px;
             min-height: calc(100vh - 60px);
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             height: auto;
             scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
-            margin-left: 20px;
+            margin-left: 0 !important;
+            width: 100%; box-sizing: border-box;
+            position: relative; z-index: 1; /* bawah sidebar */
         }
         /* Remove unintended extra top margin from first direct child */
         .content-area > *:first-child { margin-top: 0 !important; }
@@ -156,7 +159,7 @@
             .sidebar .menu-label { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
             .content-area { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 1rem !important; box-sizing: border-box; overflow-x: hidden; }
             .fixed-header { left: 0 !important; width: 100% !important; height: 60px !important; background: rgba(255, 255, 255, 0.95) !important; backdrop-filter: blur(15px) !important; }
-            .content-wrapper { margin-left: 0 !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; box-sizing: border-box; }
+            .content-wrapper { margin-left: 0 !important; padding-left: 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
             .content-area .container, .content-area .max-w-7xl, .content-area .mx-auto { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 1rem !important; box-sizing: border-box; }
         }
         
@@ -175,10 +178,7 @@
         
         @media (min-width: 1024px) {
             .content-area { margin-left: 0; padding: 0.5rem; max-width: none; overflow: visible !important; height: auto !important; }
-            .content-wrapper:not(.sidebar-collapsed) { margin-left: 0 !important; }
-            .content-wrapper.sidebar-collapsed { margin-left: 0 !important; }
-            .fixed-header:not(.sidebar-collapsed) { left: var(--sidebar-width-expanded) !important; width: calc(100% - var(--sidebar-width-expanded)) !important; }
-            .fixed-header.sidebar-collapsed { left: var(--sidebar-width-collapsed) !important; width: calc(100% - var(--sidebar-width-collapsed)) !important; }
+            /* Header offset & width sudah diatur global; tidak berubah saat hover */
         }
         @media (max-width: 1023px) {
             .sidebar { transform: translateX(-100%); z-index: 50; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
@@ -250,7 +250,7 @@
                     <?php if ($userRole !== 'siswa'): ?>
                     <!-- Dashboard -->
                     <li>
-                        <a href="<?= $baseUrl ?>/dashboard" title="Dashboard" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/dashboard' || uri_string() === 'dashboard' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                        <a href="<?= $baseUrl ?>/dashboard" title="Dashboard" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= uri_string() === 'admin/dashboard' || uri_string() === 'dashboard' ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?>">
                             <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
                                 <i class="fas fa-chart-pie text-sm"></i>
                             </div>
@@ -265,7 +265,7 @@
                     
                     <!-- Data Siswa -->
                     <li>
-                        <a href="<?= $baseUrl ?>/data-siswa" title="Data Siswa" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'data-siswa') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
+                        <a href="<?= $baseUrl ?>/data-siswa" title="Data Siswa" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'data-siswa') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?>">
                             <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
                                 <i class="fas fa-graduation-cap text-sm"></i>
                             </div>
@@ -277,7 +277,7 @@
 
                     <!-- Absensi & Kehadiran / Daftar Hadir -->
                     <li class="menu-item-with-submenu">
-                        <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'absensi') !== false || strpos(uri_string(), 'daftar-hadir') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 cursor-pointer submenu-toggle">
+                        <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'absensi') !== false || strpos(uri_string(), 'daftar-hadir') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> cursor-pointer submenu-toggle">
                             <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
                                 <i class="fas fa-clipboard-check text-sm"></i>
                             </div>
@@ -589,39 +589,44 @@
     <div class="content-wrapper" id="contentWrapper">
         <!-- Fixed Header -->
     <header class="fixed-header" id="fixedHeader">
-            <div class="flex items-center justify-between h-full px-4">
-                <!-- Left side - Menu Toggle -->
-                <div class="flex items-center space-x-2">
-                    <!-- Mobile Menu Toggle -->
-                    <button id="mobileMenuToggle" class="lg:hidden w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all duration-200">
-                        <i class="fas fa-bars text-xs"></i>
-                    </button>
-                    <!-- User Profile (icons removed as requested) -->
-                    <?php 
-                        $session = session();
-                        $displayName = $session->get('nama') ?: 'Pengguna';
-                        $roleKey = $session->get('role') ?: '';
-                        $roleMap = [
-                            'admin' => 'Administrator',
-                            'walikelas' => 'Wali Kelas',
-                            'guru' => 'Guru',
-                            'siswa' => 'Siswa'
-                        ];
-                        $displayRole = $roleMap[$roleKey] ?? 'Pengguna';
-                        $initial = strtoupper(mb_substr(trim($displayName), 0, 1, 'UTF-8')) ?: 'U';
-                    ?>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm text-xs">
-                            <?= esc($initial) ?>
-                        </div>
-                        <div class="hidden md:block">
-                            <p class="text-sm font-medium text-gray-900"><?= esc($displayName) ?></p>
-                            <p class="text-xs text-gray-500"><?= esc($displayRole) ?></p>
-                        </div>
+        <div class="flex items-center h-full px-4">
+            <!-- Left: mobile toggle -->
+            <button id="mobileMenuToggle" class="lg:hidden w-9 h-9 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white shadow-sm hover:shadow-md">
+                <i class="fas fa-bars text-sm"></i>
+            </button>
+            <h1 class="ml-3 text-sm sm:text-base font-semibold text-gray-700 truncate">Panel Admin</h1>
+            <div class="ml-auto flex items-center space-x-3" x-data="{open:false}" @click.away="open=false">
+                <?php 
+                    $session = session();
+                    $displayName = $session->get('nama') ?: 'Pengguna';
+                    $roleKey = $session->get('role') ?: '';
+                    $roleMap = [ 'admin'=>'Administrator','walikelas'=>'Wali Kelas','guru'=>'Guru','siswa'=>'Siswa'];
+                    $displayRole = $roleMap[$roleKey] ?? 'Pengguna';
+                    $initial = strtoupper(mb_substr(trim($displayName),0,1,'UTF-8')) ?: 'U';
+                ?>
+                <button @click="open=!open" class="flex items-center space-x-2 focus:outline-none">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow ring-2 ring-indigo-200">
+                        <?= esc($initial) ?>
                     </div>
+                    <div class="hidden sm:flex flex-col text-left">
+                        <span class="text-sm font-medium text-gray-800 leading-none"><?= esc($displayName) ?></span>
+                        <span class="text-xs text-gray-500 leading-none"><?= esc($displayRole) ?></span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs text-gray-400 hidden sm:block"></i>
+                </button>
+                <div x-show="open" x-transition class="absolute top-14 right-4 w-56 bg-white rounded-xl shadow-2xl py-2 ring-1 ring-black ring-opacity-5 border border-gray-100 z-50">
+                    <div class="px-4 py-2 border-b border-gray-100">
+                        <p class="text-sm font-semibold text-gray-800 mb-0"><?= esc($displayName) ?></p>
+                        <p class="text-xs text-gray-500 capitalize"><?= esc($displayRole) ?></p>
+                    </div>
+                    <a href="/logout" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                        <i class="fas fa-sign-out-alt w-5"></i>
+                        <span>Logout</span>
+                    </a>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
         <!-- Content Area -->
         <main class="content-area">
@@ -631,12 +636,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Hitung lebar scrollbar untuk kompensasi saat modal open agar tidak geser
+            const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+            document.documentElement.style.setProperty('--scrollbar-width', scrollBarWidth + 'px');
             const sidebar = document.getElementById('mainSidebar');
-            const contentWrapper = document.getElementById('contentWrapper');
-            const fixedHeader = document.getElementById('fixedHeader');
             const sidebarCollapseBtn = document.getElementById('sidebarCollapse');
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            let hoverExpanded = false;
+            // Overlay strategy: kita hanya mengubah width sidebar, tidak mengutak-atik konten / header
 
             function updateToggleIcon() {
                 if (!sidebarCollapseBtn) return;
@@ -651,29 +657,19 @@
                 }
             }
 
-        // Desktop sidebar toggle
+            // Desktop manual toggle (optional pin)
             if (sidebarCollapseBtn) {
                 sidebarCollapseBtn.addEventListener('click', function() {
-            const isCollapsed = sidebar.classList.toggle('collapsed');
-            contentWrapper.classList.toggle('sidebar-collapsed', isCollapsed);
-            fixedHeader.classList.toggle('sidebar-collapsed', isCollapsed);
-            updateToggleIcon();
+                    const isCollapsed = sidebar.classList.toggle('collapsed');
+                    if(!isCollapsed){ sidebar.classList.add('expanded'); }
+                    else { sidebar.classList.remove('expanded'); }
+                    updateToggleIcon();
                 });
             }
 
-            // Hover expand/collapse (only on desktop widths)
-            sidebar.addEventListener('mouseenter', function() {
-                if (window.innerWidth >= 1024) {
-                    sidebar.classList.remove('collapsed');
-                    sidebar.classList.add('expanded');
-                }
-            });
-            sidebar.addEventListener('mouseleave', function() {
-                if (window.innerWidth >= 1024) {
-                    sidebar.classList.remove('expanded');
-                    sidebar.classList.add('collapsed');
-                }
-            });
+            // Hover expand/collapse: hanya width sidebar berubah
+            sidebar.addEventListener('mouseenter', () => { if(window.innerWidth>=1024){ sidebar.classList.add('expanded'); sidebar.classList.remove('collapsed'); } });
+            sidebar.addEventListener('mouseleave', () => { if(window.innerWidth>=1024){ sidebar.classList.remove('expanded'); sidebar.classList.add('collapsed'); } });
 
             // Mobile menu toggle
             if (mobileMenuToggle) {

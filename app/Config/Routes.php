@@ -128,12 +128,15 @@ $routes->group('admin', function($routes) {
     // Nilai Routes
     $routes->get('nilai', 'Admin\Nilai::index');
     $routes->get('nilai/data-tp', 'Admin\Nilai::dataTP');
+    // Pretty URL: /admin/nilai/input/{kelasSlug}/{mapelSlug}
+    $routes->get('nilai/input/(:segment)/(:segment)', 'Admin\Nilai::inputNilai/$1/$2');
     $routes->get('nilai/input', 'Admin\Nilai::inputNilai');
     $routes->get('nilai/cetak', 'Admin\Nilai::cetakNilai');
     $routes->post('nilai/store-bulk-harian', 'Admin\Nilai::storeBulkHarian');
     $routes->post('nilai/update-bulk-harian', 'Admin\Nilai::updateBulkHarian');
     $routes->get('nilai/next-kode-harian', 'Admin\Nilai::nextKodeHarian');
     $routes->get('nilai/used-kode-harian', 'Admin\Nilai::usedKodeHarian');
+    $routes->post('nilai/delete-harian', 'Admin\Nilai::deleteHarianAssessment');
     // PTS & PAS pages
     $routes->get('nilai/pts', 'Admin\Nilai::pts');
     $routes->get('nilai/pas', 'Admin\Nilai::pas');

@@ -453,7 +453,7 @@ class Nilai extends BaseController
     /**
      * Input Nilai
      */
-    public function inputNilai()
+    public function inputNilai($kelasSlug = null, $mapelSlug = null)
     {
         // Check if user is logged in
         if (!session()->get('isLoggedIn')) {
@@ -497,9 +497,10 @@ class Nilai extends BaseController
         }
 
         // Get students for selected class
-        $students = [];
-        $selectedKelas = $this->request->getVar('kelas');
-        $selectedMapel = $this->request->getVar('mapel');
+    $students = [];
+    // Support pretty URL slugs or fallback to query params
+    $selectedKelas = $kelasSlug ? $this->unslugKelas($kelasSlug) : $this->request->getVar('kelas');
+    $selectedMapel = $mapelSlug ? $this->unslugMapel($mapelSlug) : $this->request->getVar('mapel');
         $harianMatrix = null;
         
         if ($selectedKelas) {
@@ -508,7 +509,8 @@ class Nilai extends BaseController
                                           ->orderBy('nama', 'ASC')
                                           ->findAll();
             if ($selectedMapel) {
-                $harianMatrix = $this->nilaiModel->getNilaiHarianMatrix($selectedKelas, $selectedMapel);
+                // Cached fetch (60s) to reduce repeated heavy grouping
+                $harianMatrix = $this->nilaiModel->getCachedNilaiHarianMatrix($selectedKelas, $selectedMapel, 60);
             }
         }
 
@@ -545,6 +547,8 @@ class Nilai extends BaseController
             'selectedMapel' => $selectedMapel,
             'harianMatrix' => $harianMatrix,
             'subjectsDynamic' => $subjectsDynamic,
+            'kelasSlug' => $selectedKelas ? $this->slugifyKelas($selectedKelas) : null,
+            'mapelSlug' => $selectedMapel ? $this->slugifyMapel($selectedMapel) : null,
             'currentUser' => [
                 'nama' => session()->get('nama'),
                 'role' => session()->get('role')
@@ -552,6 +556,36 @@ class Nilai extends BaseController
         ];
 
         return view('admin/nilai/input', $data);
+    }
+
+    private function slugifyMapel(string $mapel): string
+    {
+        $mapel = strtolower(trim($mapel));
+        $mapel = preg_replace('/[^a-z0-9]+/','-', $mapel);
+        return trim($mapel,'-');
+    }
+
+    private function slugifyKelas(string $kelas): string
+    {
+        $kelas = strtolower(trim($kelas));
+        $kelas = str_replace([' ','/'], '-', $kelas);
+        return preg_replace('/[^a-z0-9\-]+/','', $kelas);
+    }
+
+    private function unslugKelas(?string $slug): ?string
+    {
+        if(!$slug) return null;
+        // revert dashes to spaces & capitalize words with 'kelas'
+        $slug = str_replace('-', ' ', $slug);
+        // ensure leading 'kelas' capitalized
+        return ucwords($slug);
+    }
+
+    private function unslugMapel(?string $slug): ?string
+    {
+        if(!$slug) return null;
+        $slug = str_replace('-', ' ', $slug);
+        return ucwords($slug);
     }
 
     /**
@@ -655,11 +689,39 @@ class Nilai extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Tidak memiliki akses ke kelas ini']);
         }
 
+        // Pre-validate grades: reject if any >100 or <0
+        foreach($grades as $g){
+            if(isset($g['nilai']) && $g['nilai'] !== '' && $g['nilai'] !== null){
+                $v = (float)$g['nilai'];
+                if($v > 100){
+                    return $this->response->setStatusCode(400)->setJSON(['status'=>'error','message'=>'Nilai tidak boleh lebih dari 100']);
+                }
+                if($v < 0){
+                    return $this->response->setStatusCode(400)->setJSON(['status'=>'error','message'=>'Nilai tidak boleh kurang dari 0']);
+                }
+            }
+        }
+
         $db = \Config\Database::connect();
+        $hasKodeCol = false; try { $hasKodeCol = $db->fieldExists('kode_penilaian','nilai'); } catch(\Throwable $e){}
+        // Duplicate kode_penilaian guard: if client sends a kode already existing for this kelas+mapel, reject to prevent accidental overwrite
+        if($hasKodeCol && $kode){
+            $exists = $db->table('nilai')
+                ->where('kelas',$kelas)
+                ->where('mata_pelajaran',$mapel)
+                ->where('jenis_nilai','harian')
+                ->where('kode_penilaian',$kode)
+                ->where('deleted_at IS NULL')
+                ->countAllResults();
+            if($exists>0){
+                return $this->response->setStatusCode(409)->setJSON(['status'=>'error','message'=>'Kode penilaian sudah dipakai. Silakan pilih nomor lain.']);
+            }
+        }
+
         $db->transStart();
         $inserted = 0;
-        if (!$kode) {
-            // generate once
+        if (!$kode && $hasKodeCol) {
+            // generate once if column exists
             $kode = $this->nilaiModel->getNextKodeHarian($kelas, $mapel);
         }
         foreach ($grades as $g) {
@@ -667,12 +729,13 @@ class Nilai extends BaseController
                 continue;
             }
             $val = (float)$g['nilai'];
-            if ($val < 0 || $val > 100) continue;
+            if ($val < 0 || $val > 100) { // extra guard (should already have errored)
+                continue;
+            }
             $data = [
                 'siswa_id' => (int)$g['siswa_id'],
                 'mata_pelajaran' => $mapel,
                 'jenis_nilai' => 'harian',
-                'kode_penilaian' => $kode,
                 'nilai' => $val,
                 'tp_materi' => $deskripsi,
                 'tanggal' => $tanggal,
@@ -680,6 +743,7 @@ class Nilai extends BaseController
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ];
+            if($hasKodeCol && $kode){ $data['kode_penilaian'] = $kode; }
             $this->nilaiModel->insert($data);
             $inserted++;
         }
@@ -689,6 +753,8 @@ class Nilai extends BaseController
             return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menyimpan nilai']);
         }
 
+        // Invalidate caches for this kelas+mapel
+        $this->nilaiModel->invalidateHarianCaches($kelas,$mapel);
         return $this->response->setJSON([
             'status' => 'ok',
             'message' => 'Nilai berhasil disimpan',
@@ -721,11 +787,11 @@ class Nilai extends BaseController
             $payload = $this->request->getPost();
         }
 
-        $kelas  = $payload['kelas'] ?? null;
-        $mapel  = $payload['mapel'] ?? null;
-        $tanggal = $payload['tanggal'] ?? null; // updating target date
+    $kelas  = $payload['kelas'] ?? null;
+    $mapel  = $payload['mapel'] ?? null;
+    $tanggal = $payload['tanggal'] ?? null; // updating target date
     $deskripsi = $payload['deskripsi'] ?? '';
-    $kode = $payload['kode_penilaian'] ?? null;
+    $kode = $payload['kode_penilaian'] ?? null; // explicit kode_penilaian from client (e.g. PH-3)
         $grades = $payload['grades'] ?? null; // [{siswa_id, nilai}]
 
         if (!$kelas || !$mapel || !$tanggal || !is_array($grades)) {
@@ -736,7 +802,21 @@ class Nilai extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Tidak memiliki akses ke kelas ini']);
         }
 
+        // Validate values upfront
+        foreach($grades as $g){
+            if(isset($g['nilai']) && $g['nilai'] !== '' && $g['nilai'] !== null){
+                $v=(float)$g['nilai'];
+                if($v>100){
+                    return $this->response->setStatusCode(400)->setJSON(['status'=>'error','message'=>'Nilai tidak boleh lebih dari 100']);
+                }
+                if($v<0){
+                    return $this->response->setStatusCode(400)->setJSON(['status'=>'error','message'=>'Nilai tidak boleh kurang dari 0']);
+                }
+            }
+        }
+
         $db = \Config\Database::connect();
+        $hasKodeCol = false; try { $hasKodeCol = $db->fieldExists('kode_penilaian','nilai'); } catch(\Throwable $e){}
         $db->transStart();
         $updated = 0;
         foreach ($grades as $g) {
@@ -747,36 +827,42 @@ class Nilai extends BaseController
             $val = (float)$val;
             if ($val < 0 || $val > 100) continue;
 
-            // Find existing row matching this PH (date + tp) for student
-            $row = $this->nilaiModel->where('deleted_at IS NULL', null, false)
+            // Find existing row matching this PH. Priority: kode_penilaian if provided, else date.
+            $builder = $this->nilaiModel->where('deleted_at IS NULL', null, false)
                 ->where('kelas', $kelas)
                 ->where('siswa_id', $sid)
                 ->where('mata_pelajaran', $mapel)
-                ->where('jenis_nilai', 'harian')
-                ->where('DATE(tanggal)', $tanggal)
-                ->first();
+                ->where('jenis_nilai', 'harian');
+            if($hasKodeCol && $kode){
+                $builder->where('kode_penilaian', $kode);
+            } else {
+                $builder->where('DATE(tanggal)', $tanggal);
+            }
+            $row = $builder->first();
 
         if ($row) {
-                $this->nilaiModel->update($row['id'], [
+                $updateData = [
                     'nilai' => $val,
                     'tp_materi' => $deskripsi,
-            'kode_penilaian' => $kode ?: ($row['kode_penilaian'] ?? null),
                     'updated_by' => $userId,
-                ]);
+                ];
+                if($hasKodeCol && $kode){ $updateData['kode_penilaian'] = $kode ?: ($row['kode_penilaian'] ?? null); }
+                $this->nilaiModel->update($row['id'], $updateData);
                 $updated++;
             } else {
-                $this->nilaiModel->insert([
+                $insertData = [
                     'siswa_id' => $sid,
                     'mata_pelajaran' => $mapel,
                     'jenis_nilai' => 'harian',
-            'kode_penilaian' => $kode ?: $this->nilaiModel->getNextKodeHarian($kelas, $mapel),
                     'nilai' => $val,
                     'tp_materi' => $deskripsi,
                     'tanggal' => $tanggal,
                     'kelas' => $kelas,
                     'created_by' => $userId,
                     'updated_by' => $userId,
-                ]);
+                ];
+                if($hasKodeCol){ $insertData['kode_penilaian'] = $kode ?: $this->nilaiModel->getNextKodeHarian($kelas, $mapel); }
+                $this->nilaiModel->insert($insertData);
                 $updated++;
             }
         }
@@ -786,7 +872,8 @@ class Nilai extends BaseController
             return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menyimpan perubahan']);
         }
 
-        return $this->response->setJSON(['status' => 'ok', 'updated' => $updated]);
+    $this->nilaiModel->invalidateHarianCaches($kelas,$mapel);
+    return $this->response->setJSON(['status' => 'ok', 'updated' => $updated]);
     }
 
     /**
@@ -822,8 +909,63 @@ class Nilai extends BaseController
         if (!$kelas || !$mapel) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Parameter kelas & mapel wajib']);
         }
-        $used = $this->nilaiModel->listUsedKodeNumbers($kelas, $mapel, $jenis, $prefix);
+    $used = $this->nilaiModel->getCachedUsedKodeNumbers($kelas, $mapel, $jenis, $prefix, 60);
         return $this->response->setJSON(['status' => 'ok', 'used' => $used]);
+    }
+
+    /**
+     * Hapus satu penilaian harian (seluruh nilai siswa untuk satu kode / tanggal).
+     * Expect POST JSON: kelas,mapel,kode(optional),tanggal(optional)
+     */
+    public function deleteHarianAssessment()
+    {
+        // Endpoint disederhanakan: wajib kirim kelas, mapel, dan kode_penilaian (atau kode) -> hapus seluruh baris sesuai.
+        if (strtoupper($this->request->getMethod()) !== 'POST') {
+            return $this->response->setStatusCode(405)->setJSON(['status' => 'error', 'message' => 'Method not allowed']);
+        }
+        if (!session()->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+        $userRole = session()->get('role');
+        $userId = session()->get('user_id');
+        if (!in_array($userRole, ['admin','wali_kelas','walikelas'])) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        }
+        $payload = $this->request->getJSON(true); if(!is_array($payload)) $payload = $this->request->getPost();
+        $kelas = $payload['kelas'] ?? null;
+        $mapel = $payload['mapel'] ?? null;
+        $kode  = $payload['kode_penilaian'] ?? ($payload['kode'] ?? null); // accept both keys
+        if(!$kelas || !$mapel || !$kode){
+            return $this->response->setStatusCode(400)->setJSON(['status'=>'error','message'=>'Parameter kurang (kelas,mapel,kode_penilaian)']);
+        }
+        if(!$this->nilaiModel->canAccessClass($userId, $kelas, $userRole)){
+            return $this->response->setStatusCode(403)->setJSON(['status'=>'error','message'=>'Tidak punya akses']);
+        }
+        $db = \Config\Database::connect();
+        if(!$db->fieldExists('kode_penilaian','nilai')){
+            return $this->response->setStatusCode(400)->setJSON(['status'=>'error','message'=>'Kolom kode_penilaian belum tersedia']);
+        }
+        // Hitung dulu
+        $count = $db->table('nilai')
+            ->where('kelas',$kelas)
+            ->where('mata_pelajaran',$mapel)
+            ->where('jenis_nilai','harian')
+            ->where('kode_penilaian',$kode)
+            ->where('deleted_at IS NULL')
+            ->countAllResults();
+        if($count === 0){
+            return $this->response->setJSON(['status'=>'ok','deleted'=>0,'message'=>'Tidak ada data']);
+        }
+        // Bulk soft delete (lebih cepat dari loop)
+    $db->table('nilai')
+            ->where('kelas',$kelas)
+            ->where('mata_pelajaran',$mapel)
+            ->where('jenis_nilai','harian')
+            ->where('kode_penilaian',$kode)
+            ->where('deleted_at IS NULL')
+            ->update(['deleted_at'=>date('Y-m-d H:i:s')]);
+    $this->nilaiModel->invalidateHarianCaches($kelas,$mapel);
+    return $this->response->setJSON(['status'=>'ok','deleted'=>$count]);
     }
 
     /**

@@ -24,6 +24,40 @@ class NilaiModel extends Model
         'tahun_ajar'
     ];
 
+    /* ================= Performance Helpers (Caching) ================= */
+    private function cacheKeyMatrix(string $kelas,string $mapel): string { return 'harian_matrix_'.$kelas.'_'.$mapel; }
+    private function cacheKeyUsedKode(string $kelas,string $mapel,string $jenis,string $prefix): string { return 'used_kode_'.$jenis.'_'.$prefix.'_'.$kelas.'_'.$mapel; }
+
+    public function getCachedNilaiHarianMatrix(string $kelas,string $mapel,int $ttl=60): array
+    {
+        $cache = cache();
+        $key = $this->cacheKeyMatrix($kelas,$mapel);
+        $data = $cache->get($key);
+        if($data!==null) return $data;
+        $data = $this->getNilaiHarianMatrix($kelas,$mapel); // existing builder
+        $cache->save($key,$data,$ttl);
+        return $data;
+    }
+
+    public function getCachedUsedKodeNumbers(string $kelas,string $mapel,string $jenis='harian',string $prefix='PH',int $ttl=60): array
+    {
+        $cache = cache();
+        $key = $this->cacheKeyUsedKode($kelas,$mapel,$jenis,$prefix);
+        $data = $cache->get($key);
+        if($data!==null) return $data;
+        $data = $this->listUsedKodeNumbers($kelas,$mapel,$jenis,$prefix);
+        $cache->save($key,$data,$ttl);
+        return $data;
+    }
+
+    public function invalidateHarianCaches(string $kelas,string $mapel): void
+    {
+        $cache = cache();
+        $cache->delete($this->cacheKeyMatrix($kelas,$mapel));
+        // Invalidate possible prefixes (PH only now) & jenis harian
+        $cache->delete($this->cacheKeyUsedKode($kelas,$mapel,'harian','PH'));
+    }
+
     public function byStudentAndSubject($siswaId, $subjectId)
     {
         return $this->where('siswa_id',$siswaId)->where('subject_id',$subjectId)->findAll();
@@ -48,14 +82,30 @@ class NilaiModel extends Model
         } catch (\Throwable $e) {
             return 'PH-1';
         }
-        $row = $this->select('COUNT(DISTINCT kode_penilaian) as cnt')
-            ->where('kelas', $kelas)
-            ->where('mata_pelajaran', $mapel)
-            ->where('jenis_nilai', 'harian')
-            ->where('deleted_at IS NULL', null, false)
+        // Hitung kode yang sudah terisi (non-null). Jika belum ada satupun (semua NULL karena belum dibackfill), fallback hitung distinct grup tanggal+tp_materi.
+        $builder = $this->where('kelas',$kelas)
+            ->where('mata_pelajaran',$mapel)
+            ->where('jenis_nilai','harian')
+            ->where('deleted_at IS NULL', null, false);
+        $row = $builder->select('COUNT(DISTINCT kode_penilaian) as cnt_kode, SUM(CASE WHEN kode_penilaian IS NULL THEN 1 ELSE 0 END) as null_rows')
             ->first();
-        $next = (int)($row['cnt'] ?? 0) + 1;
-        return 'PH-' . $next;
+        $cntKode = (int)($row['cnt_kode'] ?? 0);
+        if ($cntKode > 0) {
+            // Ada kode valid -> next = jumlah distinct kode + 1
+            return 'PH-' . ($cntKode + 1);
+        }
+        // Tidak ada kode non-null, fallback kelompokkan berdasarkan tanggal + tp_materi untuk memperkirakan jumlah PH yang sudah pernah diinput.
+        $db = \Config\Database::connect();
+        $res = $db->table($this->table)
+            ->select('DATE(tanggal) as tgl, COALESCE(tp_materi,"") as tp')
+            ->where('kelas',$kelas)
+            ->where('mata_pelajaran',$mapel)
+            ->where('jenis_nilai','harian')
+            ->where('deleted_at IS NULL')
+            ->groupBy('DATE(tanggal), COALESCE(tp_materi,"")')
+            ->get()->getResultArray();
+        $countGroups = count($res);
+        return 'PH-' . ($countGroups + 1);
     }
 
     /**
@@ -69,23 +119,39 @@ class NilaiModel extends Model
             if (! $db->fieldExists('kode_penilaian', $this->table)) {
                 return [];
             }
-            $rows = $db->table($this->table)
+            // Ambil distinct kode yang sudah ada (non-null)
+            $kodeRows = $db->table($this->table)
                 ->select('DISTINCT kode_penilaian')
-                ->where('kelas', $kelas)
-                ->where('mata_pelajaran', $mapel)
-                ->where('jenis_nilai', $jenis)
+                ->where('kelas',$kelas)
+                ->where('mata_pelajaran',$mapel)
+                ->where('jenis_nilai',$jenis)
                 ->where('deleted_at IS NULL')
+                ->where('kode_penilaian IS NOT NULL')
                 ->get()->getResultArray();
             $used = [];
-            foreach ($rows as $r) {
+            foreach($kodeRows as $r){
                 $kp = $r['kode_penilaian'] ?? '';
-                if (!$kp) continue;
-                if (stripos($kp, $prefix.'-') === 0) {
+                if(!$kp) continue;
+                if(stripos($kp, $prefix.'-') === 0){
                     $num = (int)substr($kp, strlen($prefix)+1);
-                    if ($num > 0) $used[$num] = true;
+                    if($num>0) $used[$num]=true;
                 }
             }
-            return array_keys($used);
+            if ($used) { // Sudah ada kode eksplisit -> kembalikan daftar ini
+                $nums = array_keys($used); sort($nums, SORT_NUMERIC); return $nums;
+            }
+            // Fallback: belum ada kode terisi (semua NULL). Gunakan kelompok tanggal+tp_materi untuk menghasilkan nomor 1..n
+            $groups = $db->table($this->table)
+                ->select('DATE(tanggal) as tgl, COALESCE(tp_materi,"") as tp')
+                ->where('kelas',$kelas)
+                ->where('mata_pelajaran',$mapel)
+                ->where('jenis_nilai',$jenis)
+                ->where('deleted_at IS NULL')
+                ->groupBy('DATE(tanggal), COALESCE(tp_materi,"")')
+                ->orderBy('DATE(tanggal)','ASC')
+                ->get()->getResultArray();
+            $out=[]; $i=1; foreach($groups as $g){ $out[] = $i++; }
+            return $out; // e.g. [1,2,3]
         } catch (\Throwable $e) {
             return [];
         }
@@ -179,49 +245,59 @@ class NilaiModel extends Model
             $builder->groupBy('tanggal, tp_materi')->orderBy('tanggal','ASC');
         }
         $rows = $builder->get()->getResultArray();
+        // Safeguard: jika hanya 1 siswa muncul di UI biasanya karena headers map->index tidak konsisten
+        // Pastikan header unik & terurut stabil
+        $seen = [];
+        $filtered = [];
+        foreach($rows as $r){
+            $key = ($hasKode?($r['kode_penilaian']??''):($r['tanggal'].'|'.$r['tp_materi']));
+            if(isset($seen[$key])) continue; $seen[$key]=true; $filtered[]=$r; }
+        $rows = $filtered;
 
-        $headers = [];
-        $kodeIndexMap = []; // kode_penilaian => column number
+    $headers = [];
+    $kodeIndexMap = []; // kode_penilaian OR synthetic label => column number
+    $signatureIndexMap = []; // for fallback mode: signature (tanggal|tp_materi) => column number
         $colNo = 1;
         foreach ($rows as $r) {
             $kode = $hasKode ? ($r['kode_penilaian'] ?? null) : null;
             $label = $kode ?: ('PH-' . $colNo);
-            $headers[] = [
-                'label' => $label,
-                'date'  => $r['tanggal'],
-                'tp'    => $r['tp_materi']
-            ];
+            $headers[] = [ 'label' => $label, 'date' => $r['tanggal'], 'tp' => $r['tp_materi'] ];
             $kodeIndexMap[$kode ?: $label] = $colNo;
+            if(!$hasKode){
+                $sig = $r['tanggal'].'|'.$r['tp_materi'];
+                $signatureIndexMap[$sig] = $colNo;
+            }
             $colNo++;
         }
 
         // Ambil semua nilai harian
-        $nilaiSelect = 'siswa_id, nilai' . ($hasKode ? ', kode_penilaian' : '');
-        $nilaiRows = $db->table($this->table)
+    // Selalu ambil tp_materi agar fallback (tanpa kode_penilaian) bisa mapping kolom dengan signature tanggal|tp
+    $nilaiSelect = 'siswa_id, nilai' . ($hasKode ? ', kode_penilaian' : '') . ', tanggal, tp_materi';
+        $nilaiBuilder = $db->table($this->table)
             ->select($nilaiSelect)
             ->where('kelas', $kelas)
             ->where('mata_pelajaran', $mapel)
             ->where('jenis_nilai','harian')
-            ->where('deleted_at IS NULL')
-            ->orderBy('tanggal','ASC')
-            ->get()->getResultArray();
+            ->where('deleted_at IS NULL');
+        if($hasKode){
+            $nilaiBuilder->orderBy('kode_penilaian','ASC')->orderBy('siswa_id','ASC');
+        } else {
+            $nilaiBuilder->orderBy('tanggal','ASC')->orderBy('siswa_id','ASC');
+        }
+    $nilaiRows = $nilaiBuilder->get()->getResultArray();
 
         $values = [];
-        $seqFallback = 1;
         foreach ($nilaiRows as $nr) {
-            $k = $hasKode ? ($nr['kode_penilaian'] ?? null) : null;
-            if (!$k) {
-                // fallback sequential mapping if no kode column
-                $k = 'PH-' . $seqFallback;
-                if (!isset($kodeIndexMap[$k])) {
-                    // ensure header exists
-                    $kodeIndexMap[$k] = $seqFallback;
-                }
+            if($hasKode){
+                $k = $nr['kode_penilaian'] ?? null;
+                $idx = $k ? ($kodeIndexMap[$k] ?? null) : null;
+            } else {
+                $tp = $nr['tp_materi'] ?? '';
+                $sig = ($nr['tanggal'] ?? '') . '|' . $tp;
+                $idx = $signatureIndexMap[$sig] ?? null;
             }
-            $idx = $kodeIndexMap[$k] ?? null;
             if ($idx === null) continue;
-            $values[$nr['siswa_id']][$idx] = (float)$nr['nilai'];
-            $seqFallback++;
+            $values[$nr['siswa_id']][$idx] = isset($nr['nilai']) ? (float)$nr['nilai'] : null;
         }
 
         // Students list

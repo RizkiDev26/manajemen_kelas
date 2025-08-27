@@ -1,6 +1,8 @@
 <?= $this->extend('admin/layout') ?>
 
 <?= $this->section('content') ?>
+<?php // Normalize selected kelas & mapel coming from controller or legacy query params fallback ?>
+<?php $selectedKelas = $selectedKelas ?? ($_GET['kelas'] ?? null); $selectedMapel = $selectedMapel ?? ($_GET['mapel'] ?? null); ?>
 <!-- Page Header - Mobile Optimized -->
 <div class="mb-6 sm:mb-8 lg:mb-10 px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col gap-4 sm:gap-6">
@@ -36,7 +38,7 @@
                     <?php if ($userRole === 'admin'): ?>
                         <?php foreach ($availableClasses as $class): ?>
                             <?php if (strtolower($class['kelas']) === 'lulus') continue; ?>
-                            <option value="<?= $class['kelas'] ?>" <?= (isset($_GET['kelas']) && $_GET['kelas'] == $class['kelas']) ? 'selected' : '' ?>>
+                            <option value="<?= $class['kelas'] ?>" <?= ($selectedKelas === $class['kelas']) ? 'selected' : '' ?>>
                                 <?= $class['kelas'] ?>
                             </option>
                         <?php endforeach; ?>
@@ -82,7 +84,7 @@
 
 <!-- Rekap Nilai Harian (PH) di bawah filter) -->
 <div class="px-4 sm:px-6 lg:px-8 mb-8">
-    <?php if (!isset($_GET['kelas']) || !isset($_GET['mapel'])): ?>
+    <?php if (!$selectedKelas || !$selectedMapel): ?>
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
             <i class="fas fa-edit text-6xl text-gray-300 mb-4"></i>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">Pilih Kelas dan Mata Pelajaran</h3>
@@ -93,7 +95,7 @@
             <div class="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold text-gray-900">Nilai Harian Tersimpan</h3>
-                    <p class="text-sm text-gray-500">Kelas <?= esc($_GET['kelas']) ?> • Mapel <?= esc($_GET['mapel']) ?></p>
+                    <p class="text-sm text-gray-500">Kelas <?= esc($selectedKelas) ?> • Mapel <?= esc($selectedMapel) ?></p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="openStudentModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">
@@ -148,7 +150,7 @@
     <?php endif; ?>
 </div>
 
-<?php $hasSelection = isset($_GET['kelas']) && isset($_GET['mapel']); ?>
+<?php $hasSelection = $selectedKelas && $selectedMapel; ?>
 <div id="studentInputModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
         <!-- Header -->
@@ -156,7 +158,7 @@
             <div>
                 <h3 class="text-xl font-bold text-gray-900">Input Nilai Harian</h3>
                 <?php if ($hasSelection): ?>
-                    <p class="text-sm text-gray-500 mt-1">Kelas <?= esc($_GET['kelas']) ?> • Mapel <?= esc($_GET['mapel']) ?></p>
+                    <p class="text-sm text-gray-500 mt-1">Kelas <?= esc($selectedKelas) ?> • Mapel <?= esc($selectedMapel) ?></p>
                 <?php endif; ?>
             </div>
             <button onclick="closeStudentModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100">
@@ -172,11 +174,7 @@
                     <div class="md:col-span-2 grid grid-cols-5 gap-2">
                         <div class="col-span-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis</label>
-                            <select id="kode_prefix" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
-                                <option value="PH" selected>PH</option>
-                                <option value="PTS">PTS</option>
-                                <option value="PAS">PAS</option>
-                            </select>
+                            <input type="text" id="kode_prefix" value="PH" readonly class="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700" />
                         </div>
                         <div class="col-span-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor</label>
@@ -194,10 +192,6 @@
                     <div>
                         <label for="tanggal" class="block text-sm font-semibold text-gray-700 mb-2">Tanggal</label>
                         <input type="date" id="tanggal" name="tanggal" value="<?= date('Y-m-d') ?>" required class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis Nilai</label>
-                        <input type="text" value="Harian" disabled class="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700">
                     </div>
                 </div>
             </form>
@@ -219,10 +213,13 @@
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $index + 1 ?></td>
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium"><?= esc($student['nama']) ?></td>
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">
-                                    <input type="number" min="0" max="100" step="1"
-                                           data-siswa-id="<?= $student['id'] ?>"
-                                           class="w-24 px-2 py-1.5 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                           placeholder="0-100">
+                                    <div class="space-y-1">
+                                        <input type="number" min="0" max="100" step="1"
+                                               data-siswa-id="<?= $student['id'] ?>"
+                                               class="nilai-input w-24 px-2 py-1.5 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                               placeholder="0-100">
+                                        <p class="nilai-error hidden text-xs text-red-600"></p>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -257,7 +254,7 @@
             <div>
                 <h3 class="text-xl font-bold text-gray-900">Edit Penilaian Harian</h3>
                 <?php if ($hasSelection): ?>
-                    <p class="text-sm text-gray-500 mt-1">Kelas <?= esc($_GET['kelas']) ?> • Mapel <?= esc($_GET['mapel']) ?></p>
+                    <p class="text-sm text-gray-500 mt-1">Kelas <?= esc($selectedKelas) ?> • Mapel <?= esc($selectedMapel) ?></p>
                 <?php endif; ?>
             </div>
             <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100">
@@ -304,7 +301,10 @@
                                 <td class="px-4 sm:px-6 py-3 text-sm text-gray-600"><?= esc($student['nisn']) ?></td>
                                 <td class="px-4 sm:px-6 py-3 text-sm text-gray-900 font-medium"><?= esc($student['nama']) ?></td>
                                 <td class="px-4 sm:px-6 py-3 text-center">
-                                    <input type="number" min="0" max="100" step="1" data-edit-siswa-id="<?= $student['id'] ?>" class="w-20 px-2 py-1.5 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="0-100">
+                                    <div class="space-y-1">
+                                        <input type="number" min="0" max="100" step="1" data-edit-siswa-id="<?= $student['id'] ?>" class="edit-nilai-input w-20 px-2 py-1.5 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="0-100">
+                                        <p class="nilai-error hidden text-xs text-red-600"></p>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -315,8 +315,9 @@
                 </table>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
                 <button onclick="saveEditedGrades()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold">Simpan Perubahan</button>
+                <button onclick="deleteSelectedAssessment()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold">Hapus Penilaian</button>
                 <button onclick="closeEditModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold">Batal</button>
             </div>
         </div>
@@ -325,11 +326,72 @@
 
 <!-- JavaScript -->
 <script>
+// ===== SweetAlert2 Helpers =====
+function showFlash(message, type='success', opts={}){
+    const iconMap = { success:'success', error:'error', warning:'warning', info:'info' };
+    Swal.fire({
+        toast: true,
+        position: opts.position || 'top-end',
+        icon: iconMap[type] || 'success',
+        title: message,
+        showConfirmButton: false,
+        timer: opts.ttl ?? 3000,
+        timerProgressBar: true
+    });
+}
+
+async function confirmDialog(message, {title='Konfirmasi', icon='question', confirmText='Ya', cancelText='Batal'}={}){
+    const res = await Swal.fire({
+        title: title,
+        text: message,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonText: confirmText,
+        cancelButtonText: cancelText,
+        focusCancel: true,
+        reverseButtons: true,
+        customClass:{
+            confirmButton:'bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-400 px-4 py-2 rounded-md text-sm font-semibold',
+            cancelButton:'bg-gray-400 hover:bg-gray-500 focus:ring-2 focus:ring-gray-300 px-4 py-2 rounded-md text-sm font-semibold'
+        },
+        buttonsStyling:false
+    });
+    return res.isConfirmed;
+}
+
+// ===== Inline Validation =====
+function validateNilaiInput(el){
+    const raw = el.value.trim();
+    const wrapperErr = el.parentElement?.querySelector?.('.nilai-error');
+    let msg = '';
+    if(raw===''){ msg=''; }
+    else if(isNaN(raw)){ msg='Harus angka'; }
+    else {
+        const v = parseFloat(raw);
+        if(v < 0) msg='Tidak boleh < 0';
+        else if(v > 100) msg='Tidak boleh > 100';
+    }
+    if(msg){
+        el.classList.add('border-red-500','ring-1','ring-red-400');
+        if(wrapperErr){ wrapperErr.textContent = msg; wrapperErr.classList.remove('hidden'); }
+    } else {
+        el.classList.remove('border-red-500','ring-1','ring-red-400');
+        if(wrapperErr){ wrapperErr.textContent=''; wrapperErr.classList.add('hidden'); }
+    }
+    return !msg; // valid if no msg
+}
+
+function validateAll(containerSelector){
+    let ok = true;
+    document.querySelectorAll(containerSelector).forEach(inp=>{ if(!validateNilaiInput(inp)) ok=false; });
+    return ok;
+}
+
 function handleOpenInputHarianClick() {
     const kelas = document.getElementById('kelas')?.value || '';
     const mapel = document.getElementById('mapel')?.value || '';
     if (!kelas || !mapel) {
-        alert('Pilih kelas dan mata pelajaran terlebih dahulu.');
+        showFlash('Pilih kelas dan mata pelajaran terlebih dahulu','error');
         return;
     }
     // If selection present, open the modal directly
@@ -340,7 +402,7 @@ function openStudentModal() {
     const modal = document.getElementById('studentInputModal');
     if (modal) {
         modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
         fetchNextKode();
     }
 }
@@ -349,12 +411,12 @@ function closeStudentModal() {
     const modal = document.getElementById('studentInputModal');
     if (modal) {
         modal.classList.add('hidden');
-        document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
     }
 }
 
 function importFromExcel() {
-    alert('Fitur import Excel akan segera tersedia');
+    showFlash('Fitur import Excel akan segera tersedia','info');
 }
 
 // Edit modal handlers
@@ -362,14 +424,14 @@ function openEditModal() {
     const modal = document.getElementById('editHarianModal');
     if (modal) {
         modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     }
 }
 function closeEditModal() {
     const modal = document.getElementById('editHarianModal');
     if (modal) {
         modal.classList.add('hidden');
-        document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
     }
 }
 
@@ -406,18 +468,24 @@ async function saveEditedGrades() {
     const tanggal = document.getElementById('editTanggal').value;
     const deskripsi = document.getElementById('editDeskripsi').value.trim();
     const colIndex = parseInt(phSel.value || '0', 10);
-    if (!colIndex) { alert('Pilih Penilaian Harian dulu'); return; }
-    if (!tanggal) { alert('Tanggal wajib diisi'); return; }
-    const kelas = '<?= isset($_GET['kelas']) ? esc($_GET['kelas']) : '' ?>';
+    if (!colIndex) { showFlash('Pilih Penilaian Harian dulu','error'); return; }
+    if (!tanggal) { showFlash('Tanggal wajib diisi','error'); return; }
+    const kelas = '<?= esc($selectedKelas ?? '') ?>';
     const mapel = '<?= isset($_GET['mapel']) ? esc($_GET['mapel']) : '' ?>';
+    // Ambil kode_penilaian dari header matrix agar insert siswa baru tetap pada kode yang sama
+    let kodePenilaian = null;{
+        try { const matrix = <?= json_encode($harianMatrix ?? []) ?>; if(matrix.headers && matrix.headers[colIndex-1]) { kodePenilaian = matrix.headers[colIndex-1].label; } } catch(e){}
+    }
     const grades = [];
     document.querySelectorAll('input[data-edit-siswa-id]').forEach(inp => {
         if (inp.value !== '' && inp.value !== null) {
             grades.push({ siswa_id: parseInt(inp.getAttribute('data-edit-siswa-id'), 10), nilai: parseFloat(inp.value) });
         }
     });
-    if (!grades.length) { alert('Isi minimal satu nilai'); return; }
-    if (!confirm('Simpan perubahan untuk '+grades.length+' siswa?')) return;
+    if (!grades.length) { showFlash('Isi minimal satu nilai','error'); return; }
+    if(!validateAll('#editHarianModal input.edit-nilai-input')){ showFlash('Perbaiki nilai tidak valid terlebih dahulu','error'); return; }
+    const okEdit = await confirmDialog('Simpan perubahan untuk '+grades.length+' siswa?', {icon:'warning', confirmText:'Simpan'});
+    if(!okEdit) return;
     try {
         const csrfName = '<?= csrf_token() ?>';
         const csrfHash = '<?= csrf_hash() ?>';
@@ -435,20 +503,21 @@ async function saveEditedGrades() {
                 tanggal,
                 deskripsi,
                 colIndex,
+                kode_penilaian: kodePenilaian,
                 grades
             })
         });
         const data = await resp.json();
         if (resp.ok && data.status === 'ok') {
-            alert('Perubahan tersimpan');
-            const params = new URLSearchParams(window.location.search);
-            window.location.href = `${window.location.pathname}?kelas=${encodeURIComponent(kelas)}&mapel=${encodeURIComponent(mapel)}`;
+            closeEditModal();
+            showFlash('Perubahan tersimpan','success');
+            setTimeout(()=>{ window.location.href = buildPrettyNilaiUrl(kelas,mapel); },600);
         } else {
-            alert(data.message || 'Gagal menyimpan perubahan');
+            showFlash(data.message || 'Gagal menyimpan perubahan','error');
         }
     } catch (err) {
         console.error(err);
-        alert('Terjadi kesalahan saat menyimpan');
+        showFlash('Terjadi kesalahan saat menyimpan','error');
     }
 }
 
@@ -480,10 +549,7 @@ async function saveAllGrades() {
     const tanggalEl = document.getElementById('tanggal');
     const tanggal = tanggalEl ? tanggalEl.value : '';
     const deskripsi = (document.getElementById('deskripsi_penilaian') || { value: '' }).value.trim();
-    if (!tanggal) {
-        alert('Silakan pilih tanggal terlebih dahulu');
-        return;
-    }
+    if (!tanggal) { showFlash('Silakan pilih tanggal terlebih dahulu','error'); return; }
     
     // Collect all grades
     const grades = [];
@@ -497,14 +563,13 @@ async function saveAllGrades() {
         }
     });
     
-    if (grades.length === 0) {
-        alert('Silakan input minimal satu nilai');
-        return;
-    }
+    if (grades.length === 0) { showFlash('Silakan input minimal satu nilai','error'); return; }
+    if(!validateAll('#studentInputModal input.nilai-input')){ showFlash('Perbaiki nilai tidak valid terlebih dahulu','error'); return; }
     
-    const kelas = '<?= isset($_GET['kelas']) ? esc($_GET['kelas']) : '' ?>';
-    const mapel = '<?= isset($_GET['mapel']) ? esc($_GET['mapel']) : '' ?>';
-    if (!confirm(`Simpan ${grades.length} nilai harian untuk Kelas ${kelas} - ${mapel}?`)) return;
+    const kelas = '<?= esc($selectedKelas ?? '') ?>';
+    const mapel = '<?= esc($selectedMapel ?? '') ?>';
+    const okStore = await confirmDialog(`Simpan ${grades.length} nilai harian untuk Kelas ${kelas} - ${mapel}?`, {icon:'question', confirmText:'Simpan'});
+    if(!okStore) return;
 
     try {
         const csrfName = '<?= csrf_token() ?>';
@@ -528,28 +593,24 @@ async function saveAllGrades() {
         });
         const data = await resp.json();
         if (resp.ok && data.status === 'ok') {
-            alert(data.message || 'Nilai berhasil disimpan!');
-            // Reload page to refresh recap and show new PH column if needed
-            const params = new URLSearchParams(window.location.search);
-            window.location.href = `${window.location.pathname}?kelas=${encodeURIComponent(kelas)}&mapel=${encodeURIComponent(mapel)}`;
+            closeStudentModal();
+            const extraInfo = (data.inserted?` (${data.inserted} baris, Kode ${data.kode_penilaian||'-'})`: '');
+            showFlash((data.message || 'Nilai berhasil disimpan') + extraInfo,'success');
+            setTimeout(()=>{ window.location.href = buildPrettyNilaiUrl(kelas,mapel); },800);
         } else {
-            alert(data.message || 'Gagal menyimpan nilai');
+            showFlash(data.message || 'Gagal menyimpan nilai','error');
         }
     } catch (err) {
         console.error(err);
-        alert('Terjadi kesalahan saat menyimpan');
+        showFlash('Terjadi kesalahan saat menyimpan','error');
     }
 }
 
-function clearAllGrades() {
-    if (confirm('Hapus semua input nilai?')) {
-        document.querySelectorAll('input[type="number"]').forEach(input => {
-            input.value = '';
-        });
-        document.querySelectorAll('[id^="grade-"]').forEach(span => {
-            span.textContent = '-';
-            span.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
-        });
+async function clearAllGrades() {
+    const ok = await confirmDialog('Hapus semua input nilai?', {icon:'warning', confirmText:'Hapus'});
+    if(ok){
+        document.querySelectorAll('input[type="number"]').forEach(input => { input.value=''; });
+        document.querySelectorAll('[id^="grade-"]').forEach(span => { span.textContent='-'; span.className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800'; });
     }
 }
 
@@ -581,7 +642,7 @@ document.addEventListener('input', function(e) {
 
 // Auto-open modal when kelas & mapel ada di query
 document.addEventListener('DOMContentLoaded', function () {
-    const hasSelection = <?= isset($_GET['kelas']) && isset($_GET['mapel']) ? 'true' : 'false' ?>;
+    const hasSelection = <?= ($selectedKelas && $selectedMapel) ? 'true' : 'false' ?>;
     // If URL contains open=1 and selection exists, open input modal automatically
     const params = new URLSearchParams(window.location.search);
     if (hasSelection && params.get('open') === '1') {
@@ -594,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const mapelSel = document.getElementById('mapel');
     function trySubmit() {
         if (form && kelasSel && mapelSel && kelasSel.value && mapelSel.value) {
-            form.requestSubmit ? form.requestSubmit() : form.submit();
+            window.location.href = buildPrettyNilaiUrl(kelasSel.value, mapelSel.value);
         }
     }
     if (kelasSel) kelasSel.addEventListener('change', trySubmit);
@@ -602,8 +663,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 async function fetchNextKode(){
-    const kelas = '<?= isset($_GET['kelas']) ? esc($_GET['kelas']) : '' ?>';
-    const mapel = '<?= isset($_GET['mapel']) ? esc($_GET['mapel']) : '' ?>';
+    const kelas = '<?= esc($selectedKelas ?? '') ?>';
+    const mapel = '<?= esc($selectedMapel ?? '') ?>';
     const prefixSel = document.getElementById('kode_prefix');
     const numberSel = document.getElementById('kode_number');
     const kodeInput = document.getElementById('kode_penilaian');
@@ -642,18 +703,55 @@ function updateKodeCombined(){
 }
 
 document.addEventListener('change', function(e){
-    if(e.target && (e.target.id==='kode_prefix')){
-        fetchNextKode();
-    }
     if(e.target && e.target.id==='kode_number'){
         updateKodeCombined();
     }
 });
 
+async function deleteSelectedAssessment(){
+    const kelas = '<?= esc($selectedKelas ?? '') ?>';
+    const mapel = '<?= esc($selectedMapel ?? '') ?>';
+    const phSel = document.getElementById('editPhSelect');
+    if(!phSel || !phSel.value){ showFlash('Pilih PH dulu','error'); return; }
+    const colIndex = parseInt(phSel.value,10);
+    const matrix = <?= json_encode($harianMatrix ?? []) ?>;
+    const headers = matrix.headers || [];
+    const header = headers[colIndex-1] || null;
+    const kode = header ? header.label : null;
+    if(!kode){ showFlash('Tidak bisa ambil kode','error'); return; }
+    const okDel = await confirmDialog('Hapus seluruh nilai untuk '+ kode +'?', {icon:'warning', confirmText:'Hapus'});
+    if(!okDel) return;
+    try {
+        const csrfName = '<?= csrf_token() ?>';
+        const csrfHash = '<?= csrf_hash() ?>';
+        const resp = await fetch('<?= base_url('admin/nilai/delete-harian') ?>', {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':csrfHash},
+            body: JSON.stringify({[csrfName]:csrfHash, kelas, mapel, kode_penilaian: kode})
+        });
+        const data = await resp.json();
+        if(resp.ok && data.status==='ok'){
+            closeEditModal();
+            showFlash('Penilaian dihapus ('+ (data.deleted||0)+' baris)','success');
+            setTimeout(()=>window.location.href = buildPrettyNilaiUrl(kelas,mapel),600);
+        } else { showFlash(data.message || 'Gagal menghapus','error'); }
+    } catch(err){ console.error(err); showFlash('Error menghapus','error'); }
+}
+
 // Close modal when clicking backdrop
 document.getElementById('studentInputModal')?.addEventListener('click', function(e) {
     if (e.target === this) closeStudentModal();
 });
+
+// Live validation listeners
+document.addEventListener('input', function(e){
+    if(e.target.classList.contains('nilai-input') || e.target.classList.contains('edit-nilai-input')){
+        validateNilaiInput(e.target);
+    }
+});
+// Pretty URL helpers
+function slugify(str){ return str.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+function buildPrettyNilaiUrl(kelas,mapel){ if(!kelas||!mapel) return '/admin/nilai/input'; return '/admin/nilai/input/'+ slugify(kelas) + '/' + slugify(mapel); }
 </script>
 
 <?= $this->endSection() ?>

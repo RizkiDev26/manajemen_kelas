@@ -55,10 +55,14 @@
                 <label for="mapel" class="block text-sm font-semibold text-gray-700 mb-2">Mata Pelajaran</label>
                 <select name="mapel" id="mapel" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base">
                     <option value="">Pilih Mapel</option>
-                    <?php $selMapel = $_GET['mapel'] ?? ''; ?>
+                    <?php 
+                        // Gunakan variabel yang sudah diproses controller agar slug / query tetap konsisten
+                        $selMapel = $selectedMapel ?? ($_GET['mapel'] ?? '');
+                    ?>
                     <?php if (!empty($subjectsDynamic)): ?>
                         <?php foreach ($subjectsDynamic as $subj): ?>
-                            <option value="<?= esc($subj) ?>" <?= ($selMapel === $subj ? 'selected':'') ?>><?= esc($subj) ?></option>
+                            <?php $isSelected = strtolower($selMapel) === strtolower($subj); ?>
+                            <option value="<?= esc($subj) ?>" <?= $isSelected ? 'selected' : '' ?>><?= esc($subj) ?></option>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </select>

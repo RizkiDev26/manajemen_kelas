@@ -8,95 +8,76 @@ class AddPerformanceIndexes extends Migration
 {
     public function up()
     {
-        // Add indexes for frequently queried columns
-        
-        // Users table indexes
-        if ($this->db->tableExists('users')) {
-            // Check if index doesn't exist before adding
-            $indexExists = false;
+        // Helper closures
+        $getIndexMap = function(string $table) {
+            $map = [];
             try {
-                $query = $this->db->query("SHOW INDEX FROM users WHERE Key_name = 'role'");
-                $indexExists = $query->getNumRows() > 0;
-            } catch (Exception $e) {
-                // Index query failed, assume it doesn't exist
-            }
-            
-            if (!$indexExists) {
-                $this->forge->addKey('role');
-            }
-            
-            $emailIndexExists = false;
+                $query = $this->db->query("SHOW INDEX FROM `{$table}`");
+                $temp = [];
+                foreach ($query->getResultArray() as $row) {
+                    $key = $row['Key_name'];
+                    $seq = (int)$row['Seq_in_index'];
+                    $col = $row['Column_name'];
+                    $temp[$key][$seq] = $col;
+                }
+                foreach ($temp as $name => $cols) {
+                    ksort($cols);
+                    $map[$name] = implode(',', $cols);
+                }
+            } catch (\Throwable $e) {}
+            return $map;
+        };
+        $hasColumnsSignature = function(array $indexMap, array $columns) {
+            $sig = implode(',', $columns);
+            return in_array($sig, $indexMap, true);
+        };
+        $addIndexIfMissing = function(string $table, string $indexName, array $columns) use ($getIndexMap, $hasColumnsSignature) {
+            if (!$this->db->tableExists($table)) return;
+            $indexMap = $getIndexMap($table);
+            if (isset($indexMap[$indexName])) return; // exact name exists
+            if ($hasColumnsSignature($indexMap, $columns)) return; // same columns different name
+            $colsSql = '`' . implode('`,`', $columns) . '`';
             try {
-                $query = $this->db->query("SHOW INDEX FROM users WHERE Key_name = 'email'");
-                $emailIndexExists = $query->getNumRows() > 0;
-            } catch (Exception $e) {
-                // Index query failed, assume it doesn't exist
+                $this->db->query("ALTER TABLE `{$table}` ADD INDEX `{$indexName}` ({$colsSql})");
+            } catch (\Throwable $e) {
+                // swallow to keep migration moving
             }
-            
-            if (!$emailIndexExists) {
-                $this->forge->addKey('email');
-            }
-            
-            $this->forge->processIndexes('users');
-        }
+        };
 
-        // Walikelas table indexes  
-        if ($this->db->tableExists('walikelas')) {
-            $this->forge->addKey('user_id');
-            $this->forge->addKey('kelas');
-            $this->forge->processIndexes('walikelas');
-        }
+        // Users
+        $addIndexIfMissing('users', 'idx_users_role', ['role']);
+        $addIndexIfMissing('users', 'idx_users_email', ['email']);
 
-        // TB Siswa table indexes
-        if ($this->db->tableExists('tb_siswa')) {
-            // Check if columns exist before adding indexes
-            $fields = $this->db->getFieldNames('tb_siswa');
-            
-            if (in_array('kelas', $fields)) {
-                $this->forge->addKey('kelas');
-            }
-            if (in_array('siswa_id', $fields)) {
-                $this->forge->addKey('siswa_id');
-            }
-            if (in_array('kelas', $fields) && in_array('siswa_id', $fields)) {
-                $this->forge->addKey(['kelas', 'siswa_id']); // Composite index
-            }
-            $this->forge->processIndexes('tb_siswa');
-        }
+        // Walikelas
+        $addIndexIfMissing('walikelas', 'idx_walikelas_user_id', ['user_id']);
+        $addIndexIfMissing('walikelas', 'idx_walikelas_kelas', ['kelas']);
 
-        // Absensi table indexes
-        if ($this->db->tableExists('absensi')) {
-            $this->forge->addKey('tanggal');
-            $this->forge->addKey('kelas');
-            $this->forge->addKey('siswa_id');
-            $this->forge->addKey(['tanggal', 'kelas']); // Composite index for date + class queries
-            $this->forge->addKey(['siswa_id', 'tanggal']); // Composite index for student attendance history
-            $this->forge->processIndexes('absensi');
-        }
+        // tb_siswa
+        $addIndexIfMissing('tb_siswa', 'idx_tb_siswa_kelas', ['kelas']);
+        $addIndexIfMissing('tb_siswa', 'idx_tb_siswa_siswa_id', ['siswa_id']);
+        $addIndexIfMissing('tb_siswa', 'idx_tb_siswa_kelas_siswa_id', ['kelas','siswa_id']);
 
-        // Nilai table indexes
-        if ($this->db->tableExists('nilai')) {
-            $this->forge->addKey('siswa_id');
-            $this->forge->addKey('mata_pelajaran');
-            $this->forge->addKey('semester');
-            $this->forge->addKey(['siswa_id', 'semester']); // Composite for student grades per semester
-            $this->forge->processIndexes('nilai');
-        }
+        // absensi
+        $addIndexIfMissing('absensi', 'idx_absensi_tanggal', ['tanggal']);
+        $addIndexIfMissing('absensi', 'idx_absensi_kelas', ['kelas']);
+        $addIndexIfMissing('absensi', 'idx_absensi_siswa_id', ['siswa_id']);
+        $addIndexIfMissing('absensi', 'idx_absensi_tanggal_kelas', ['tanggal','kelas']);
+        $addIndexIfMissing('absensi', 'idx_absensi_siswa_id_tanggal', ['siswa_id','tanggal']);
 
-        // Kalender akademik indexes
-        if ($this->db->tableExists('kalender_akademik')) {
-            $this->forge->addKey('tanggal_mulai');
-            $this->forge->addKey('tanggal_selesai');
-            $this->forge->addKey('jenis_kegiatan');
-            $this->forge->processIndexes('kalender_akademik');
-        }
+        // nilai
+        $addIndexIfMissing('nilai', 'idx_nilai_siswa_id', ['siswa_id']);
+        $addIndexIfMissing('nilai', 'idx_nilai_mata_pelajaran', ['mata_pelajaran']);
+        $addIndexIfMissing('nilai', 'idx_nilai_semester', ['semester']);
+        $addIndexIfMissing('nilai', 'idx_nilai_siswa_id_semester', ['siswa_id','semester']);
 
-        // Berita table indexes
-        if ($this->db->tableExists('berita')) {
-            $this->forge->addKey('tanggal');
-            $this->forge->addKey('created_at');
-            $this->forge->processIndexes('berita');
-        }
+        // kalender_akademik
+        $addIndexIfMissing('kalender_akademik', 'idx_kalender_mulai', ['tanggal_mulai']);
+        $addIndexIfMissing('kalender_akademik', 'idx_kalender_selesai', ['tanggal_selesai']);
+        $addIndexIfMissing('kalender_akademik', 'idx_kalender_jenis', ['jenis_kegiatan']);
+
+        // berita
+        $addIndexIfMissing('berita', 'idx_berita_tanggal', ['tanggal']);
+        $addIndexIfMissing('berita', 'idx_berita_created_at', ['created_at']);
     }
 
     public function down()

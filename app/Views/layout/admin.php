@@ -253,7 +253,7 @@
                     <div class="flex-shrink-0 flex items-center">
                         <i class="fas fa-school text-xl sm:text-2xl text-blue-600 mr-2 sm:mr-3"></i>
                         <div class="min-w-0">
-                            <span class="text-base sm:text-xl font-bold text-gray-800 truncate">SDN GU 09</span>
+                            <span class="text-base sm:text-xl font-bold text-gray-800 truncate">SDN Grogol Utara 09</span>
                             <span class="hidden sm:inline text-xs sm:text-sm text-gray-500 ml-2">Aplikasi Pengelolaan Sekolah</span>
                         </div>
                     </div>
@@ -341,7 +341,7 @@
                 <div class="flex items-center mb-6">
                     <i class="fas fa-school text-2xl text-white mr-3"></i>
                     <div>
-                        <div class="text-white font-bold text-lg">SDN GU 09</div>
+                        <div class="text-white font-bold text-lg">SDN Grogol Utara 09</div>
                         <div class="text-white text-sm opacity-90">Aplikasi Pengelolaan Sekolah</div>
                     </div>
                 </div>
@@ -425,7 +425,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex justify-between items-center">
                 <p class="text-sm text-gray-500">
-                    © <?= date('Y') ?> SDN GU 09. Aplikasi Pengelolaan Sekolah.
+                    © <?= date('Y') ?> SDN Grogol Utara 09. Aplikasi Pengelolaan Sekolah.
                 </p>
                 <p class="text-sm text-gray-500">
                     Version 1.0 | Powered by CodeIgniter 4

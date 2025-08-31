@@ -8,7 +8,7 @@
     <!-- Video + Progress Pills Layout (Single Row) -->
     <section class="flex flex-col xl:flex-row gap-8 items-stretch">
         <!-- Video Column -->
-        <div class="flex flex-col flex-1 space-y-4" x-ref="videoColumn">
+    <div class="flex flex-col flex-1 space-y-4" x-ref="videoColumn">
             <div class="relative rounded-xl border border-slate-200 bg-white shadow p-2 flex items-center justify-center aspect-[16/9] w-full" x-ref="videoWrapper" :style="videoHeight ? 'height:'+videoHeight+'px' : ''">
                 <!-- Skeleton while video loading -->
                 <div x-show="!videoLoaded" class="absolute inset-0 bg-slate-200/70 animate-pulse flex items-center justify-center text-slate-500 text-lg select-none rounded-lg">Memuat Video...</div>
@@ -54,13 +54,13 @@
                     <template x-for="i in 9" :key="'pill-'+i">
                         <!-- Habit pills (1..7) -->
                         <template x-if="habitStatus[i-1]">
-                            <button @click="goInput()" class="group relative w-full h-[4.5rem] rounded-lg px-3 py-2 text-[13px] md:text-[14px] font-semibold tracking-tight flex flex-col items-start justify-center gap-1 border transition shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                <button @click="goInput()" class="group relative w-full h-[4.5rem] rounded-lg px-3 py-2 text-[13px] md:text-[14px] font-semibold tracking-tight flex flex-col items-start justify-center gap-1 border transition shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40 overflow-hidden"
                                     :class="habitStatus[i-1].done ? 'bg-emerald-500/10 border-emerald-300 text-emerald-700 hover:bg-emerald-500/15' : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400'" :aria-pressed="habitStatus[i-1].done">
                                 <div class="flex items-center gap-1 w-full">
                                     <span class="flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-[11px] shadow-inner" :class="habitStatus[i-1].done ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'">
                                         <i class="fa-solid" :class="iconFor(habitStatus[i-1].id)"></i>
                                     </span>
-                                    <span class="flex-1 text-left leading-snug text-[13px] md:text-[15px]" x-text="habitStatus[i-1].name"></span>
+                    <span class="flex-1 text-left leading-snug text-[13px] md:text-[15px] break-words whitespace-normal overflow-hidden" x-text="habitStatus[i-1].name"></span>
                                     <span x-show="habitStatus[i-1].done" x-cloak class="relative inline-flex items-center justify-center ml-auto">
                                         <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] shadow">✓</span>
                                     </span>
@@ -94,7 +94,7 @@
     <!-- Quick Stats with Skeleton -->
     <section class="grid md:grid-cols-3 gap-6">
         <!-- Streak -->
-        <div class="rounded-2xl p-6 bg-gradient-to-br from-white to-indigo-50 border border-indigo-100 shadow-sm flex flex-col gap-3 relative">
+    <div class="rounded-2xl p-6 bg-gradient-to-br from-white to-indigo-50 border border-indigo-100 shadow-sm flex flex-col gap-3 relative">
             <div class="flex items-center gap-3 text-indigo-600">
                 <span class="w-11 h-11 rounded-xl flex items-center justify-center bg-indigo-100"><i class="fa-solid fa-fire text-lg"></i></span>
                 <h3 class="font-semibold tracking-tight">Streak Beruntun</h3>
@@ -105,7 +105,7 @@
             <div class="mt-auto text-[11px] text-indigo-600/70">Terbaik: <span x-show="!loadingStats" x-text="stats.best_streak + ' hari'" x-cloak></span><span x-show="loadingStats" class="inline-block h-3 w-14 bg-indigo-100/60 animate-pulse rounded" x-cloak></span></div>
         </div>
         <!-- Weekly -->
-        <div class="rounded-2xl p-6 bg-gradient-to-br from-white to-fuchsia-50 border border-fuchsia-100 shadow-sm flex flex-col gap-3 relative">
+    <div class="rounded-2xl p-6 bg-gradient-to-br from-white to-fuchsia-50 border border-fuchsia-100 shadow-sm flex flex-col gap-3 relative">
             <div class="flex items-center gap-3 text-fuchsia-600">
                 <span class="w-11 h-11 rounded-xl flex items-center justify-center bg-fuchsia-100"><i class="fa-solid fa-bullseye text-lg"></i></span>
                 <h3 class="font-semibold tracking-tight">Progress Mingguan</h3>
@@ -121,7 +121,7 @@
             </p>
         </div>
         <!-- Today -->
-        <div class="rounded-2xl p-6 bg-gradient-to-br from-white to-rose-50 border border-rose-100 shadow-sm flex flex-col gap-3 relative">
+    <div class="rounded-2xl p-6 bg-gradient-to-br from-white to-rose-50 border border-rose-100 shadow-sm flex flex-col gap-3 relative">
             <div class="flex items-center gap-3 text-rose-600">
                 <span class="w-11 h-11 rounded-xl flex items-center justify-center bg-rose-100"><i class="fa-solid fa-star text-lg"></i></span>
                 <h3 class="font-semibold tracking-tight">Target Hari Ini</h3>
@@ -146,14 +146,14 @@
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             <template x-for="h in habitStatus" :key="'grid-'+h.id">
-                <div @click="goInput()" class="group cursor-pointer rounded-xl p-3 border flex flex-col gap-2 transition hover:shadow-sm"
+        <div @click="goInput()" class="group cursor-pointer rounded-xl p-3 border flex flex-col gap-2 transition hover:shadow-sm overflow-hidden"
                      :class="h.done ? 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200' : 'bg-slate-50 border-slate-200 hover:bg-white'">
                     <div class="flex items-center gap-2.5">
                         <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow text-xs"
                              :class="h.done ? 'bg-emerald-500' : 'bg-slate-300 text-slate-600'">
                             <i class="fa-solid" :class="h.done ? 'fa-check' : 'fa-minus'"></i>
                         </div>
-                        <div class="font-medium text-xs leading-tight" x-text="h.name"></div>
+            <div class="font-medium text-xs leading-tight break-words whitespace-normal overflow-hidden" x-text="h.name"></div>
                     </div>
                     <div class="pl-0.5 text-[10px] tracking-wide uppercase font-semibold"
                          :class="h.done ? 'text-emerald-600' : 'text-slate-400'"

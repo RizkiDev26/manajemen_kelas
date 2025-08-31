@@ -82,55 +82,23 @@ class AddPerformanceIndexes extends Migration
 
     public function down()
     {
-        // Drop the indexes we created
-        
-        // Users table
-        if ($this->db->tableExists('users')) {
-            $this->forge->dropKey('users', 'role');
-            $this->forge->dropKey('users', 'email');
-        }
+        // Drop only indexes we added (use explicit index names created in up()).
+        $dropIdx = function(string $table, array $indexNames){
+            if(!$this->db->tableExists($table)) return; 
+            foreach($indexNames as $ix){
+                try { $this->db->query("ALTER TABLE `{$table}` DROP INDEX `{$ix}`"); } catch(\Throwable $e) {}
+            }
+        };
 
-        // Walikelas table
-        if ($this->db->tableExists('walikelas')) {
-            $this->forge->dropKey('walikelas', 'user_id');
-            $this->forge->dropKey('walikelas', 'kelas');
-        }
-
-        // TB Siswa table
-        if ($this->db->tableExists('tb_siswa')) {
-            $this->forge->dropKey('tb_siswa', 'kelas');
-            $this->forge->dropKey('tb_siswa', 'siswa_id');
-            $this->forge->dropKey('tb_siswa', ['kelas', 'siswa_id']);
-        }
-
-        // Absensi table
-        if ($this->db->tableExists('absensi')) {
-            $this->forge->dropKey('absensi', 'tanggal');
-            $this->forge->dropKey('absensi', 'kelas');
-            $this->forge->dropKey('absensi', 'siswa_id');
-            $this->forge->dropKey('absensi', ['tanggal', 'kelas']);
-            $this->forge->dropKey('absensi', ['siswa_id', 'tanggal']);
-        }
-
-        // Nilai table
-        if ($this->db->tableExists('nilai')) {
-            $this->forge->dropKey('nilai', 'siswa_id');
-            $this->forge->dropKey('nilai', 'mata_pelajaran');
-            $this->forge->dropKey('nilai', 'semester');
-            $this->forge->dropKey('nilai', ['siswa_id', 'semester']);
-        }
-
-        // Kalender akademik
-        if ($this->db->tableExists('kalender_akademik')) {
-            $this->forge->dropKey('kalender_akademik', 'tanggal_mulai');
-            $this->forge->dropKey('kalender_akademik', 'tanggal_selesai');
-            $this->forge->dropKey('kalender_akademik', 'jenis_kegiatan');
-        }
-
-        // Berita table
-        if ($this->db->tableExists('berita')) {
-            $this->forge->dropKey('berita', 'tanggal');
-            $this->forge->dropKey('berita', 'created_at');
-        }
+        $dropIdx('users', ['idx_users_role','idx_users_email']);
+        $dropIdx('walikelas', ['idx_walikelas_user_id','idx_walikelas_kelas']);
+        $dropIdx('tb_siswa', ['idx_tb_siswa_kelas','idx_tb_siswa_siswa_id','idx_tb_siswa_kelas_siswa_id']);
+        $dropIdx('absensi', [
+            'idx_absensi_tanggal','idx_absensi_kelas','idx_absensi_siswa_id',
+            'idx_absensi_tanggal_kelas','idx_absensi_siswa_id_tanggal'
+        ]);
+        $dropIdx('nilai', ['idx_nilai_siswa_id','idx_nilai_mata_pelajaran','idx_nilai_semester','idx_nilai_siswa_id_semester']);
+        $dropIdx('kalender_akademik', ['idx_kalender_mulai','idx_kalender_selesai','idx_kalender_jenis']);
+        $dropIdx('berita', ['idx_berita_tanggal','idx_berita_created_at']);
     }
 }

@@ -6,6 +6,11 @@ use App\Controllers\BaseController;
 use App\Models\NilaiModel;
 use App\Models\TbSiswaModel;
 use App\Models\WalikelasModel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class Nilai extends BaseController
 {
@@ -496,6 +501,14 @@ class Nilai extends BaseController
             $availableClasses = [['kelas' => $userKelas]];
         }
 
+        // Legacy query param support -> if query params present but route segments missing, redirect (canonicalize)
+        $legacyKelas = $this->request->getVar('kelas');
+        $legacyMapel = $this->request->getVar('mapel');
+        if((!$kelasSlug || !$mapelSlug) && $legacyKelas && $legacyMapel){
+            $target = '/admin/nilai/input/' . $this->slugifyKelas($legacyKelas) . '/' . $this->slugifyMapel($legacyMapel);
+            return redirect()->to($target, 301);
+        }
+
         // Get students for selected class
     $students = [];
     // Support pretty URL slugs or fallback to query params
@@ -622,16 +635,111 @@ class Nilai extends BaseController
             }
         }
 
-        // Get available classes
+        // Get available classes (exclude 'Lulus' for cleanliness)
         $availableClasses = [];
         if ($userRole === 'admin') {
             $availableClasses = $this->tbSiswaModel->select('kelas')
-                                                  ->distinct()
-                                                  ->orderBy('kelas', 'ASC')
-                                                  ->findAll();
-        } else {
-            if ($userKelas) {
-                $availableClasses = [['kelas' => $userKelas]];
+                ->distinct()
+                ->where('kelas !=', 'Lulus')
+                ->orderBy('kelas', 'ASC')
+                ->findAll();
+        } else if ($userKelas) {
+            $availableClasses = [['kelas' => $userKelas]];
+        }
+
+        // Selected params (GET)
+        $selectedKelas = $this->request->getGet('kelas');
+        $selectedMapel = $this->request->getGet('mapel');
+
+        // Guard walikelas: force kelas to their class if mismatch
+        if (($userRole === 'wali_kelas' || $userRole === 'walikelas') && $userKelas) {
+            if (!$selectedKelas || $selectedKelas !== $userKelas) {
+                $selectedKelas = $userKelas; // override
+            }
+        }
+
+        // Mata pelajaran list (canonical ordering)
+        $mataPelajaranList = $this->nilaiModel->getMataPelajaranList();
+
+    $reportRows = [];
+    // Dynamic PH columns: show minimum 4 columns; if more assessments exist show up to their count (capped at 10)
+    $phHeaderCount = 4; // will be recalculated after we know actual
+    $phActualCount = 0;  // number of actual PH assessments (capped 10)
+        $students = [];
+
+        if ($selectedKelas && $selectedMapel) {
+            // Access check for kelas
+            if (!$this->nilaiModel->canAccessClass($userId, $selectedKelas, $userRole)) {
+                return redirect()->to('/admin')->with('error', 'Anda tidak memiliki akses ke kelas tersebut');
+            }
+
+            // Students list
+            $students = $this->tbSiswaModel->where('kelas', $selectedKelas)
+                ->where('deleted_at IS NULL', null, false)
+                ->orderBy('nama', 'ASC')
+                ->findAll();
+
+            // Harian matrix to derive PH values (chronological) then limit to 10
+            $matrix = $this->nilaiModel->getNilaiHarianMatrix($selectedKelas, $selectedMapel);
+            $headers = $matrix['headers'] ?? [];
+            if ($headers) {
+                $phActualCountTotal = min(count($headers), 10); // actual available up to 10
+                $phActualCount = $phActualCountTotal; // store actual count used for averaging
+                $phHeaderCount = max($phActualCountTotal, 4); // ensure at least 4 columns shown even if fewer assessments
+            } else {
+                // no headers -> still show 4 empty PH columns
+                $phHeaderCount = 4; $phActualCount = 0;
+            }
+
+            // Build fast lookup for harian values per siswa
+            $values = $matrix['values'] ?? [];
+
+            // Fetch PTS & PAS for entire kelas+mapel (single query)
+            $examRows = $this->nilaiModel->where('deleted_at IS NULL', null, false)
+                ->where('kelas', $selectedKelas)
+                ->where('mata_pelajaran', $selectedMapel)
+                ->whereIn('jenis_nilai', ['pts', 'pas'])
+                ->findAll();
+            $ptsMap = [];
+            $pasMap = [];
+            foreach ($examRows as $er) {
+                if ($er['jenis_nilai'] === 'pts') { $ptsMap[$er['siswa_id']] = (float)$er['nilai']; }
+                if ($er['jenis_nilai'] === 'pas') { $pasMap[$er['siswa_id']] = (float)$er['nilai']; }
+            }
+
+            // Assemble rows
+            $noUrut = 1;
+            foreach ($students as $stu) {
+                $sid = $stu['id'];
+                $phScores = [];
+                $sum = 0; $count = 0;
+                for ($i = 1; $i <= $phHeaderCount; $i++) {
+                    if ($i <= $phActualCount) {
+                        $val = $values[$sid][$i] ?? null; // matrix uses 1-based column index
+                        if ($val !== null && $val !== '') {
+                            $phScores[$i] = $val;
+                            $sum += (float)$val; $count++;
+                        } else {
+                            $phScores[$i] = '';
+                        }
+                    } else {
+                        $phScores[$i] = '';
+                    }
+                }
+                $avgPH = $count > 0 ? round($sum / $count, 2) : '';
+                $pts = isset($ptsMap[$sid]) ? $ptsMap[$sid] : '';
+                $pas = isset($pasMap[$sid]) ? $pasMap[$sid] : '';
+                $nilaiRapot = ($avgPH !== '' && $pts !== '' && $pas !== '') ? round(($avgPH + $pts + $pas) / 3, 2) : '';
+                $reportRows[] = [
+                    'no' => $noUrut++,
+                    'nisn' => $stu['nisn'] ?? '',
+                    'nama' => $stu['nama'] ?? '',
+                    'ph' => $phScores,
+                    'avg_ph' => $avgPH,
+                    'pts' => $pts,
+                    'pas' => $pas,
+                    'rapot' => $nilaiRapot,
+                ];
             }
         }
 
@@ -640,10 +748,85 @@ class Nilai extends BaseController
             'userRole' => $userRole,
             'userKelas' => $userKelas,
             'availableClasses' => $availableClasses,
+            'mataPelajaranList' => $mataPelajaranList,
+            'selectedKelas' => $selectedKelas,
+            'selectedMapel' => $selectedMapel,
+            'reportRows' => $reportRows,
+            'phHeaderCount' => $phHeaderCount,
+            'phActualCount' => $phActualCount,
             'currentUser' => [
                 'nama' => session()->get('nama'),
                 'role' => session()->get('role')
-            ]
+            ],
+            // inject profil sekolah & walikelas data for print signature
+            'profilSekolah' => (function(){
+                try { $m = new \App\Models\ProfilSekolahModel(); return $m->getProfilSekolah(); } catch(\Throwable $e){ return []; }
+            })(),
+            'walikelasData' => (function() use ($selectedKelas){
+                if(!$selectedKelas) return [];
+                try {
+                    $db = \Config\Database::connect();
+                    // 1) Coba tabel 'guru' (skema import JSON) berdasarkan tugas_mengajar
+                    $hasGuru = $db->tableExists('guru');
+                    if($hasGuru){
+                        $hasGelarGuru = false; try { $hasGelarGuru = $db->fieldExists('gelar','guru'); } catch(\Throwable $e) {}
+                        $selectCols = 'nama, nip, tugas_mengajar' . ($hasGelarGuru ? ', gelar' : '');
+                        $row = $db->table('guru')
+                            ->select($selectCols)
+                            ->where('tugas_mengajar', $selectedKelas)
+                            ->orderBy('id','ASC')
+                            ->get()->getRowArray();
+                        if($row){
+                            return [
+                                'nama' => $row['nama'],
+                                'nip'  => $row['nip'],
+                                'kelas'=> $row['tugas_mengajar'],
+                                'gelar'=> $row['gelar'] ?? null,
+                            ];
+                        }
+                    }
+                    // 2) Coba tabel 'tb_guru' (skema migrasi tb_guru) berdasarkan jabatan = 'Wali Kelas {kelas}'
+                    $hasTbGuru = $db->tableExists('tb_guru');
+                    if($hasTbGuru){
+                        $jabatanTarget = 'Wali Kelas ' . $selectedKelas; // contoh: Wali Kelas 5 A
+                        $row2 = $db->table('tb_guru')
+                            ->select('nama_lengkap, gelar, nip, jabatan')
+                            ->where('jabatan', $jabatanTarget)
+                            ->orderBy('id','ASC')
+                            ->get()->getRowArray();
+                        if(!$row2){
+                            // fallback like search (kadang format jabatan berbeda)
+                            $row2 = $db->table('tb_guru')
+                                ->select('nama_lengkap, gelar, nip, jabatan')
+                                ->like('jabatan','Wali Kelas')
+                                ->like('jabatan', $selectedKelas)
+                                ->orderBy('id','ASC')
+                                ->get()->getRowArray();
+                        }
+                        if($row2){
+                            return [
+                                'nama' => $row2['nama_lengkap'],
+                                'nip'  => $row2['nip'],
+                                'kelas'=> $selectedKelas,
+                                'gelar'=> $row2['gelar'] ?? null,
+                            ];
+                        }
+                    }
+                    // 3) Fallback lama: tabel walikelas
+                    if($db->tableExists('walikelas')){
+                        $legacy = $db->table('walikelas')->where('kelas',$selectedKelas)->get()->getRowArray();
+                        if($legacy){
+                            return [
+                                'nama' => $legacy['nama'] ?? ($legacy['walikelas_nama'] ?? null),
+                                'nip'  => $legacy['nip'] ?? null,
+                                'kelas'=> $selectedKelas,
+                                'gelar'=> null,
+                            ];
+                        }
+                    }
+                } catch(\Throwable $e){ return []; }
+                return [];
+            })()
         ];
 
         return view('admin/nilai/cetak', $data);
@@ -1122,5 +1305,450 @@ class Nilai extends BaseController
             return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menyimpan nilai']);
         }
         return $this->response->setJSON(['status' => 'ok', 'saved' => $upserted]);
+    }
+
+    /**
+     * Test export method tanpa auth untuk debugging
+     */
+    /**
+     * Export nilai ke Excel (XLSX format)
+     */
+    public function exportExcel()
+    {
+        // Debug mode - check what's happening
+        log_message('info', 'Export Excel method called');
+        
+        // Check if user is logged in
+        if (!session()->get('isLoggedIn')) {
+            log_message('info', 'User not logged in, redirecting to login');
+            return redirect()->to('/login');
+        }
+
+        $userRole = session()->get('role');
+        $userId = session()->get('user_id');
+
+        if (!in_array($userRole, ['admin', 'wali_kelas', 'walikelas'])) {
+            log_message('info', 'User role not authorized: ' . $userRole);
+            return redirect()->to('/admin')->with('error', 'Anda tidak memiliki akses ke halaman ini');
+        }
+
+        // Get parameters
+        $selectedKelas = $this->request->getGet('kelas');
+        $selectedMapel = $this->request->getGet('mapel');
+
+        log_message('info', 'Export parameters - Kelas: ' . $selectedKelas . ', Mapel: ' . $selectedMapel);
+
+        if (!$selectedKelas || !$selectedMapel) {
+            log_message('info', 'Missing parameters');
+            return redirect()->back()->with('error', 'Parameter kelas dan mata pelajaran wajib diisi');
+        }
+
+        // Check access to class
+        if (!$this->nilaiModel->canAccessClass($userId, $selectedKelas, $userRole)) {
+            log_message('info', 'User cannot access class: ' . $selectedKelas);
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke kelas tersebut');
+        }
+
+        try {
+            // Get data
+            $students = $this->tbSiswaModel->where('kelas', $selectedKelas)
+                ->where('deleted_at IS NULL', null, false)
+                ->orderBy('nama', 'ASC')
+                ->findAll();
+
+            if (empty($students)) {
+                log_message('info', 'No students found for class: ' . $selectedKelas);
+                return redirect()->back()->with('error', 'Tidak ada siswa di kelas tersebut');
+            }
+
+            log_message('info', 'Found ' . count($students) . ' students');
+
+            // Get harian matrix
+            $matrix = $this->nilaiModel->getNilaiHarianMatrix($selectedKelas, $selectedMapel);
+            $headers = $matrix['headers'] ?? [];
+            $values = $matrix['values'] ?? [];
+
+            log_message('info', 'Harian matrix has ' . count($headers) . ' headers');
+
+            // Limit PH columns to max 10
+            $phActualCount = min(count($headers), 10);
+            $phHeaderCount = max($phActualCount, 4); // minimum 4 columns
+
+            // Get PTS & PAS values
+            $examRows = $this->nilaiModel->where('deleted_at IS NULL', null, false)
+                ->where('kelas', $selectedKelas)
+                ->where('mata_pelajaran', $selectedMapel)
+                ->whereIn('jenis_nilai', ['pts', 'pas'])
+                ->findAll();
+
+            $ptsMap = [];
+            $pasMap = [];
+            foreach ($examRows as $er) {
+                if ($er['jenis_nilai'] === 'pts') {
+                    $ptsMap[$er['siswa_id']] = (float)$er['nilai'];
+                }
+                if ($er['jenis_nilai'] === 'pas') {
+                    $pasMap[$er['siswa_id']] = (float)$er['nilai'];
+                }
+            }
+
+            log_message('info', 'Found ' . count($ptsMap) . ' PTS and ' . count($pasMap) . ' PAS values');
+
+            // Prepare report data
+            $reportRows = [];
+            $noUrut = 1;
+            foreach ($students as $stu) {
+                $sid = $stu['id'];
+                $phScores = [];
+                $sum = 0;
+                $count = 0;
+
+                for ($i = 1; $i <= $phHeaderCount; $i++) {
+                    if ($i <= $phActualCount) {
+                        $val = $values[$sid][$i] ?? null;
+                        if ($val !== null && $val !== '') {
+                            $phScores[$i] = $val;
+                            $sum += (float)$val;
+                            $count++;
+                        } else {
+                            $phScores[$i] = '';
+                        }
+                    } else {
+                        $phScores[$i] = '';
+                    }
+                }
+
+                $avgPH = $count > 0 ? round($sum / $count, 2) : '';
+                $pts = $ptsMap[$sid] ?? '';
+                $pas = $pasMap[$sid] ?? '';
+                $nilaiRapot = ($avgPH !== '' && $pts !== '' && $pas !== '') ? 
+                    round(($avgPH + $pts + $pas) / 3, 2) : '';
+
+                $reportRows[] = [
+                    'no' => $noUrut++,
+                    'nisn' => $stu['nisn'] ?? '',
+                    'nama' => $stu['nama'] ?? '',
+                    'ph' => $phScores,
+                    'avg_ph' => $avgPH,
+                    'pts' => $pts,
+                    'pas' => $pas,
+                    'rapot' => $nilaiRapot,
+                ];
+            }
+
+            log_message('info', 'Prepared ' . count($reportRows) . ' report rows');
+
+            // Create Excel file
+            $spreadsheet = new Spreadsheet();
+            // Set default font to Roboto
+            try { $spreadsheet->getDefaultStyle()->getFont()->setName('Roboto')->setSize(11); } catch(\Throwable $e) {}
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Rekap Nilai');
+
+            // Set title header
+            $sheet->mergeCells('A1:K1');
+            $sheet->setCellValue('A1', 'REKAP NILAI SISWA');
+            $sheet->mergeCells('A2:K2');
+            $sheet->setCellValue('A2', 'KELAS: ' . $selectedKelas . ' | MATA PELAJARAN: ' . $selectedMapel);
+            $sheet->mergeCells('A3:K3');
+            $sheet->setCellValue('A3', 'TAHUN AJARAN ' . date('Y') . '/' . (date('Y') + 1));
+
+            // Style for title
+            $titleStyle = [
+                'font' => [
+                    'bold' => true,
+                    'size' => 14,
+                    'color' => ['rgb' => '000000']
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
+            ];
+            $sheet->getStyle('A1:K3')->applyFromArray($titleStyle);
+
+            // Header row (starting from row 5)
+            $headerRow = 5;
+            $sheet->setCellValue('A' . $headerRow, 'No');
+            $sheet->setCellValue('B' . $headerRow, 'NISN');
+            $sheet->setCellValue('C' . $headerRow, 'Nama Siswa');
+
+            // PH columns
+            $col = 4;
+            for ($i = 1; $i <= $phHeaderCount; $i++) {
+                $colLetter = chr(ord('A') + $col - 1);
+                $sheet->setCellValue($colLetter . $headerRow, 'PH ' . $i);
+                $col++;
+            }
+
+            // Additional columns
+            $avgCol = chr(ord('A') + $col - 1);
+            $sheet->setCellValue($avgCol . $headerRow, 'Rata-rata PH');
+            $col++;
+
+            $ptsCol = chr(ord('A') + $col - 1);
+            $sheet->setCellValue($ptsCol . $headerRow, 'PTS');
+            $col++;
+
+            $pasCol = chr(ord('A') + $col - 1);
+            $sheet->setCellValue($pasCol . $headerRow, 'PAS');
+            $col++;
+
+            $rapotCol = chr(ord('A') + $col - 1);
+            $sheet->setCellValue($rapotCol . $headerRow, 'Nilai Rapot');
+
+            // Header style
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF']
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4472C4']
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
+            ];
+
+            $lastCol = chr(ord('A') + $col - 1);
+            $sheet->getStyle('A' . $headerRow . ':' . $lastCol . $headerRow)->applyFromArray($headerStyle);
+
+            // Data rows
+            $dataStartRow = $headerRow + 1;
+            $row = $dataStartRow;
+
+            foreach ($reportRows as $data) {
+                $sheet->setCellValue('A' . $row, $data['no']);
+                $sheet->setCellValue('B' . $row, $data['nisn']);
+                $sheet->setCellValue('C' . $row, $data['nama']);
+
+                // PH values
+                $col = 4;
+                for ($i = 1; $i <= $phHeaderCount; $i++) {
+                    $colLetter = chr(ord('A') + $col - 1);
+                    $value = $data['ph'][$i] ?? '';
+                    if (is_numeric($value)) {
+                        $sheet->setCellValue($colLetter . $row, (float)$value);
+                    } else {
+                        $sheet->setCellValue($colLetter . $row, $value);
+                    }
+                    $col++;
+                }
+
+                // Additional values
+                $avgCol = chr(ord('A') + $col - 1);
+                if (is_numeric($data['avg_ph'])) {
+                    $sheet->setCellValue($avgCol . $row, (float)$data['avg_ph']);
+                } else {
+                    $sheet->setCellValue($avgCol . $row, $data['avg_ph']);
+                }
+                $col++;
+
+                $ptsCol = chr(ord('A') + $col - 1);
+                if (is_numeric($data['pts'])) {
+                    $sheet->setCellValue($ptsCol . $row, (float)$data['pts']);
+                } else {
+                    $sheet->setCellValue($ptsCol . $row, $data['pts']);
+                }
+                $col++;
+
+                $pasCol = chr(ord('A') + $col - 1);
+                if (is_numeric($data['pas'])) {
+                    $sheet->setCellValue($pasCol . $row, (float)$data['pas']);
+                } else {
+                    $sheet->setCellValue($pasCol . $row, $data['pas']);
+                }
+                $col++;
+
+                $rapotCol = chr(ord('A') + $col - 1);
+                if (is_numeric($data['rapot'])) {
+                    $sheet->setCellValue($rapotCol . $row, (float)$data['rapot']);
+                } else {
+                    $sheet->setCellValue($rapotCol . $row, $data['rapot']);
+                }
+
+                $row++;
+            }
+
+            $lastDataRow = $row - 1;
+
+            // Data style
+            $dataStyle = [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
+            ];
+
+            $sheet->getStyle('A' . $dataStartRow . ':' . $lastCol . $lastDataRow)->applyFromArray($dataStyle);
+
+            // Override alignment for Nama Siswa column (C) -> left align values
+            if ($lastDataRow >= $dataStartRow) {
+                $sheet->getStyle('C' . $dataStartRow . ':C' . $lastDataRow)
+                      ->getAlignment()
+                      ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            }
+
+            // Color coding for grades
+            for ($r = $dataStartRow; $r <= $lastDataRow; $r++) {
+                // Color based on final grade (rapot)
+                $rapotValue = $sheet->getCell($rapotCol . $r)->getValue();
+                if (is_numeric($rapotValue)) {
+                    $grade = (float)$rapotValue;
+                    if ($grade >= 90) {
+                        $color = 'C6EFCE'; // Green for excellent
+                    } elseif ($grade >= 80) {
+                        $color = 'FFEB9C'; // Yellow for good
+                    } elseif ($grade >= 70) {
+                        $color = 'FFC7CE'; // Light red for needs improvement
+                    } else {
+                        $color = 'FF9999'; // Red for poor
+                    }
+
+                    $sheet->getStyle('A' . $r . ':' . $lastCol . $r)->getFill()
+                        ->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()
+                        ->setRGB($color);
+                }
+            }
+
+            // Auto-size columns
+            foreach (range('A', $lastCol) as $columnID) {
+                $sheet->getColumnDimension($columnID)->setAutoSize(true);
+            }
+
+            // Set row heights: header taller (21.5pt), data rows 15pt
+            $sheet->getRowDimension($headerRow)->setRowHeight(21.5); // header
+            $dataRowHeightPt = 15;
+            for ($r = $dataStartRow; $r <= $lastDataRow; $r++) {
+                $sheet->getRowDimension($r)->setRowHeight($dataRowHeightPt);
+            }
+
+            // Repeat header row on each printed page
+            $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd($headerRow, $headerRow);
+
+            // Signature section (Kepala Sekolah & Wali Kelas) similar to web print
+            $sigStart = $lastDataRow + 3; // spacing after table
+            // Fetch profil sekolah
+            $profilSekolah = [];
+            try { $pm = new \App\Models\ProfilSekolahModel(); $profilSekolah = $pm->getProfilSekolah(); } catch(\Throwable $e) {}
+            $kepalaNama = $profilSekolah['nama_kepala_sekolah'] ?? '';
+            $kepalaNip  = $profilSekolah['nip_kepala_sekolah'] ?? '';
+
+            // Fetch wali kelas data for selected class
+            $waliNama = '';$waliNip='';
+            try {
+                $db = \Config\Database::connect();
+                // Try guru table
+                if($db->tableExists('guru')){
+                    $row = $db->table('guru')->select('nama,nip,tugas_mengajar')->where('tugas_mengajar',$selectedKelas)->orderBy('id','ASC')->get()->getRowArray();
+                    if($row){ $waliNama = $row['nama'] ?? ''; $waliNip = $row['nip'] ?? ''; }
+                }
+                if(!$waliNama && $db->tableExists('tb_guru')){
+                    $jabatanTarget = 'Wali Kelas ' . $selectedKelas;
+                    $row2 = $db->table('tb_guru')->select('nama_lengkap,nip,jabatan')->where('jabatan',$jabatanTarget)->orderBy('id','ASC')->get()->getRowArray();
+                    if(!$row2){
+                        $row2 = $db->table('tb_guru')->select('nama_lengkap,nip,jabatan')->like('jabatan','Wali Kelas')->like('jabatan',$selectedKelas)->orderBy('id','ASC')->get()->getRowArray();
+                    }
+                    if($row2){ $waliNama = $row2['nama_lengkap'] ?? ''; $waliNip = $row2['nip'] ?? ''; }
+                }
+                if(!$waliNama && $db->tableExists('walikelas')){
+                    $legacy = $db->table('walikelas')->where('kelas',$selectedKelas)->get()->getRowArray();
+                    if($legacy){ $waliNama = $legacy['nama'] ?? ($legacy['walikelas_nama'] ?? ''); $waliNip = $legacy['nip'] ?? ''; }
+                }
+            } catch(\Throwable $e) {}
+
+            // Determine merge areas (split sheet width roughly in half)
+            $totalCols = ord($lastCol) - ord('A') + 1;
+            $mid = (int) floor($totalCols / 2);
+            if($mid < 3) { $mid = 3; } // minimum width safeguard
+            $leftEnd = chr(ord('A') + $mid - 1);
+            $rightStart = chr(ord('A') + $mid);
+            if(ord($rightStart) > ord($lastCol)) { $rightStart = $leftEnd; }
+
+            // Date row above wali kelas column (right side only)
+            $dateRow = $sigStart; // first row used for date on right side
+            // Localized Indonesian date with location prefix
+            $bulanIndo = [1=>'Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            $d = (int)date('j'); $m=(int)date('n'); $y=date('Y');
+            $today = 'Jakarta, ' . $d . ' ' . ($bulanIndo[$m] ?? date('F')) . ' ' . $y;
+            $sheet->mergeCells($rightStart.$dateRow.':'.$lastCol.$dateRow);
+            $sheet->setCellValue($rightStart.$dateRow, $today);
+            $sheet->getStyle($rightStart.$dateRow.':'.$lastCol.$dateRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getRowDimension($dateRow)->setRowHeight(18);
+
+            // Labels row (one row below date)
+            $labelRow = $dateRow + 1;
+            $sheet->mergeCells('A'.$labelRow.':'.$leftEnd.$labelRow);
+            $sheet->mergeCells($rightStart.$labelRow.':'.$lastCol.$labelRow);
+            $sheet->setCellValue('A'.$labelRow, 'Kepala Sekolah');
+            $sheet->setCellValue($rightStart.$labelRow, 'Walikelas ' . $selectedKelas);
+            $sheet->getStyle('A'.$labelRow.':'.$lastCol.$labelRow)->getFont()->setBold(true);
+            $sheet->getStyle('A'.$labelRow.':'.$lastCol.$labelRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Name row after space for signature (5 rows space from labelRow)
+            $nameRow = $labelRow + 5;
+            $nipRow  = $nameRow + 1;
+            $sheet->mergeCells('A'.$nameRow.':'.$leftEnd.$nameRow);
+            $sheet->mergeCells($rightStart.$nameRow.':'.$lastCol.$nameRow);
+            $sheet->mergeCells('A'.$nipRow.':'.$leftEnd.$nipRow);
+            $sheet->mergeCells($rightStart.$nipRow.':'.$lastCol.$nipRow);
+            $sheet->setCellValue('A'.$nameRow, $kepalaNama ? $kepalaNama : '( _________________________ )');
+            $sheet->setCellValue($rightStart.$nameRow, $waliNama ? $waliNama : '( _________________________ )');
+            $sheet->setCellValue('A'.$nipRow, 'NIP: '. ($kepalaNip ?: '_____________'));
+            $sheet->setCellValue($rightStart.$nipRow, 'NIP: '. ($waliNip ?: '_____________'));
+            $sheet->getStyle('A'.$nameRow.':'.$lastCol.$nipRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A'.$nameRow.':'.$lastCol.$nameRow)->getFont()->setBold(true);
+
+            // Adjust row heights for signature block (optional slightly larger name rows)
+            $sheet->getRowDimension($nameRow)->setRowHeight(18);
+            $sheet->getRowDimension($nipRow)->setRowHeight(15);
+
+            // Page setup
+            $sheet->getPageSetup()
+                ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE)
+                ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4)
+                ->setFitToWidth(1)
+                ->setFitToHeight(0);
+
+            // Generate filename
+            $filename = 'Rekap_Nilai_' . str_replace(' ', '_', $selectedKelas) . '_' . str_replace(' ', '_', $selectedMapel) . '_' . date('Y-m-d') . '.xlsx';
+
+            log_message('info', 'Excel file created, preparing download: ' . $filename);
+
+            // Output file
+            $writer = new Xlsx($spreadsheet);
+            
+            ob_start();
+            $writer->save('php://output');
+            $data = ob_get_clean();
+
+            log_message('info', 'Excel data generated, size: ' . strlen($data) . ' bytes');
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->setBody($data);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Export Excel error: ' . $e->getMessage());
+            log_message('error', 'Trace: ' . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat export: ' . $e->getMessage());
+        }
     }
 }

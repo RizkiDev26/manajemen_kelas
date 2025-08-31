@@ -132,6 +132,7 @@ $routes->group('admin', function($routes) {
     $routes->get('nilai/input/(:segment)/(:segment)', 'Admin\Nilai::inputNilai/$1/$2');
     $routes->get('nilai/input', 'Admin\Nilai::inputNilai');
     $routes->get('nilai/cetak', 'Admin\Nilai::cetakNilai');
+    $routes->get('nilai/export-excel', 'Admin\Nilai::exportExcel');
     $routes->post('nilai/store-bulk-harian', 'Admin\Nilai::storeBulkHarian');
     $routes->post('nilai/update-bulk-harian', 'Admin\Nilai::updateBulkHarian');
     $routes->get('nilai/next-kode-harian', 'Admin\Nilai::nextKodeHarian');
@@ -270,6 +271,8 @@ $routes->group('siswa', ['filter' => 'role:siswa'], function($routes){
     $routes->get('profile', 'Siswa\\ProfileController::index');
     // Basic JSON name endpoint for dashboard lazy refresh
     $routes->get('profile/json-basic', 'Siswa\\ProfileController::basicJson');
+    // Classroom (materi & tugas terpublish untuk kelas siswa)
+    $routes->get('classroom', 'Siswa\\ClassroomController::index');
 });
 
 // Admin, Guru & Walikelas share access
@@ -278,4 +281,44 @@ $routes->group('guru', ['filter' => 'role:guru,walikelas,admin'], function($rout
     $routes->get('stats.json', 'Guru\\DashboardController::stats');
     $routes->get('logs', 'Guru\\DashboardController::logs');
     $routes->get('logs/export', 'Guru\\DashboardController::exportCsv');
+});
+
+// Classroom Stage 1 Routes (basic lessons & assignments)
+$routes->group('classroom', ['filter' => 'auth'], function($routes) {
+    // Lessons
+    $routes->get('lessons', 'Classroom\\LessonController::index');
+    $routes->get('lessons/create', 'Classroom\\LessonController::create');
+    $routes->post('lessons/store', 'Classroom\\LessonController::store');
+    $routes->get('lessons/(:num)', 'Classroom\\LessonController::show/$1');
+    $routes->post('lessons/(:num)/publish', 'Classroom\\LessonController::publish/$1');
+    // Assignments
+    $routes->get('assignments', 'Classroom\\AssignmentController::index');
+    $routes->get('assignments/create', 'Classroom\\AssignmentController::create');
+    $routes->post('assignments/store', 'Classroom\\AssignmentController::store');
+    $routes->get('assignments/(:num)/edit', 'Classroom\AssignmentController::edit/$1');
+    $routes->post('assignments/(:num)/update', 'Classroom\AssignmentController::update/$1');
+    $routes->post('assignments/(:num)/delete', 'Classroom\AssignmentController::delete/$1');
+    $routes->get('assignments/question-image/(:any)', 'Classroom\AssignmentController::questionImage/$1');
+    $routes->get('assignments/(:num)', 'Classroom\AssignmentController::show/$1');
+    $routes->post('assignments/(:num)/submit-attempt', 'Classroom\\AssignmentController::submitAttempt/$1');
+    $routes->post('assignments/(:num)/start', 'Classroom\AssignmentController::startAttempt/$1');
+    $routes->post('assignments/(:num)/ajax-save', 'Classroom\AssignmentController::ajaxSaveAnswers/$1');
+    $routes->get('assignments/(:num)/debug-questions', 'Classroom\\AssignmentController::debugQuestions/$1');
+    $routes->match(['get', 'post'], 'assignments/test-upload', 'Classroom\\AssignmentController::testUpload');
+
+
+    $routes->post('assignments/(:num)/publish', 'Classroom\\AssignmentController::publish/$1');
+    // Submissions Stage 2
+    $routes->get('assignments/(:num)/submit', 'Classroom\\SubmissionController::create/$1');
+    $routes->post('assignments/(:num)/submit', 'Classroom\\SubmissionController::store/$1');
+    $routes->get('assignments/(:num)/submission', 'Classroom\\SubmissionController::showOwn/$1');
+    $routes->get('assignments/(:num)/submissions', 'Classroom\\SubmissionController::listForAssignment/$1');
+    $routes->get('submissions/(:num)/grade', 'Classroom\\SubmissionController::gradeForm/$1');
+    $routes->post('submissions/(:num)/grade', 'Classroom\\SubmissionController::grade/$1');
+    // New: reset attempt & auto-grade
+    $routes->post('assignments/(:num)/submissions/(:num)/reset', 'Classroom\\SubmissionController::resetAttempt/$1/$2');
+    $routes->post('assignments/(:num)/submissions/(:num)/auto-grade', 'Classroom\\SubmissionController::autoGrade/$1/$2');
+    $routes->post('assignments/(:num)/submissions/(:num)/delete', 'Classroom\\SubmissionController::deleteSubmission/$1/$2');
+    // Attachments download
+    $routes->get('attachment/(:num)/download', 'Classroom\\AttachmentController::download/$1');
 });

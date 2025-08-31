@@ -36,8 +36,9 @@
     .sidebar, .sidebar nav a, .sidebar nav div, .content-wrapper, .fixed-header, .sidebar nav .submenu, .sidebar nav .submenu-chevron, .sidebar-text, .menu-text, .menu-label { transition: none !important; }
         
         /* Submenu functionality */
-        .menu-item-with-submenu .submenu { max-height: 0; opacity: 0; overflow: hidden; }
-        .menu-item-with-submenu.open .submenu { max-height: 200px; opacity: 1; }
+    .menu-item-with-submenu .submenu { max-height: 0; opacity: 0; overflow: hidden; }
+    /* Perbesar max-height agar item terakhir (Cetak) tidak terpotong; tampilkan overflow saat open */
+    .menu-item-with-submenu.open .submenu { max-height: 600px; opacity: 1; overflow: visible; }
         .menu-item-with-submenu.open .submenu-chevron { transform: rotate(180deg); }
         
     /* Enhanced menu item styles (no horizontal shift on hover) */
@@ -77,6 +78,11 @@
         /* Hover expanded appearance overlays content without pushing */
     .sidebar.expanded { width: var(--sidebar-width-expanded); }
         .sidebar.collapsed { width: var(--sidebar-width-collapsed); }
+    /* When collapsed remove large shadow to eliminate perceived gap line; add subtle separator */
+    .sidebar.collapsed { box-shadow: none; border-right: none; }
+    /* Reduce left padding of content when sidebar collapsed to close visual gap */
+    body.sidebar-collapsed .content-area { padding-left: 0.5rem !important; }
+    body.sidebar-collapsed .content-area > *:first-child { margin-left: 0 !important; }
         .sidebar.collapsed .sidebar-text, .sidebar.collapsed .menu-text, .sidebar.collapsed .menu-label { opacity: 0; pointer-events: none; width: 0; overflow: hidden; position: absolute; visibility: hidden; }
     /* Hide chevron + active indicator when collapsed */
     .sidebar.collapsed .submenu-chevron { display: none !important; }
@@ -215,7 +221,7 @@
                         <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
                     <div class="sidebar-text">
-                        <h1 class="text-white text-xl font-bold tracking-tight">SDN GU 09</h1>
+                        <h1 class="text-white text-xl font-bold tracking-tight">SDN Grogol Utara 09</h1>
                         <p class="text-white/80 text-sm font-medium">Aplikasi Pengelolaan Sekolah</p>
                         <div class="flex items-center mt-1">
                             <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
@@ -290,7 +296,7 @@
                         </div>
                         
                         <!-- Submenu -->
-                        <div class="submenu pl-4 mt-2 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
+                        <div class="submenu pl-4 mt-2 pb-3 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
                             <a href="<?= $baseUrl ?>/absensi/input" title="Input Harian" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'absensi/input') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
                                 <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
                                     <i class="fas fa-plus text-xs"></i>
@@ -359,7 +365,7 @@
                                     <span class="text-sm font-medium">PAS</span>
                                 </div>
                             </a>
-                            <a href="<?= $baseUrl ?>/nilai/cetak" title="Cetak" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'nilai/cetak') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                            <a href="<?= $baseUrl ?>/nilai/cetak" title="Cetak" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'nilai/cetak') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1 mb-1">
                                 <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
                                     <i class="fas fa-print text-xs"></i>
                                 </div>
@@ -373,7 +379,7 @@
 
                     <!-- Buku Kasus -->
                     <?php if ($userRole !== 'walikelas' && $userRole !== 'siswa'): ?>
-                    <li>
+                    <li class="mt-3">
                         <a href="/buku-kasus" title="Buku Kasus" class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'buku-kasus') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 transform hover:translate-x-1">
                             <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
                                 <i class="fas fa-book text-sm"></i>
@@ -389,6 +395,37 @@
                     </li>
                     <?php endif; ?>
                     <?php endif; // end if not siswa ?>
+
+                    <!-- Classroom (visible untuk semua role termasuk siswa) -->
+                    <li class="menu-item-with-submenu mt-3">
+                        <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'classroom') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> cursor-pointer submenu-toggle">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                                <i class="fas fa-chalkboard text-sm"></i>
+                            </div>
+                            <div class="menu-text flex-1">
+                                <span class="font-semibold text-sm block">Classroom</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-300 submenu-chevron"></i>
+                        </div>
+                        <div class="submenu pl-4 mt-2 space-y-1 overflow-hidden max-h-0 transition-all duration-300">
+                            <a href="/classroom/lessons" title="Materi" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'classroom/lessons') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-book-open text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Materi</span>
+                                </div>
+                            </a>
+                            <a href="/classroom/assignments" title="Tugas" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'classroom/assignments') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1 mb-1">
+                                <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-tasks text-xs"></i>
+                                </div>
+                                <div class="menu-text">
+                                    <span class="text-sm font-medium">Tugas</span>
+                                </div>
+                            </a>
+                        </div>
+                    </li>
 
                     <!-- Menu Kebiasaan dihapus sesuai permintaan user -->
                     <!-- Rekap Bulanan 7 Kebiasaan (Admin & Walikelas) -->
@@ -594,7 +631,8 @@
             <button id="mobileMenuToggle" class="lg:hidden w-9 h-9 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white shadow-sm hover:shadow-md">
                 <i class="fas fa-bars text-sm"></i>
             </button>
-            <h1 class="ml-3 text-sm sm:text-base font-semibold text-gray-700 truncate">Panel Admin</h1>
+            <!-- Judul navbar dihapus sesuai permintaan -->
+            <div class="ml-3"></div>
             <div class="ml-auto flex items-center space-x-3" x-data="{open:false}" @click.away="open=false">
                 <?php 
                     $session = session();
@@ -651,9 +689,11 @@
                 if (sidebar.classList.contains('collapsed')) {
                     icon.classList.remove('fa-angles-left');
                     icon.classList.add('fa-angles-right');
+                    document.body.classList.add('sidebar-collapsed');
                 } else {
                     icon.classList.remove('fa-angles-right');
                     icon.classList.add('fa-angles-left');
+                    document.body.classList.remove('sidebar-collapsed');
                 }
             }
 
@@ -669,7 +709,7 @@
 
             // Hover expand/collapse: hanya width sidebar berubah
             sidebar.addEventListener('mouseenter', () => { if(window.innerWidth>=1024){ sidebar.classList.add('expanded'); sidebar.classList.remove('collapsed'); } });
-            sidebar.addEventListener('mouseleave', () => { if(window.innerWidth>=1024){ sidebar.classList.remove('expanded'); sidebar.classList.add('collapsed'); } });
+            sidebar.addEventListener('mouseleave', () => { if(window.innerWidth>=1024){ sidebar.classList.remove('expanded'); sidebar.classList.add('collapsed'); updateToggleIcon(); } });
 
             // Mobile menu toggle
             if (mobileMenuToggle) {

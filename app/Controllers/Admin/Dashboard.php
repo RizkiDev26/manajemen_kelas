@@ -154,18 +154,37 @@ class Dashboard extends BaseController
         ];
 
         try {
-            // Count attendance (present) and any attendance marked today
-            // Map tb_siswa (master) -> legacy siswa via nisn
-            $attendanceSql = "
-                SELECT
-                    SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) AS hadir_count,
-                    COUNT(DISTINCT a.siswa_id) AS marked_count
-                FROM absensi a
-                JOIN siswa ls ON ls.id = a.siswa_id
-                JOIN tb_siswa t ON t.nisn = ls.nisn
-                WHERE t.kelas = ? AND DATE(a.tanggal) = ?
-            ";
-            $attendanceRow = $db->query($attendanceSql, [$kelas, $today])->getRowArray();
+            // Count attendance (present) and any attendance marked today.
+            // New structure: absensi.siswa_id now references tb_siswa.id (based on AbsensiModel usage).
+            // Use tb_siswa directly; keep legacy mapping fallback if needed.
+            $attendanceRow = null;
+            try {
+                $attendanceSqlNew = "
+                    SELECT
+                        SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) AS hadir_count,
+                        COUNT(DISTINCT a.siswa_id) AS marked_count
+                    FROM absensi a
+                    JOIN tb_siswa t ON t.id = a.siswa_id
+                    WHERE t.kelas = ? AND DATE(a.tanggal) = ?
+                ";
+                $attendanceRow = $db->query($attendanceSqlNew, [$kelas, $today])->getRowArray();
+            } catch(\Throwable $e) {}
+            // Fallback to legacy join path if new query returned null or zero rows but there might be legacy data
+            if(!$attendanceRow || ($attendanceRow['hadir_count']??0)+($attendanceRow['marked_count']??0)===0) {
+                try {
+                    $attendanceSqlLegacy = "
+                        SELECT
+                            SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) AS hadir_count,
+                            COUNT(DISTINCT a.siswa_id) AS marked_count
+                        FROM absensi a
+                        JOIN siswa ls ON ls.id = a.siswa_id
+                        JOIN tb_siswa t ON t.nisn = ls.nisn
+                        WHERE t.kelas = ? AND DATE(a.tanggal) = ?
+                    ";
+                    $attendanceRowLegacy = $db->query($attendanceSqlLegacy, [$kelas, $today])->getRowArray();
+                    if($attendanceRowLegacy) { $attendanceRow = $attendanceRowLegacy; }
+                } catch(\Throwable $e2) {}
+            }
 
             if ($attendanceRow) {
                 $result['attendance_present'] = (int)$attendanceRow['hadir_count'];
@@ -173,14 +192,31 @@ class Dashboard extends BaseController
             }
 
             // Count students with at least one habit log today
-            $habitSql = "
-                SELECT COUNT(DISTINCT hl.student_id) AS habit_logged
-                FROM habit_logs hl
-                JOIN siswa ls ON ls.id = hl.student_id
-                JOIN tb_siswa t ON t.nisn = ls.nisn
-                WHERE t.kelas = ? AND hl.log_date = ?
-            ";
-            $habitRow = $db->query($habitSql, [$kelas, $today])->getRowArray();
+            $habitRow = null;
+            // Primary (legacy mapping) query
+            try {
+                $habitSql = "
+                    SELECT COUNT(DISTINCT hl.student_id) AS habit_logged
+                    FROM habit_logs hl
+                    JOIN siswa ls ON ls.id = hl.student_id
+                    JOIN tb_siswa t ON t.nisn = ls.nisn
+                    WHERE t.kelas = ? AND hl.log_date = ?
+                ";
+                $habitRow = $db->query($habitSql, [$kelas, $today])->getRowArray();
+            } catch(\Throwable $e) {}
+            // If schema already migrated (habit_logs.student_id references tb_siswa.id) attempt direct join
+            if((!$habitRow || ($habitRow['habit_logged']??0)===0)) {
+                try {
+                    $habitSqlNew = "
+                        SELECT COUNT(DISTINCT hl.student_id) AS habit_logged
+                        FROM habit_logs hl
+                        JOIN tb_siswa t ON t.id = hl.student_id
+                        WHERE t.kelas = ? AND hl.log_date = ?
+                    ";
+                    $habitRowNew = $db->query($habitSqlNew, [$kelas, $today])->getRowArray();
+                    if($habitRowNew && ($habitRowNew['habit_logged']??0) > 0) { $habitRow = $habitRowNew; }
+                } catch(\Throwable $e3) {}
+            }
             if ($habitRow) {
                 $result['habit_logged'] = (int)$habitRow['habit_logged'];
             }

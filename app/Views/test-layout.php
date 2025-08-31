@@ -1,6 +1,6 @@
 <?= $this->extend('layout/admin') ?>
 
-<?= $this->section('title') ?>Test Layout - SDN GU 09<?= $this->endSection() ?>
+<?= $this->section('title') ?>Test Layout - SDN Grogol Utara 09<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <div class="container mx-auto px-4 py-8">
@@ -15,7 +15,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div class="bg-blue-100 rounded-lg p-4">
                     <i class="fas fa-school text-2xl text-blue-600 mb-2"></i>
-                    <h3 class="font-semibold text-gray-800">SDN GU 09</h3>
+                    <h3 class="font-semibold text-gray-800">SDN Grogol Utara 09</h3>
                     <p class="text-sm text-gray-600">Sekolah Dasar</p>
                 </div>
                 

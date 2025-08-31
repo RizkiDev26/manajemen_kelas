@@ -24,6 +24,8 @@ class AddKodePenilaianToNilai extends Migration
     public function down()
     {
         if ($this->db->fieldExists('kode_penilaian', 'nilai')) {
+            // Drop the column; index will be dropped automatically by MySQL, but attempt explicit drop for portability
+            try { $this->db->query('ALTER TABLE `nilai` DROP INDEX `idx_nilai_kode_penilaian`'); } catch(\Throwable $e) {}
             $this->forge->dropColumn('nilai', 'kode_penilaian');
         }
     }

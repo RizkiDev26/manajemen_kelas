@@ -1,6 +1,6 @@
 <?= $this->extend('layout/admin') ?>
 
-<?= $this->section('title') ?>Kelola User - SDN GU 09<?= $this->endSection() ?>
+<?= $this->section('title') ?>Kelola User - SDN Grogol Utara 09<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 

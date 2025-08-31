@@ -172,21 +172,61 @@ class NilaiModel extends Model
 
     public function getMataPelajaranList(): array
     {
-        // Dynamic from subjects table if exists
+        // Canonical ordered list requested by user (fixed order)
+        $canonical = [
+            'Pendidikan Agama',
+            'Pendidikan Pancasila',
+            'Bahasa Indonesia',
+            'Matematika',
+            'Ilmu Pengetahuan Alam dan Sosial',
+            'Seni Rupa',
+            'Pendidikan Jasmani Olahraga dan Kesenian', // as requested (note: DB might store "Kesehatan")
+            'Pendidikan Lingkungan dan Budaya Jakarta',
+            'Bahasa Inggris',
+            'Coding'
+        ];
+
+        // Aliases -> canonical
+        $aliases = [
+            'Agama' => 'Pendidikan Agama',
+            'PKn' => 'Pendidikan Pancasila',
+            'PPKN' => 'Pendidikan Pancasila',
+            'IPA' => 'Ilmu Pengetahuan Alam dan Sosial',
+            'IPS' => 'Ilmu Pengetahuan Alam dan Sosial',
+            'IPAS' => 'Ilmu Pengetahuan Alam dan Sosial',
+            'Seni Budaya' => 'Seni Rupa',
+            'Olahraga' => 'Pendidikan Jasmani Olahraga dan Kesenian',
+            'PJOK' => 'Pendidikan Jasmani Olahraga dan Kesenian',
+            'Pendidikan Jasmani Olahraga dan Kesehatan' => 'Pendidikan Jasmani Olahraga dan Kesenian',
+            'PLBJ' => 'Pendidikan Lingkungan dan Budaya Jakarta'
+        ];
+
+        $extra = [];
         try {
             $db = \Config\Database::connect();
+            // collect distinct mapel from subjects table
             if ($db->tableExists('subjects')) {
-                $rows = $db->table('subjects')->select('id,name')->where('deleted_at IS NULL')->orderBy('name','ASC')->get()->getResultArray();
-                $out = [];
-                foreach ($rows as $r) { $out[$r['name']] = $r['name']; }
-                if ($out) return $out;
+                $rows = $db->table('subjects')->select('DISTINCT name')->where('deleted_at IS NULL')->get()->getResultArray();
+                foreach ($rows as $r) {
+                    $raw = $r['name'];
+                    $canon = $aliases[$raw] ?? $raw;
+                    if (!in_array($canon, $canonical, true) && !in_array($canon, $extra, true)) $extra[] = $canon;
+                }
+            }
+            // collect distinct legacy mapel from nilai table
+            $rows2 = $db->query("SELECT DISTINCT mata_pelajaran FROM nilai WHERE mata_pelajaran IS NOT NULL AND mata_pelajaran<>''")->getResultArray();
+            foreach ($rows2 as $r) {
+                $raw = $r['mata_pelajaran'];
+                $canon = $aliases[$raw] ?? $raw;
+                if (!in_array($canon, $canonical, true) && !in_array($canon, $extra, true)) $extra[] = $canon;
             }
         } catch (\Throwable $e) {}
-        return [
-            'Matematika' => 'Matematika',
-            'Bahasa Indonesia' => 'Bahasa Indonesia',
-            'Bahasa Inggris' => 'Bahasa Inggris',
-        ];
+
+        $ordered = $canonical; // base
+        foreach ($extra as $x) { $ordered[] = $x; }
+
+        $out = []; foreach ($ordered as $n) { $out[$n] = $n; }
+        return $out;
     }
 
     public function getJenisNilaiList(): array

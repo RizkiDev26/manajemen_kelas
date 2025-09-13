@@ -165,7 +165,7 @@ class Dashboard extends BaseController
                         COUNT(DISTINCT a.siswa_id) AS marked_count
                     FROM absensi a
                     JOIN tb_siswa t ON t.id = a.siswa_id
-                    WHERE t.kelas = ? AND DATE(a.tanggal) = ?
+                    WHERE REPLACE(UPPER(t.kelas),' ','') = REPLACE(UPPER(?),' ','') AND DATE(a.tanggal) = ?
                 ";
                 $attendanceRow = $db->query($attendanceSqlNew, [$kelas, $today])->getRowArray();
             } catch(\Throwable $e) {}
@@ -179,7 +179,7 @@ class Dashboard extends BaseController
                         FROM absensi a
                         JOIN siswa ls ON ls.id = a.siswa_id
                         JOIN tb_siswa t ON t.nisn = ls.nisn
-                        WHERE t.kelas = ? AND DATE(a.tanggal) = ?
+                        WHERE REPLACE(UPPER(t.kelas),' ','') = REPLACE(UPPER(?),' ','') AND DATE(a.tanggal) = ?
                     ";
                     $attendanceRowLegacy = $db->query($attendanceSqlLegacy, [$kelas, $today])->getRowArray();
                     if($attendanceRowLegacy) { $attendanceRow = $attendanceRowLegacy; }
@@ -200,7 +200,7 @@ class Dashboard extends BaseController
                     FROM habit_logs hl
                     JOIN siswa ls ON ls.id = hl.student_id
                     JOIN tb_siswa t ON t.nisn = ls.nisn
-                    WHERE t.kelas = ? AND hl.log_date = ?
+                    WHERE REPLACE(UPPER(t.kelas),' ','') = REPLACE(UPPER(?),' ','') AND hl.log_date = ?
                 ";
                 $habitRow = $db->query($habitSql, [$kelas, $today])->getRowArray();
             } catch(\Throwable $e) {}
@@ -211,7 +211,7 @@ class Dashboard extends BaseController
                         SELECT COUNT(DISTINCT hl.student_id) AS habit_logged
                         FROM habit_logs hl
                         JOIN tb_siswa t ON t.id = hl.student_id
-                        WHERE t.kelas = ? AND hl.log_date = ?
+                        WHERE REPLACE(UPPER(t.kelas),' ','') = REPLACE(UPPER(?),' ','') AND hl.log_date = ?
                     ";
                     $habitRowNew = $db->query($habitSqlNew, [$kelas, $today])->getRowArray();
                     if($habitRowNew && ($habitRowNew['habit_logged']??0) > 0) { $habitRow = $habitRowNew; }
@@ -221,7 +221,7 @@ class Dashboard extends BaseController
                 $result['habit_logged'] = (int)$habitRow['habit_logged'];
             }
 
-            // Percentages
+                            // Count students with at least one habit log today
             if ($totalSiswa > 0) {
                 $result['attendance_percentage'] = round(($result['attendance_present'] / $totalSiswa) * 100, 1);
                 $result['habit_percentage'] = round(($result['habit_logged'] / $totalSiswa) * 100, 1);
@@ -250,6 +250,15 @@ class Dashboard extends BaseController
         // Get recent activities
         $recentGuru = $guruModel->orderBy('created_at', 'DESC')->findAll(5);
         $recentSiswa = $siswaModel->orderBy('created_at', 'DESC')->findAll(5);
+
+                            // Inject debug fields to help diagnose zero counts
+                            $debugCounts = $db->query('SELECT COUNT(*) c FROM habit_logs WHERE log_date = ?', [$today])->getRowArray();
+                            $result['_debug'] = [
+                                'kelas_input'=>$kelas,
+                                'today'=>$today,
+                                'habit_logs_today_total'=> (int)($debugCounts['c'] ?? 0),
+                                'sample_logs'=> $db->query('SELECT student_id, habit_id, log_date FROM habit_logs WHERE log_date = ? ORDER BY id DESC LIMIT 5', [$today])->getResultArray(),
+                            ];
         
         return [
             'currentUser' => $currentUser ?: [

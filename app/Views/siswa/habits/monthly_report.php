@@ -1347,6 +1347,7 @@ function monthlyReportApp() {
         // Fetch data from server
         let url = `<?= base_url('siswa/habits/monthly-data') ?>?month=${this.selectedMonth}`;
         if (this.selectedStudentId) {
+          console.log('🆔 selectedStudentId before fetch =', this.selectedStudentId);
           url += `&student_id=${this.selectedStudentId}`;
         }
         console.log('🔄 Fetching monthly data from:', url);

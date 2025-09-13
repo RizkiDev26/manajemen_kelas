@@ -253,10 +253,17 @@ class HabitMonthlyController extends BaseController
                             $debug['fallback_sample'] = array_map(function($r){return $r['kelas'];}, $tmp);
                         }
 
-                        $mapped=0; $unmapped=0;
+                        $mapped=0; $unmapped=0; $students=[];
                         foreach($rows as $r){
                             if($r['mapped_id']) $mapped++; else $unmapped++;
-                            $students[] = [ 'id'=>(int)$r['effective_id'], 'nama'=>$r['nama'], 'kelas'=>$r['kelas'] ];
+                            $students[] = [
+                                'id'=>(int)$r['tb_id'],
+                                'tb_id'=>(int)$r['tb_id'],
+                                'legacy_id'=>$r['mapped_id'] ? (int)$r['mapped_id'] : null,
+                                'nama'=>$r['nama'],
+                                'kelas'=>$r['kelas'],
+                                'mapping_status'=>$r['mapped_id'] ? 'mapped':'tb_only'
+                            ];
                         }
                         $debug['final_count'] = count($students);
                         $debug['mapped'] = $mapped;
@@ -288,7 +295,7 @@ class HabitMonthlyController extends BaseController
                     $fallbackDebug['by_kelas_id_count'] = count($resByKelasId);
                     if ($resByKelasId) {
                         foreach($resByKelasId as $r){
-                            $fallbackStudents[] = [ 'id'=>(int)$r['effective_id'], 'nama'=>$r['nama'], 'kelas'=>$r['kelas'] ];
+                            $fallbackStudents[] = [ 'id'=>(int)$r['tb_id'], 'tb_id'=>(int)$r['tb_id'], 'legacy_id'=>$r['mapped_id']?(int)$r['mapped_id']:null, 'nama'=>$r['nama'], 'kelas'=>$r['kelas'], 'mapping_status'=>$r['mapped_id']?'mapped':'tb_only' ];
                         }
                     }
                 }
@@ -307,7 +314,7 @@ class HabitMonthlyController extends BaseController
                     $rowsLoose = $db2->query($sqlLoose, [$like1,$like2,$like3])->getResultArray();
                     $fallbackDebug['loose_like_count'] = count($rowsLoose);
                     foreach($rowsLoose as $r){
-                        $fallbackStudents[] = [ 'id'=>(int)$r['effective_id'], 'nama'=>$r['nama'], 'kelas'=>$r['kelas'] ];
+                        $fallbackStudents[] = [ 'id'=>(int)$r['tb_id'], 'tb_id'=>(int)$r['tb_id'], 'legacy_id'=>$r['mapped_id']?(int)$r['mapped_id']:null, 'nama'=>$r['nama'], 'kelas'=>$r['kelas'], 'mapping_status'=>$r['mapped_id']?'mapped':'tb_only' ];
                     }
                 }
 
@@ -321,7 +328,7 @@ class HabitMonthlyController extends BaseController
                     $rowsExactSimple = $db2->query($sqlExactSimple, [strtoupper(trim($kelasNama))])->getResultArray();
                     $fallbackDebug['exact_simple_count'] = count($rowsExactSimple);
                     foreach($rowsExactSimple as $r){
-                        $fallbackStudents[] = [ 'id'=>(int)$r['effective_id'], 'nama'=>$r['nama'], 'kelas'=>$r['kelas'] ];
+                        $fallbackStudents[] = [ 'id'=>(int)$r['tb_id'], 'tb_id'=>(int)$r['tb_id'], 'legacy_id'=>$r['mapped_id']?(int)$r['mapped_id']:null, 'nama'=>$r['nama'], 'kelas'=>$r['kelas'], 'mapping_status'=>$r['mapped_id']?'mapped':'tb_only' ];
                     }
                 }
 
@@ -358,7 +365,7 @@ class HabitMonthlyController extends BaseController
                 $debug['extra_fallback_count'] = count($rowsExtra);
                 if ($rowsExtra) {
                     foreach($rowsExtra as $r){
-                        $students[] = [ 'id'=>(int)$r['effective_id'], 'nama'=>$r['nama'], 'kelas'=>$r['kelas'] ];
+                        $students[] = [ 'id'=>(int)$r['tb_id'], 'tb_id'=>(int)$r['tb_id'], 'legacy_id'=>$r['mapped_id']?(int)$r['mapped_id']:null, 'nama'=>$r['nama'], 'kelas'=>$r['kelas'], 'mapping_status'=>$r['mapped_id']?'mapped':'tb_only' ];
                     }
                 }
             } catch(\Throwable $e) {
@@ -376,22 +383,41 @@ class HabitMonthlyController extends BaseController
     public function data()
     {
         $month = $this->request->getGet('month');
-        $studentId = (int)$this->request->getGet('student_id');
-        if(!$month || !preg_match('/^\d{4}-\d{2}$/',$month) || $studentId===0){
+        $inputId = (int)$this->request->getGet('student_id');
+        if(!$month || !preg_match('/^\d{4}-\d{2}$/',$month) || $inputId===0){
             return $this->response->setStatusCode(422)->setJSON(['message'=>'Param tidak valid']);
         }
-        if($studentId < 0){
-            return $this->response->setJSON(['status'=>'success','data'=>[],'month'=>$month,'note'=>'Legacy-only student (belum sinkron ke tabel siswa)']);
+        $db = db_connect();
+        $mappingStatus = 'tb_direct';
+        $legacyId = null;
+        // 1. Direct match in tb_siswa?
+        $rowTb = $db->query('SELECT id FROM tb_siswa WHERE id=? LIMIT 1', [abs($inputId)])->getRowArray();
+        if($rowTb){
+            $tbId = (int)$rowTb['id'];
+            if($inputId < 0){
+                $mappingStatus = 'negative_abs_canonical';
+            }
+        } else {
+            // 2. Try legacy siswa.id -> tb via nisn
+            $rowMap = $db->query('SELECT t.id AS tb_id FROM siswa s JOIN tb_siswa t ON t.nisn=s.nisn WHERE s.id=? LIMIT 1', [$inputId])->getRowArray();
+            if($rowMap){
+                $tbId = (int)$rowMap['tb_id'];
+                $legacyId = $inputId;
+                $mappingStatus = 'legacy_mapped';
+            } else {
+                // 3. Fallback: treat absolute as canonical (no validation)
+                $tbId = abs($inputId);
+                $mappingStatus = 'assumed_tb';
+            }
         }
         $start = $month.'-01';
         $end = date('Y-m-t', strtotime($start));
-        $db = db_connect();
-        $rows = $db->query("SELECT hl.log_date, hl.habit_id, hl.value_bool, hl.value_time, hl.value_number, hl.notes, h.name as habit_name FROM habit_logs hl JOIN habits h ON h.id=hl.habit_id WHERE hl.student_id=? AND hl.log_date BETWEEN ? AND ? ORDER BY hl.log_date, hl.habit_id", [$studentId,$start,$end])->getResultArray();
+        $rows = $db->query("SELECT hl.log_date, hl.habit_id, hl.value_bool, hl.value_time, hl.value_number, hl.notes, h.name as habit_name FROM habit_logs hl JOIN habits h ON h.id=hl.habit_id WHERE hl.student_id=? AND hl.log_date BETWEEN ? AND ? ORDER BY hl.log_date, hl.habit_id", [$tbId,$start,$end])->getResultArray();
         $monthly=[];
         foreach($rows as $r){
             $d=$r['log_date']; $key='habit_'.$r['habit_id'];
             if(!isset($monthly[$d])) $monthly[$d]=[];
-            $completed = ($r['value_bool']==1) || $r['value_time'] || ($r['value_number'] && $r['value_number']>0);
+            $completed = ($r['value_bool']==1) || $r['value_time'] || ($r['value_number'] && $r['value_number']>0) || !empty($r['notes']);
             $monthly[$d][$key]=[
                 'completed'=>$completed,
                 'time'=>$r['value_time'],
@@ -400,27 +426,44 @@ class HabitMonthlyController extends BaseController
                 'habit_name'=>$r['habit_name']
             ];
         }
-        return $this->response->setJSON(['status'=>'success','data'=>$monthly,'month'=>$month]);
+        return $this->response->setJSON([
+            'status'=>'success',
+            'data'=>$monthly,
+            'month'=>$month,
+            'input_id'=>$inputId,
+            'tb_id'=>$tbId,
+            'legacy_id'=>$legacyId,
+            'mapping_status'=>$mappingStatus,
+            'row_count'=>count($rows)
+        ]);
     }
 
     public function export()
     {
         $month = $this->request->getGet('month');
-        $studentId = (int)$this->request->getGet('student_id');
-        if(!$month || !preg_match('/^\d{4}-\d{2}$/',$month) || $studentId===0){
+        $inputId = (int)$this->request->getGet('student_id');
+        if(!$month || !preg_match('/^\d{4}-\d{2}$/',$month) || $inputId===0){
             return $this->response->setStatusCode(422)->setBody('Parameter tidak valid');
         }
-        if($studentId < 0){
-            return $this->response->setStatusCode(200)->setBody('Tidak ada data (legacy-only student)');
+        $db = db_connect();
+        $rowTb = $db->query('SELECT id,nama FROM tb_siswa WHERE id=? LIMIT 1',[abs($inputId)])->getRowArray();
+        if($rowTb){
+            $tbId = (int)$rowTb['id'];
+            $studentName = $rowTb['nama'];
+        } else {
+            $rowMap = $db->query('SELECT t.id AS tb_id, t.nama FROM siswa s JOIN tb_siswa t ON t.nisn=s.nisn WHERE s.id=? LIMIT 1', [$inputId])->getRowArray();
+            if($rowMap){
+                $tbId = (int)$rowMap['tb_id'];
+                $studentName = $rowMap['nama'];
+            } else {
+                $tbId = abs($inputId);
+                $studentName = 'Siswa '.$tbId;
+            }
         }
         $start = $month.'-01';
         $end = date('Y-m-t', strtotime($start));
-        $db = db_connect();
-        $rows = $db->query("SELECT hl.log_date, hl.habit_id, hl.value_bool, hl.value_time, hl.value_number, hl.notes, h.name as habit_name FROM habit_logs hl JOIN habits h ON h.id=hl.habit_id WHERE hl.student_id=? AND hl.log_date BETWEEN ? AND ? ORDER BY hl.log_date, hl.habit_id", [$studentId,$start,$end])->getResultArray();
+        $rows = $db->query("SELECT hl.log_date, hl.habit_id, hl.value_bool, hl.value_time, hl.value_number, hl.notes, h.name as habit_name FROM habit_logs hl JOIN habits h ON h.id=hl.habit_id WHERE hl.student_id=? AND hl.log_date BETWEEN ? AND ? ORDER BY hl.log_date, hl.habit_id", [$tbId,$start,$end])->getResultArray();
         $byDate=[]; foreach($rows as $r){ $d=$r['log_date']; if(!isset($byDate[$d])) $byDate[$d]=[]; $byDate[$d]['habit_'.$r['habit_id']]=$r; }
-    // Ambil nama siswa untuk judul / header tambahan
-    $studentNameRow = $db->query("SELECT nama FROM siswa WHERE id=?",[$studentId])->getRowArray();
-    $studentName = $studentNameRow['nama'] ?? 'Nama Siswa';
         $ss = new Spreadsheet(); $sheet=$ss->getActiveSheet(); $sheet->setTitle('Rekap '.$month);
         $headers = ['Tanggal','Status (x/7)','Bangun Pagi','Beribadah','Berolahraga','Makan Sehat','Gemar Belajar','Bermasyarakat','Tidur Cepat'];
         // Title section rows 1-3
@@ -532,7 +575,7 @@ class HabitMonthlyController extends BaseController
         }
         $writer = new Xlsx($ss); ob_start(); $writer->save('php://output'); $data = ob_get_clean();
         return $this->response->setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            ->setHeader('Content-Disposition','attachment; filename="rekap_habits_'.$month.'_s'.$studentId.'.xlsx"')
+            ->setHeader('Content-Disposition','attachment; filename="rekap_habits_'.$month.'_s'.$tbId.'.xlsx"')
             ->setBody($data);
     }
 
@@ -576,18 +619,29 @@ class HabitMonthlyController extends BaseController
 
     public function exportPdf(){
         $month = $this->request->getGet('month');
-        $studentId = (int)$this->request->getGet('student_id');
-        if(!$month || !preg_match('/^\d{4}-\d{2}$/',$month) || $studentId===0){
+        $inputId = (int)$this->request->getGet('student_id');
+        if(!$month || !preg_match('/^\d{4}-\d{2}$/',$month) || $inputId===0){
             return $this->response->setStatusCode(422)->setBody('Parameter tidak valid');
         }
-        if($studentId < 0){ return $this->response->setStatusCode(200)->setBody('Tidak ada data'); }
+        $db = db_connect();
+        $rowTb = $db->query('SELECT id,nama FROM tb_siswa WHERE id=? LIMIT 1',[abs($inputId)])->getRowArray();
+        if($rowTb){
+            $tbId = (int)$rowTb['id'];
+            $studentName = $rowTb['nama'];
+        } else {
+            $rowMap = $db->query('SELECT t.id AS tb_id, t.nama FROM siswa s JOIN tb_siswa t ON t.nisn=s.nisn WHERE s.id=? LIMIT 1', [$inputId])->getRowArray();
+            if($rowMap){
+                $tbId = (int)$rowMap['tb_id'];
+                $studentName = $rowMap['nama'];
+            } else {
+                $tbId = abs($inputId);
+                $studentName = 'Siswa '.$tbId;
+            }
+        }
         $start = $month.'-01';
         $end = date('Y-m-t', strtotime($start));
-        $db = db_connect();
-        $rows = $db->query("SELECT hl.log_date, hl.habit_id, hl.value_bool, hl.value_time, hl.value_number, hl.notes FROM habit_logs hl WHERE hl.student_id=? AND hl.log_date BETWEEN ? AND ? ORDER BY hl.log_date, hl.habit_id", [$studentId,$start,$end])->getResultArray();
+        $rows = $db->query("SELECT hl.log_date, hl.habit_id, hl.value_bool, hl.value_time, hl.value_number, hl.notes FROM habit_logs hl WHERE hl.student_id=? AND hl.log_date BETWEEN ? AND ? ORDER BY hl.log_date, hl.habit_id", [$tbId,$start,$end])->getResultArray();
         $byDate=[]; foreach($rows as $r){ $d=$r['log_date']; if(!isset($byDate[$d])) $byDate[$d]=[]; $byDate[$d]['habit_'.$r['habit_id']]=$r; }
-        $studentNameRow = $db->query("SELECT nama FROM siswa WHERE id=?",[$studentId])->getRowArray();
-        $studentName = $studentNameRow['nama'] ?? 'Nama Siswa';
         $period = new \DatePeriod(new \DateTime($start), new \DateInterval('P1D'), (new \DateTime($end))->modify('+1 day'));
         $html = '<html><head><meta charset="UTF-8"><style>
             @page { margin:20px 25px 25px 25px; }
@@ -607,7 +661,7 @@ class HabitMonthlyController extends BaseController
         $html .= '<table>';
         $html .= '<tr class="name-row"><td colspan="9">Nama Siswa: '.htmlspecialchars($studentName).' | Bulan: '.htmlspecialchars($this->formatIndonesianMonth($month)).'</td></tr>';
         $html .= '<thead><tr><th>Tanggal</th><th>Status (x/7)</th><th>Bangun Pagi</th><th>Beribadah</th><th>Berolahraga</th><th>Makan Sehat</th><th>Gemar Belajar</th><th>Bermasyarakat</th><th>Tidur Cepat</th></tr></thead><tbody>';
-        foreach($period as $dt){
+    foreach($period as $dt){
             $dateStrYmd=$dt->format('Y-m-d'); // key format in $byDate
             $dateStr=$dt->format('d-m-Y');    // display format
             $done=0; for($i=1;$i<=7;$i++){ if(!empty($byDate[$dateStrYmd]['habit_'.$i])){ $r=$byDate[$dateStrYmd]['habit_'.$i]; if($r['value_bool']==1 || $r['value_time'] || ($r['value_number'] && $r['value_number']>0) || !empty($r['notes'])) $done++; }}
@@ -637,7 +691,7 @@ class HabitMonthlyController extends BaseController
             $dompdf->render();
             $output = $dompdf->output();
             return $this->response->setHeader('Content-Type','application/pdf')
-                ->setHeader('Content-Disposition','attachment; filename="rekap_habits_'.$month.'_s'.$studentId.'.pdf"')
+                ->setHeader('Content-Disposition','attachment; filename="rekap_habits_'.$month.'_s'.$tbId.'.pdf"')
                 ->setBody($output);
         } catch(\Throwable $e){
             return $this->response->setStatusCode(500)->setBody('PDF error: '.$e->getMessage());

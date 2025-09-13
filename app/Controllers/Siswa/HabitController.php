@@ -268,7 +268,7 @@ class HabitController extends BaseController
                     COUNT(DISTINCT hl.habit_id) as completed_habits,
                     (SELECT COUNT(*) FROM habits WHERE status = 'active') as total_habits
                 FROM date_series ds
-                LEFT JOIN habit_logs hl ON DATE(hl.date) = ds.log_date 
+                LEFT JOIN habit_logs hl ON hl.log_date = ds.log_date 
                     AND hl.student_id = ? 
                     AND hl.value_bool = 1
                 GROUP BY ds.log_date
@@ -305,13 +305,13 @@ class HabitController extends BaseController
         $db = db_connect();
         $sql = "
             SELECT 
-                COUNT(DISTINCT DATE(hl.date)) as days_with_activity,
-                COUNT(DISTINCT CASE WHEN hl.value_bool = 1 THEN CONCAT(DATE(hl.date), '_', hl.habit_id) END) as completed_habits,
+                COUNT(DISTINCT hl.log_date) as days_with_activity,
+                COUNT(DISTINCT CASE WHEN hl.value_bool = 1 THEN CONCAT(hl.log_date, '_', hl.habit_id) END) as completed_habits,
                 (SELECT COUNT(*) FROM habits WHERE status = 'active') * 7 as total_possible_habits
             FROM habit_logs hl
             WHERE hl.student_id = ? 
-                AND DATE(hl.date) >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
-                AND DATE(hl.date) <= CURDATE()
+                AND hl.log_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+                AND hl.log_date <= CURDATE()
         ";
         
         $query = $db->query($sql, [$studentId]);
@@ -358,22 +358,15 @@ class HabitController extends BaseController
         }
         $students = null;
         if (in_array($role, ['admin','walikelas'])) {
+            // Sekarang daftar siswa bersumber dari tb_siswa sebagai sumber utama
             try {
-                // Tabel siswa tidak punya kolom 'kelas' langsung; gunakan kelas_id join ke tabel kelas (nama)
-                $db = db_connect();
-                $builder = $db->table('siswa s');
-                $builder->select('s.id, s.nama, s.nisn, s.nis, s.kelas_id, k.nama as kelas_nama');
-                // Cek apakah tabel kelas ada
-                try {
-                    $db->getFieldNames('kelas');
-                    $builder->join('kelas k', 'k.id = s.kelas_id', 'left');
-                } catch (\Throwable $e) {
-                    // Jika tidak ada tabel kelas, biarkan tanpa join
-                }
-                $builder->orderBy('s.nama','ASC');
-                $students = $builder->get()->getResultArray();
-            } catch (\Exception $e) {
-                log_message('error', 'Gagal mengambil daftar siswa: '.$e->getMessage());
+                $students = $this->tbSiswaModel
+                    ->select('id, nama, nisn, kelas')
+                    ->where('deleted_at', null)
+                    ->orderBy('nama','ASC')
+                    ->findAll();
+            } catch (\Throwable $e) {
+                log_message('error', 'Gagal mengambil daftar tb_siswa: '.$e->getMessage());
             }
         } else {
             // Siswa view: pastikan session student_name di-set dari tb_siswa menggunakan nisn
@@ -397,130 +390,154 @@ class HabitController extends BaseController
         if (!$month || !preg_match('/^\d{4}-\d{2}$/', $month)) {
             return $this->response->setStatusCode(422)->setJSON(['message' => 'Format bulan tidak valid (YYYY-MM)']);
         }
-
+        // Baru: gunakan tb_siswa sebagai sumber utama id; fallback ke legacy bila perlu
         $role = session('role');
-        $requestedTbSiswaId = (int)($this->request->getGet('student_id') ?? 0); // id dari tb_siswa (dropdown)
-        $studentId = $this->resolveStudentId(); // id di tabel siswa (habit_logs)
-
-        // Override jika admin/walikelas memilih siswa di dropdown (tb_siswa)
-        if ($requestedTbSiswaId > 0 && in_array($role, ['admin','walikelas'])) {
-            $tbRow = $this->tbSiswaModel->select('id,nisn,nama')->find($requestedTbSiswaId);
-            if ($tbRow) {
-                $mapped = $this->siswaModel->where('nisn', $tbRow['nisn'])->first();
-                if ($mapped) {
-                    $studentId = (int)$mapped['id'];
-                } else {
-                    // Tidak ada mapping ke tabel siswa -> kembalikan kosong
-                    return $this->response->setJSON([
-                        'status' => 'success',
-                        'data' => [],
-                        'month' => $month,
-                        'debug' => [
-                            'info' => 'Mapping nisn tidak ditemukan di tabel siswa',
-                            'requested_tb_siswa_id' => $requestedTbSiswaId,
-                            'nisn' => $tbRow['nisn'],
-                            'role' => $role
-                        ]
-                    ]);
-                }
-            } else {
-                return $this->response->setStatusCode(404)->setJSON([
-                    'status' => 'error',
-                    'message' => 'Siswa (tb_siswa) tidak ditemukan',
-                    'requested_tb_siswa_id' => $requestedTbSiswaId
-                ]);
-            }
-        } elseif ($requestedTbSiswaId > 0 && !in_array($role, ['admin','walikelas'])) {
-            return $this->response->setStatusCode(403)->setJSON([
-                'status' => 'error',
-                'message' => 'Tidak diizinkan mengakses data siswa lain'
-            ]);
+    $rawStudentParam = $this->request->getGet('student_id');
+    $requestedTbId = abs((int)($rawStudentParam ?? 0)); // tb_siswa id dari dropdown (normalisasi: buang tanda negatif jika ada)
+        if ($rawStudentParam !== null) {
+            log_message('debug', 'monthlyData request student_id param: '.$rawStudentParam);
         }
-
-        // Jika belum ada studentId dan admin belum pilih dropdown -> kosong
-        if (!$studentId) {
-            if (in_array($role, ['admin','walikelas']) && $requestedTbSiswaId === 0) {
+        $tbRow = null;
+        if (in_array($role, ['admin','walikelas'])) {
+            if ($requestedTbId === 0) {
                 return $this->response->setJSON([
                     'status' => 'success',
                     'data' => [],
                     'month' => $month,
-                    'debug' => [
-                        'info' => 'Menunggu pemilihan siswa',
-                        'student_id' => null,
-                        'requested_tb_siswa_id' => $requestedTbSiswaId,
-                        'role' => $role
-                    ]
+                    'debug' => [ 'info' => 'Menunggu pemilihan siswa tb_siswa' ]
                 ]);
             }
-            return $this->response->setStatusCode(400)->setJSON([
-                'message' => 'Sesi siswa tidak ditemukan',
-                'debug' => [
-                    'session_student_id' => session('student_id'),
-                    'session_username' => session('username'),
-                    'resolved_student_id' => $studentId
-                ]
-            ]);
+            $tbRow = $this->tbSiswaModel->select('id,nisn,nama')->find($requestedTbId);
+            if (!$tbRow) {
+                return $this->response->setStatusCode(404)->setJSON([
+                    'status' => 'error',
+                    'message' => 'Siswa (tb_siswa) tidak ditemukan'
+                ]);
+            }
+        } else {
+            // siswa biasa: cari tb_siswa dari nisn session
+            $username = session('username');
+            if ($username) {
+                $tbRow = $this->tbSiswaModel->where('nisn',$username)->first();
+            }
+            if (!$tbRow) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error', 'message' => 'Data tb_siswa tidak ditemukan untuk akun ini'
+                ]);
+            }
         }
 
-        log_message('info', 'Monthly data request - Month: ' . $month . ' EffectiveStudentId: '.$studentId.' Role: '.$role.' RequestedTbSiswaId: '.$requestedTbSiswaId);
+        $tbId = (int)$tbRow['id'];
+        if ($requestedTbId && $requestedTbId !== $tbId) {
+            // Mungkin yang dikirim adalah legacy siswa.id (pasca migrasi seharusnya tidak dipakai lagi)
+            log_message('warning', 'monthlyData: requested student_id '.$requestedTbId.' tidak cocok tb_siswa id '.$tbId.' (kemungkinan legacy). Memakai tb_siswa id.');
+        }
+        if (!empty($tbRow['nama']) && session('student_name') !== $tbRow['nama']) {
+            session()->set('student_name', $tbRow['nama']);
+        }
 
-        $startDate = $month . '-01';
+        $startDate = $month.'-01';
         $endDate = date('Y-m-t', strtotime($startDate));
-
         $db = db_connect();
-        $sql = "SELECT hl.log_date, hl.habit_id, hl.value_bool as completed, hl.value_time as time, hl.value_number as duration, hl.notes, h.name as habit_name
+
+        // Kumpulkan kemungkinan ID yang dipakai di habit_logs (tb_siswa.id atau legacy siswa.id)
+        $candidateIds = [$tbId];
+        $legacyId = null;
+        if (!empty($tbRow['nisn'])) {
+            $legacyRow = db_connect()->table('siswa')->select('id,nisn')->where('nisn',$tbRow['nisn'])->get()->getFirstRow('array');
+            if ($legacyRow) {
+                $legacyId = (int)$legacyRow['id'];
+                if (!in_array($legacyId, $candidateIds, true)) $candidateIds[] = $legacyId;
+            }
+        }
+
+        // Bangun query dinamis untuk IN (...)
+        $placeholders = implode(',', array_fill(0, count($candidateIds), '?'));
+        $sql = "SELECT hl.student_id, hl.log_date, hl.habit_id, hl.value_bool as completed, hl.value_time as time, hl.value_number as duration, hl.notes, h.name as habit_name
                 FROM habit_logs hl
                 JOIN habits h ON h.id = hl.habit_id
-                WHERE hl.student_id = ? AND hl.log_date BETWEEN ? AND ?
+                WHERE hl.student_id IN ($placeholders) AND hl.log_date BETWEEN ? AND ?
                 ORDER BY hl.log_date ASC, hl.habit_id ASC";
-        $query = $db->query($sql, [$studentId, $startDate, $endDate]);
-        $results = $query->getResultArray();
+        $params = array_merge($candidateIds, [$startDate, $endDate]);
+        $rawResults = $db->query($sql, $params)->getResultArray();
+
+        // Fallback tambahan: jika tidak ada hasil sama sekali dan kita punya nisn, cari kemungkinan id tb_siswa lain (misal setelah migrasi, row aktif berbeda id dari yang menyimpan log historis atau sebaliknya)
+        if (empty($rawResults) && !empty($tbRow['nisn'])) {
+            $altSql = "SELECT DISTINCT hl.student_id FROM habit_logs hl\n                        JOIN tb_siswa ts ON ts.id = hl.student_id\n                        WHERE ts.nisn = ? AND hl.log_date BETWEEN ? AND ?";
+            $altIds = $db->query($altSql, [$tbRow['nisn'], $startDate, $endDate])->getResultArray();
+            $alternativeIds = [];
+            foreach ($altIds as $ai) {
+                $aid = (int)$ai['student_id'];
+                if (!in_array($aid, $candidateIds, true)) $alternativeIds[] = $aid;
+            }
+            if ($alternativeIds) {
+                log_message('warning', 'monthlyData: fallback alternative student_ids ditemukan untuk nisn '.$tbRow['nisn'].': '.implode(',', $alternativeIds));
+                $candidateIds = array_merge($candidateIds, $alternativeIds);
+                $placeholders2 = implode(',', array_fill(0, count($candidateIds), '?'));
+                $sql2 = "SELECT hl.student_id, hl.log_date, hl.habit_id, hl.value_bool as completed, hl.value_time as time, hl.value_number as duration, hl.notes, h.name as habit_name\n                        FROM habit_logs hl\n                        JOIN habits h ON h.id = hl.habit_id\n                        WHERE hl.student_id IN ($placeholders2) AND hl.log_date BETWEEN ? AND ?\n                        ORDER BY hl.log_date ASC, hl.habit_id ASC";
+                $params2 = array_merge($candidateIds, [$startDate, $endDate]);
+                $rawResults = $db->query($sql2, $params2)->getResultArray();
+            }
+        }
+
+        // Merge (prioritaskan data dengan tb_siswa.id jika duplikat tanggal+habit)
+        $results = [];
+        $seen = [];
+        foreach ($rawResults as $r) {
+            $key = $r['log_date'].'_'.$r['habit_id'];
+            if (!isset($seen[$key]) || ($r['student_id'] === $tbId && $seen[$key] !== $tbId)) {
+                $results[] = $r;
+                $seen[$key] = $r['student_id'];
+            }
+        }
+        $usedId = $tbId;
+        $fallbackUsed = ($legacyId !== null && in_array($legacyId, $seen, true) && $legacyId !== $tbId);
+        $fallbackInfo = $fallbackUsed ? [ 'legacy_id_used' => $legacyId ] : null;
 
         $monthlyData = [];
         foreach ($results as $row) {
             $date = $row['log_date'];
-            $habitKey = 'habit_' . $row['habit_id'];
+            $habitKey = 'habit_'.$row['habit_id'];
             if (!isset($monthlyData[$date])) $monthlyData[$date] = [];
-
             $notes = '';
             if ($row['notes']) {
                 $notesData = json_decode($row['notes'], true);
                 if (is_array($notesData)) {
-                    if (!empty($notesData['prayers']) && is_array($notesData['prayers'])) {
+                    if (!empty($notesData['prayers'])) {
                         $prayers = array_keys(array_filter($notesData['prayers']));
-                        if ($prayers) $notes .= 'Sholat: '.implode(', ', $prayers).'. ';
+                        if ($prayers) $notes .= 'Sholat: '.implode(', ',$prayers).'. ';
                     }
-                    if (isset($notesData['note'])) $notes .= $notesData['note'];
+                    if (!empty($notesData['note'])) $notes .= $notesData['note'];
                 } else {
                     $notes = $row['notes'];
                 }
             }
-
-            $completed = false;
-            if ($row['completed'] == 1 || $row['time'] || ($row['duration'] && $row['duration'] > 0)) {
-                $completed = true;
-            }
-
+            $completed = ($row['completed']==1) || $row['time'] || ($row['duration'] && $row['duration']>0);
             $monthlyData[$date][$habitKey] = [
-                'completed' => $completed,
-                'time' => $row['time'],
-                'duration' => $row['duration'],
-                'notes' => trim($notes),
-                'habit_name' => $row['habit_name']
+                'completed'=>$completed,
+                'time'=>$row['time'],
+                'duration'=>$row['duration'],
+                'notes'=>trim($notes),
+                'habit_name'=>$row['habit_name']
             ];
         }
 
-        return $this->response->setJSON([
-            'status' => 'success',
-            'data' => $monthlyData,
-            'month' => $month,
-            'debug' => [
-                'query_results_count' => count($results),
-                'student_id' => $studentId,
-                'requested_tb_siswa_id' => $requestedTbSiswaId,
-                'date_range' => [$startDate, $endDate],
-                'role' => $role,
-                'sample_data' => array_slice($results, 0, 3)
+    return $this->response->setJSON([
+            'status'=>'success',
+            'data'=>$monthlyData,
+            'month'=>$month,
+            'debug'=>[
+                'query_results_count'=>count($results),
+                'tb_siswa_id'=>$tbId,
+                'legacy_id'=>$legacyId,
+                'candidate_ids'=>$candidateIds,
+                'fallback_alternative_used'=> isset($alternativeIds) && !empty($alternativeIds),
+                'alternative_ids'=> $alternativeIds ?? [],
+                'date_range'=>[$startDate,$endDate],
+                'fallback_used'=>$fallbackUsed,
+                'fallback_info'=>$fallbackInfo,
+        'sample_data'=>array_slice($results,0,3),
+        'raw_rows'=>array_slice($rawResults,0,10)
             ]
         ]);
     }

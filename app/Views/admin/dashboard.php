@@ -279,6 +279,64 @@
         </div>
         <?php endif; ?>
     </div>
+
+    <!-- Weekly Absence Breakdown (Mon-Fri) -->
+    <?php if (isset($isWalikelas) && $isWalikelas && isset($attendanceData['weekly_absence'])): ?>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mt-6">
+        <div class="mb-4 md:mb-6">
+            <h3 class="text-base md:text-lg font-semibold text-gray-900">Rekap Ketidakhadiran (Senin - Jum'at)</h3>
+            <p class="text-gray-500 text-xs md:text-sm">Menampilkan daftar siswa yang tidak hadir minggu berjalan</p>
+        </div>
+        <div class="space-y-4">
+            <?php if (!empty($attendanceData['weekly_absence'])): ?>
+                <?php foreach ($attendanceData['weekly_absence'] as $wd): ?>
+                    <div class="border rounded-lg p-3 md:p-4 bg-gray-50">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
+                            <div class="font-semibold text-gray-800 text-sm md:text-base">
+                                <?= esc($wd['day']) ?> (<?= date('d M Y', strtotime($wd['date'])) ?>)
+                            </div>
+                            <div class="text-xs text-gray-500">Alpa / Sakit / Izin</div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-xs md:text-sm">
+                            <div>
+                                <div class="text-red-600 font-medium mb-1">Alpa</div>
+                                <?php if (!empty($wd['alpa'])): ?>
+                                    <ul class="list-disc list-inside space-y-0.5">
+                                        <?php foreach ($wd['alpa'] as $n): ?><li><?= esc($n) ?></li><?php endforeach; ?>
+                                    </ul>
+                                <?php else: ?>
+                                    <div class="text-gray-400 italic">-</div>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <div class="text-yellow-600 font-medium mb-1">Sakit</div>
+                                <?php if (!empty($wd['sakit'])): ?>
+                                    <ul class="list-disc list-inside space-y-0.5">
+                                        <?php foreach ($wd['sakit'] as $n): ?><li><?= esc($n) ?></li><?php endforeach; ?>
+                                    </ul>
+                                <?php else: ?>
+                                    <div class="text-gray-400 italic">-</div>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <div class="text-blue-600 font-medium mb-1">Izin</div>
+                                <?php if (!empty($wd['izin'])): ?>
+                                    <ul class="list-disc list-inside space-y-0.5">
+                                        <?php foreach ($wd['izin'] as $n): ?><li><?= esc($n) ?></li><?php endforeach; ?>
+                                    </ul>
+                                <?php else: ?>
+                                    <div class="text-gray-400 italic">-</div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="text-gray-500 text-sm">Belum ada data ketidakhadiran minggu ini.</div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Recent activity sections removed -->

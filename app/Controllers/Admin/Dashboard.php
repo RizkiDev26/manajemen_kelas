@@ -354,6 +354,75 @@ class Dashboard extends BaseController
             ";
             
             $totalData = $db->query($totalQuery, [$kelas, $startDate, $endDate])->getRowArray();
+
+            // -------------------------------------------------------------
+            // Weekly absence breakdown (Mon-Fri) listing names per status
+            // Structure requested: Senin (Alpa: ..., Sakit: ..., Izin: ...)
+            // -------------------------------------------------------------
+            $weekStart = date('Y-m-d', strtotime('monday this week'));
+            $weekEnd = date('Y-m-d', strtotime('friday this week'));
+
+            // Ensure we don't go into the future (e.g. viewing mid-week)
+            $today = date('Y-m-d');
+            if ($weekEnd > $today) {
+                $weekEnd = $today; // clamp to today if before Friday
+            }
+
+            $absenceSql = "
+                SELECT DATE(a.tanggal) AS tanggal, a.status, s.nama
+                FROM absensi a
+                JOIN tb_siswa s ON s.id = a.siswa_id
+                WHERE s.kelas = ?
+                  AND a.tanggal BETWEEN ? AND ?
+                  AND a.status IN ('sakit','izin','alpha')
+                ORDER BY a.tanggal ASC, s.nama ASC
+            ";
+            $absenceRows = $db->query($absenceSql, [$kelas, $weekStart, $weekEnd])->getResultArray();
+
+            // Prepare map date => categories
+            $dayNameMap = [
+                'Mon' => 'Senin',
+                'Tue' => 'Selasa',
+                'Wed' => 'Rabu',
+                'Thu' => 'Kamis',
+                'Fri' => 'Jumat',
+            ];
+
+            $weekAbsence = [];
+            // Initialize Monday-Friday entries even if empty
+            $period = new \DatePeriod(
+                new \DateTime($weekStart),
+                new \DateInterval('P1D'),
+                (new \DateTime($weekEnd))->modify('+1 day')
+            );
+            foreach ($period as $dt) {
+                $d = $dt->format('Y-m-d');
+                $dowShort = $dt->format('D');
+                if (!isset($dayNameMap[$dowShort])) continue; // skip weekend if weekEnd < Friday
+                $weekAbsence[$d] = [
+                    'date' => $d,
+                    'day' => $dayNameMap[$dowShort],
+                    'alpa' => [], // label uses 'alpa' (DB field is 'alpha')
+                    'sakit' => [],
+                    'izin' => []
+                ];
+            }
+
+            foreach ($absenceRows as $row) {
+                $d = $row['tanggal'];
+                if (!isset($weekAbsence[$d])) continue; // outside Mon-Fri or clamped range
+                $status = $row['status'];
+                if ($status === 'alpha') {
+                    $weekAbsence[$d]['alpa'][] = $row['nama'];
+                } elseif ($status === 'sakit') {
+                    $weekAbsence[$d]['sakit'][] = $row['nama'];
+                } elseif ($status === 'izin') {
+                    $weekAbsence[$d]['izin'][] = $row['nama'];
+                }
+            }
+
+            // Re-index to simple array ordered by date
+            $weeklyAbsenceList = array_values($weekAbsence);
             
             return [
                 'weekly' => $chartData,
@@ -364,6 +433,7 @@ class Dashboard extends BaseController
                     'total_alpha' => 0,
                     'total_records' => 0
                 ],
+                'weekly_absence' => $weeklyAbsenceList,
                 'period' => [
                     'start_date' => $startDate,
                     'end_date' => $endDate

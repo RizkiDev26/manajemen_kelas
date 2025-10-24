@@ -30,69 +30,73 @@
             'attendance_percentage'=>0,'habit_percentage'=>0
         ];
     ?>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Total Siswa -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-1"><?= $totalSiswa ?? 0 ?></h3>
-            <p class="text-gray-500 text-sm">Total Siswa</p>
+            <h3 class="text-3xl font-bold text-white mb-1"><?= $totalSiswa ?? 0 ?></h3>
+            <p class="text-white/80 text-sm">Total Siswa</p>
         </div>
+        
         <!-- Laki-laki -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-1"><?= $siswaLaki ?? 0 ?></h3>
-            <p class="text-gray-500 text-sm">Siswa Laki-laki</p>
+            <h3 class="text-3xl font-bold text-white mb-1"><?= $siswaLaki ?? 0 ?></h3>
+            <p class="text-white/80 text-sm">Siswa Laki-laki</p>
         </div>
+        
         <!-- Perempuan -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5a12.083 12.083 0 01-6.16-10.922L12 14z"/></svg>
+        <div class="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5a12.083 12.083 0 01-6.16-10.922L12 14z"/></svg>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-1"><?= $siswaPerempuan ?? 0 ?></h3>
-            <p class="text-gray-500 text-sm">Siswa Perempuan</p>
+            <h3 class="text-3xl font-bold text-white mb-1"><?= $siswaPerempuan ?? 0 ?></h3>
+            <p class="text-white/80 text-sm">Siswa Perempuan</p>
         </div>
-        <!-- Progress Kehadiran Hari Ini -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5 sm:p-6">
+        
+        <!-- Progress Kehadiran -->
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
             <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-semibold text-gray-700">Progress Kehadiran</h4>
-                <span class="text-xs text-gray-500">Hari ini</span>
+                <h4 class="text-sm font-semibold text-white">Kehadiran Hari Ini</h4>
             </div>
             <div class="mt-2">
-                <div class="flex items-baseline gap-2 mb-1">
-                    <span class="text-2xl font-bold text-gray-900"><?= $dp['attendance_present'] ?></span>
-                    <span class="text-sm text-gray-500">/ <?= $dp['total_students'] ?></span>
+                <div class="flex items-baseline gap-1 mb-2">
+                    <span class="text-3xl font-bold text-white"><?= $dp['attendance_present'] ?></span>
+                    <span class="text-base text-white/70">/ <?= $dp['total_students'] ?></span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
-                    <div class="bg-blue-600 h-2" style="width: <?= min(100,(int)$dp['attendance_percentage']) ?>%"></div>
+                <?php $attendWidth = min(100, (int)$dp['attendance_percentage']); ?>
+                <div class="w-full bg-white/30 rounded-full h-2 mb-2">
+                    <div class="bg-white h-2 rounded-full transition-all duration-300" style="width: <?= $attendWidth ?>%"></div>
                 </div>
-                <p class="text-xs text-gray-500"><?= $dp['attendance_percentage'] ?>% hadir</p>
+                <p class="text-xs text-white/80"><?= $dp['attendance_percentage'] ?>% hadir</p>
             </div>
         </div>
+        
         <!-- Progress 7 Kebiasaan -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5 sm:p-6">
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
             <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-semibold text-gray-700">Progress 7 Kebiasaan</h4>
-                <span class="text-xs text-gray-500">Hari ini</span>
+                <h4 class="text-sm font-semibold text-white">7 Kebiasaan Hari Ini</h4>
             </div>
             <div class="mt-2">
-                <div class="flex items-baseline gap-2 mb-1">
-                    <span class="text-2xl font-bold text-gray-900"><?= $dp['habit_logged'] ?></span>
-                    <span class="text-sm text-gray-500">/ <?= $dp['total_students'] ?></span>
+                <div class="flex items-baseline gap-1 mb-2">
+                    <span class="text-3xl font-bold text-white"><?= $dp['habit_logged'] ?></span>
+                    <span class="text-base text-white/70">/ <?= $dp['total_students'] ?></span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
-                    <div class="bg-green-600 h-2" style="width: <?= min(100,(int)$dp['habit_percentage']) ?>%"></div>
+                <?php $habitWidth = min(100, (int)$dp['habit_percentage']); ?>
+                <div class="w-full bg-white/30 rounded-full h-2 mb-2">
+                    <div class="bg-white h-2 rounded-full transition-all duration-300" style="width: <?= $habitWidth ?>%"></div>
                 </div>
-                <p class="text-xs text-gray-500"><?= $dp['habit_percentage'] ?>% sudah input</p>
+                <p class="text-xs text-white/80"><?= $dp['habit_percentage'] ?>% sudah input</p>
             </div>
         </div>
     </div>
@@ -287,52 +291,148 @@
             <h3 class="text-base md:text-lg font-semibold text-gray-900">Rekap Ketidakhadiran (Senin - Jum'at)</h3>
             <p class="text-gray-500 text-xs md:text-sm">Menampilkan daftar siswa yang tidak hadir minggu berjalan</p>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3">
             <?php if (!empty($attendanceData['weekly_absence'])): ?>
-                <?php foreach ($attendanceData['weekly_absence'] as $wd): ?>
-                    <div class="border rounded-lg p-3 md:p-4 bg-gray-50">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
-                            <div class="font-semibold text-gray-800 text-sm md:text-base">
-                                <?= esc($wd['day']) ?> (<?= date('d M Y', strtotime($wd['date'])) ?>)
+                <?php foreach ($attendanceData['weekly_absence'] as $idx => $wd): ?>
+                    <?php 
+                        $totalAbsent = count($wd['alpa']) + count($wd['sakit']) + count($wd['izin']);
+                        $hasData = $totalAbsent > 0;
+                    ?>
+                    <div class="border rounded-lg overflow-hidden <?= $hasData ? 'border-gray-300' : 'border-gray-200' ?>">
+                        <!-- Header - Clickable -->
+                        <button 
+                            type="button"
+                            onclick="toggleDay(<?= $idx ?>)"
+                            class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                        >
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-white border border-gray-200">
+                                    <span class="text-sm font-bold text-gray-700"><?= date('d', strtotime($wd['date'])) ?></span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-sm md:text-base">
+                                        <?= esc($wd['day']) ?>
+                                    </h4>
+                                    <p class="text-xs text-gray-500"><?= date('d M Y', strtotime($wd['date'])) ?></p>
+                                </div>
                             </div>
-                            <div class="text-xs text-gray-500">Alpa / Sakit / Izin</div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-xs md:text-sm">
-                            <div>
-                                <div class="text-red-600 font-medium mb-1">Alpa</div>
-                                <?php if (!empty($wd['alpa'])): ?>
-                                    <ul class="list-disc list-inside space-y-0.5">
-                                        <?php foreach ($wd['alpa'] as $n): ?><li><?= esc($n) ?></li><?php endforeach; ?>
-                                    </ul>
+                            <div class="flex items-center gap-3">
+                                <?php if ($hasData): ?>
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <?php if (count($wd['alpa']) > 0): ?>
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full font-medium">
+                                                Alpa: <?= count($wd['alpa']) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if (count($wd['sakit']) > 0): ?>
+                                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
+                                                Sakit: <?= count($wd['sakit']) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if (count($wd['izin']) > 0): ?>
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+                                                Izin: <?= count($wd['izin']) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
                                 <?php else: ?>
-                                    <div class="text-gray-400 italic">-</div>
+                                    <span class="text-xs text-green-600 font-medium">✓ Semua hadir</span>
                                 <?php endif; ?>
+                                <svg 
+                                    id="icon-<?= $idx ?>" 
+                                    class="w-5 h-5 text-gray-400 transition-transform duration-200" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
                             </div>
-                            <div>
-                                <div class="text-yellow-600 font-medium mb-1">Sakit</div>
-                                <?php if (!empty($wd['sakit'])): ?>
-                                    <ul class="list-disc list-inside space-y-0.5">
-                                        <?php foreach ($wd['sakit'] as $n): ?><li><?= esc($n) ?></li><?php endforeach; ?>
-                                    </ul>
-                                <?php else: ?>
-                                    <div class="text-gray-400 italic">-</div>
-                                <?php endif; ?>
-                            </div>
-                            <div>
-                                <div class="text-blue-600 font-medium mb-1">Izin</div>
-                                <?php if (!empty($wd['izin'])): ?>
-                                    <ul class="list-disc list-inside space-y-0.5">
-                                        <?php foreach ($wd['izin'] as $n): ?><li><?= esc($n) ?></li><?php endforeach; ?>
-                                    </ul>
-                                <?php else: ?>
-                                    <div class="text-gray-400 italic">-</div>
-                                <?php endif; ?>
-                            </div>
+                        </button>
+                        
+                        <!-- Content - Expandable -->
+                        <div id="day-<?= $idx ?>" class="hidden border-t border-gray-200">
+                            <?php if ($hasData): ?>
+                                <div class="p-4 bg-white">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <!-- Alpa -->
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                <span class="text-sm font-semibold text-red-700">Alpa</span>
+                                                <span class="text-xs text-gray-500">(<?= count($wd['alpa']) ?>)</span>
+                                            </div>
+                                            <?php if (!empty($wd['alpa'])): ?>
+                                                <ul class="space-y-1">
+                                                    <?php foreach ($wd['alpa'] as $n): ?>
+                                                        <li class="text-sm text-gray-700 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-red-500">
+                                                            <?= esc($n) ?>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <p class="text-sm text-gray-400 italic pl-4">Tidak ada</p>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Sakit -->
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                                <span class="text-sm font-semibold text-yellow-700">Sakit</span>
+                                                <span class="text-xs text-gray-500">(<?= count($wd['sakit']) ?>)</span>
+                                            </div>
+                                            <?php if (!empty($wd['sakit'])): ?>
+                                                <ul class="space-y-1">
+                                                    <?php foreach ($wd['sakit'] as $n): ?>
+                                                        <li class="text-sm text-gray-700 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-yellow-500">
+                                                            <?= esc($n) ?>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <p class="text-sm text-gray-400 italic pl-4">Tidak ada</p>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Izin -->
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                <span class="text-sm font-semibold text-blue-700">Izin</span>
+                                                <span class="text-xs text-gray-500">(<?= count($wd['izin']) ?>)</span>
+                                            </div>
+                                            <?php if (!empty($wd['izin'])): ?>
+                                                <ul class="space-y-1">
+                                                    <?php foreach ($wd['izin'] as $n): ?>
+                                                        <li class="text-sm text-gray-700 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-blue-500">
+                                                            <?= esc($n) ?>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <p class="text-sm text-gray-400 italic pl-4">Tidak ada</p>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="p-4 bg-green-50">
+                                    <p class="text-sm text-green-700 text-center">
+                                        <span class="font-medium">✓</span> Semua siswa hadir pada hari ini
+                                    </p>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <div class="text-gray-500 text-sm">Belum ada data ketidakhadiran minggu ini.</div>
+                <div class="text-center py-8 text-gray-500 text-sm">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p>Belum ada data ketidakhadiran minggu ini.</p>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -343,6 +443,18 @@
 
 <!-- JavaScript for Dashboard Functionality -->
 <script>
-// All interactive refresh & chart scripts removed with dashboard simplification.
+// Toggle day details
+function toggleDay(index) {
+    const content = document.getElementById('day-' + index);
+    const icon = document.getElementById('icon-' + index);
+    
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        content.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
 </script>
 <?= $this->endSection() ?>

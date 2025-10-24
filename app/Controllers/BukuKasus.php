@@ -28,16 +28,15 @@ class BukuKasus extends BaseController
         
         // Get filter parameters
         $selectedKelas = $this->request->getGet('kelas') ?? '';
-        $selectedStatus = $this->request->getGet('status') ?? '';
         
         if ($userRole === 'admin') {
             // Admin sees all cases
-            $kasusList = $this->bukuKasusModel->getKasusWithDetails($selectedKelas, $selectedStatus);
+            $kasusList = $this->bukuKasusModel->getKasusWithDetails($selectedKelas, '');
         } else if ($userRole === 'walikelas') {
             // Walikelas only sees their class's cases
             $kelas = $this->getKelasByGuruId($userId);
             if ($kelas) {
-                $kasusList = $this->bukuKasusModel->getKasusByKelas($kelas, $selectedStatus);
+                $kasusList = $this->bukuKasusModel->getKasusByKelas($kelas, '');
             } else {
                 $kasusList = [];
             }
@@ -50,7 +49,6 @@ class BukuKasus extends BaseController
             'kasusList' => $kasusList,
             'kelasList' => $this->getAvailableClasses(),
             'selectedKelas' => $selectedKelas,
-            'selectedStatus' => $selectedStatus,
         ];
         
         return view('admin/buku_kasus/index', $data);
@@ -96,12 +94,8 @@ class BukuKasus extends BaseController
         $rules = [
             'siswa_id' => 'required|is_natural_no_zero',
             'tanggal_kejadian' => 'required|valid_date',
-            'jenis_kasus' => 'required',
             'deskripsi_kasus' => 'required|min_length[5]',
-            'status' => 'required|in_list[belum_ditangani,dalam_proses,selesai]',
-            'tingkat_keparahan' => 'required|in_list[Ringan,Sedang,Berat]',
             'tindakan_yang_diambil' => 'permit_empty|string',
-            'catatan_guru' => 'permit_empty|string',
         ];
 
         if (! $this->validate($rules)) {
@@ -121,12 +115,13 @@ class BukuKasus extends BaseController
             'siswa_id' => $siswaId,
             'guru_id' => $userId,
             'tanggal_kejadian' => $this->request->getPost('tanggal_kejadian'),
-            'jenis_kasus' => $this->request->getPost('jenis_kasus'),
             'deskripsi_kasus' => $this->request->getPost('deskripsi_kasus'),
             'tindakan_yang_diambil' => $this->request->getPost('tindakan_yang_diambil'),
-            'status' => $this->request->getPost('status'),
-            'tingkat_keparahan' => $this->request->getPost('tingkat_keparahan'),
-            'catatan_guru' => $this->request->getPost('catatan_guru'),
+            // Set default values for fields we're not using
+            'jenis_kasus' => '-',
+            'status' => 'selesai',
+            'tingkat_keparahan' => '-',
+            'catatan_guru' => null,
         ];
 
         $this->bukuKasusModel->insert($payload);
@@ -173,12 +168,16 @@ class BukuKasus extends BaseController
         $userRole = $session->get('role');
         $userId = $session->get('user_id');
         
-        // Check permission
+        // Check permission - both admin and walikelas can edit
         if (!in_array($userRole, ['admin', 'walikelas'])) {
             return redirect()->to('/dashboard')->with('error', 'Akses ditolak');
         }
         
         $kasus = $this->bukuKasusModel->find($id);
+        
+        if (!$kasus) {
+            return redirect()->to('/buku-kasus')->with('error', 'Kasus tidak ditemukan');
+        }
         
         // If walikelas, verify this is their class's case  
         if ($userRole === 'walikelas') {
@@ -195,6 +194,8 @@ class BukuKasus extends BaseController
             'title' => 'Edit Kasus',
             'kasus' => $kasus,
             'kelasList' => $this->getAvailableClasses(),
+            'siswaList' => $this->siswaModel->getSiswaByClass($siswa['kelas']),
+            'kelasDipilih' => $siswa['kelas'],
             'validation' => \Config\Services::validation(),
         ];
         
@@ -205,12 +206,8 @@ class BukuKasus extends BaseController
     {
         $rules = [
             'tanggal_kejadian' => 'required|valid_date',
-            'jenis_kasus' => 'required',
             'deskripsi_kasus' => 'required|min_length[5]',
-            'status' => 'required|in_list[belum_ditangani,dalam_proses,selesai]',
-            'tingkat_keparahan' => 'required|in_list[Ringan,Sedang,Berat]',
             'tindakan_yang_diambil' => 'permit_empty|string',
-            'catatan_guru' => 'permit_empty|string',
             'siswa_id' => 'permit_empty|if_exist|is_natural_no_zero',
         ];
 
@@ -220,12 +217,8 @@ class BukuKasus extends BaseController
 
         $data = [
             'tanggal_kejadian' => $this->request->getPost('tanggal_kejadian'),
-            'jenis_kasus' => $this->request->getPost('jenis_kasus'),
             'deskripsi_kasus' => $this->request->getPost('deskripsi_kasus'),
             'tindakan_yang_diambil' => $this->request->getPost('tindakan_yang_diambil'),
-            'status' => $this->request->getPost('status'),
-            'tingkat_keparahan' => $this->request->getPost('tingkat_keparahan'),
-            'catatan_guru' => $this->request->getPost('catatan_guru'),
         ];
 
         $siswaId = $this->request->getPost('siswa_id');
@@ -244,9 +237,21 @@ class BukuKasus extends BaseController
         $userRole = $session->get('role');
         $userId = $session->get('user_id');
         
-        // Only admin can delete cases
-        if ($userRole !== 'admin') {
+        // Both admin and walikelas can delete
+        if (!in_array($userRole, ['admin', 'walikelas'])) {
             return redirect()->to('/buku-kasus')->with('error', 'Akses ditolak');
+        }
+        
+        // If walikelas, verify this is their class's case
+        if ($userRole === 'walikelas') {
+            $kasus = $this->bukuKasusModel->find($id);
+            if ($kasus) {
+                $siswa = $this->siswaModel->find($kasus['siswa_id']);
+                $kelas = $this->getKelasByGuruId($userId);
+                if ($kelas !== $siswa['kelas']) {
+                    return redirect()->to('/buku-kasus')->with('error', 'Akses ditolak');
+                }
+            }
         }
         
         $this->bukuKasusModel->delete($id);
@@ -300,7 +305,7 @@ class BukuKasus extends BaseController
         
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->setPaper([0, 0, 612, 936], 'portrait'); // F4/Folio: 215.9mm x 330mm = 612pt x 936pt
         $dompdf->render();
         
         // Stream the PDF to the browser

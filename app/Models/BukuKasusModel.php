@@ -34,9 +34,10 @@ class BukuKasusModel extends Model
     public function getKasusWithDetails($kelasFilter = '', $statusFilter = '', $id = null)
     {
         $builder = $this->db->table('buku_kasus bk');
-        $builder->select('bk.*, s.nama as nama_siswa, s.nipd as nis, s.kelas, s.jk as jenis_kelamin, s.tempat_lahir, s.tanggal_lahir, u.nama as nama_guru, u.email as email_guru');
+        $builder->select('bk.*, s.nama as nama_siswa, s.nipd as nis, s.kelas, s.jk as jenis_kelamin, s.tempat_lahir, s.tanggal_lahir, u.nama as nama_guru, u.email as email_guru, g.nip as nip_guru');
         $builder->join('tb_siswa s', 's.id = bk.siswa_id');
         $builder->join('users u', 'u.id = bk.guru_id');
+        $builder->join('guru g', 'g.nip = u.username OR g.email = u.email', 'left');
         $builder->orderBy('bk.created_at', 'DESC');
         
         // Apply filters
@@ -60,9 +61,10 @@ class BukuKasusModel extends Model
     public function getKasusByKelas($kelas, $statusFilter = '')
     {
         $builder = $this->db->table('buku_kasus bk');
-        $builder->select('bk.*, s.nama as nama_siswa, s.nipd as nis, s.kelas, s.jk as jenis_kelamin, s.tempat_lahir, s.tanggal_lahir, u.nama as nama_guru, u.email as email_guru');
+        $builder->select('bk.*, s.nama as nama_siswa, s.nipd as nis, s.kelas, s.jk as jenis_kelamin, s.tempat_lahir, s.tanggal_lahir, u.nama as nama_guru, u.email as email_guru, g.nip as nip_guru');
         $builder->join('tb_siswa s', 's.id = bk.siswa_id');
         $builder->join('users u', 'u.id = bk.guru_id');
+        $builder->join('guru g', 'g.nip = u.username OR g.email = u.email', 'left');
         $builder->where('s.kelas', $kelas);
         $builder->orderBy('bk.created_at', 'DESC');
         
@@ -77,9 +79,10 @@ class BukuKasusModel extends Model
     public function getKasusBySiswa($siswaId)
     {
         $builder = $this->db->table('buku_kasus bk');
-        $builder->select('bk.*, s.nama as nama_siswa, s.nipd as nis, s.kelas, s.jk as jenis_kelamin, s.tempat_lahir, s.tanggal_lahir, u.nama as nama_guru, u.email as email_guru');
+        $builder->select('bk.*, s.nama as nama_siswa, s.nipd as nis, s.kelas, s.jk as jenis_kelamin, s.tempat_lahir, s.tanggal_lahir, u.nama as nama_guru, u.email as email_guru, g.nip as nip_guru');
         $builder->join('tb_siswa s', 's.id = bk.siswa_id');
         $builder->join('users u', 'u.id = bk.guru_id');
+        $builder->join('guru g', 'g.nip = u.username OR g.email = u.email', 'left');
         $builder->where('bk.siswa_id', $siswaId);
         $builder->orderBy('bk.created_at', 'DESC');
         

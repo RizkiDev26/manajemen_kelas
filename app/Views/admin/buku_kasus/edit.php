@@ -5,138 +5,191 @@ Edit Kasus
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="max-w-4xl mx-auto">
-    <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">Edit Kasus</h1>
-        <nav class="mt-2 text-sm text-gray-500">
-            <ol class="flex items-center space-x-2">
-                <li><a href="<?= base_url('admin') ?>" class="text-indigo-600 hover:underline">Dashboard</a></li>
-                <li>/</li>
-                <li><a href="<?= base_url('buku-kasus') ?>" class="text-indigo-600 hover:underline">Buku Kasus</a></li>
-                <li>/</li>
-                <li class="text-gray-700">Edit</li>
-            </ol>
+<div class="w-full px-6 py-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-edit text-white text-xl"></i>
+                    </div>
+                    Edit Kasus
+                </h1>
+                <p class="mt-2 text-sm text-gray-600">Perbarui informasi kasus siswa</p>
+            </div>
+            <a href="<?= base_url('buku-kasus') ?>" 
+               class="inline-flex items-center gap-2 px-5 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                <i class="fas fa-arrow-left"></i>
+                <span>Kembali</span>
+            </a>
+        </div>
+        <nav class="mt-4 flex items-center space-x-2 text-sm">
+            <a href="<?= base_url('admin') ?>" class="text-indigo-600 hover:text-indigo-800 font-medium">Dashboard</a>
+            <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+            <a href="<?= base_url('buku-kasus') ?>" class="text-indigo-600 hover:text-indigo-800 font-medium">Buku Kasus</a>
+            <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+            <span class="text-gray-700 font-medium">Edit</span>
         </nav>
     </div>
 
     <!-- Flash Messages -->
     <?php if (session()->getFlashdata('error')): ?>
-        <div class="mb-4 rounded-md bg-red-50 p-4 border border-red-200 text-red-800">
-            <div class="flex"><i class="fa-solid fa-triangle-exclamation mr-2"></i><?= session()->getFlashdata('error') ?></div>
+        <div class="mb-6 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 p-4 shadow-sm">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-red-800"><?= session()->getFlashdata('error') ?></p>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 
-    <!-- Validation Errors -->
     <?php if (session()->getFlashdata('errors')): ?>
-        <div class="mb-4 rounded-md bg-red-50 p-4 border border-red-200 text-red-800">
-            <div class="font-medium">Terdapat kesalahan:</div>
-            <ul class="list-disc pl-5 mt-2 space-y-1">
-                <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                    <li><?= esc($error) ?></li>
-                <?php endforeach; ?>
-            </ul>
+        <div class="mb-6 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 p-4 shadow-sm">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-semibold text-red-800 mb-2">Terdapat kesalahan:</p>
+                    <ul class="list-disc pl-5 space-y-1 text-sm text-red-700">
+                        <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                            <li><?= esc($error) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-100">
-            <h2 class="text-gray-800 font-medium"><i class="fa-solid fa-pen-to-square text-indigo-600 mr-2"></i>Form Edit Kasus</h2>
+    <!-- Form Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
+                    <i class="fas fa-file-alt text-white"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Form Edit Kasus</h2>
+                    <p class="text-xs text-gray-600">Perbarui data kasus dengan informasi terbaru</p>
+                </div>
+            </div>
         </div>
-        <div class="px-6 py-5">
-            <form action="<?= base_url('buku-kasus/update/' . $kasus['id']) ?>" method="POST" id="formEditKasus" class="space-y-5">
+
+        <div class="p-6 md:p-8">
+            <form action="<?= base_url('buku-kasus/update/' . $kasus['id']) ?>" method="POST" id="formEditKasus" class="space-y-8">
                 <?= csrf_field() ?>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label for="tanggal_kejadian" class="block text-sm font-medium text-gray-700">Tanggal Kejadian <span class="text-rose-600">*</span></label>
-                        <input type="date" id="tanggal_kejadian" name="tanggal_kejadian" value="<?= old('tanggal_kejadian', $kasus['tanggal_kejadian']) ?>" required
-                               class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm" />
-                    </div>
-                    <div>
-                        <label for="jenis_kasus" class="block text-sm font-medium text-gray-700">Jenis Kasus <span class="text-rose-600">*</span></label>
-                        <select id="jenis_kasus" name="jenis_kasus" required
-                                class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm">
-                            <?php $jenisOptions = ['Kedisiplinan','Akademik','Perilaku','Kesehatan','Sosial','Lainnya']; ?>
-                            <?php foreach ($jenisOptions as $opt): ?>
-                                <option value="<?= $opt ?>" <?= old('jenis_kasus', $kasus['jenis_kasus']) == $opt ? 'selected' : '' ?>><?= $opt ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label for="kelas_nama" class="block text-sm font-medium text-gray-700">Kelas <span class="text-rose-600">*</span></label>
-                        <select id="kelas_nama" name="kelas_nama" required
-                                class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm">
-                            <?php foreach ($kelasList as $kelas): ?>
-                                <option value="<?= $kelas['nama'] ?>" <?= old('kelas_nama', $kelasDipilih) == $kelas['nama'] ? 'selected' : '' ?>><?= $kelas['nama'] ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                <!-- Identitas Siswa -->
+                <div class="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-md">
+                            <i class="fas fa-user-graduate text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Identitas Siswa</h3>
+                            <p class="text-xs text-gray-600">Data siswa dan waktu kejadian</p>
+                        </div>
                     </div>
-                    <div>
-                        <label for="siswa_id" class="block text-sm font-medium text-gray-700">Nama Siswa <span class="text-rose-600">*</span></label>
-                        <select id="siswa_id" name="siswa_id" required
-                                class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm">
-                            <?php foreach ($siswaList as $s): ?>
-                                <option value="<?= $s['id'] ?>" <?= old('siswa_id', $kasus['siswa_id']) == $s['id'] ? 'selected' : '' ?>><?= esc($s['nama']) ?> (<?= esc($s['nis']) ?>)</option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label for="deskripsi_kasus" class="block text-sm font-medium text-gray-700">Deskripsi Kasus <span class="text-rose-600">*</span></label>
-                    <textarea id="deskripsi_kasus" name="deskripsi_kasus" rows="4" required
-                              class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm"><?= old('deskripsi_kasus', $kasus['deskripsi_kasus']) ?></textarea>
-                </div>
-
-                <div>
-                    <label for="tindakan_yang_diambil" class="block text-sm font-medium text-gray-700">Tindakan yang Diambil</label>
-                    <textarea id="tindakan_yang_diambil" name="tindakan_yang_diambil" rows="3"
-                              class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm"><?= old('tindakan_yang_diambil', $kasus['tindakan_yang_diambil']) ?></textarea>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700">Status <span class="text-rose-600">*</span></label>
-                        <select id="status" name="status" required
-                                class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm">
-                            <?php $statusOptions = ['belum_ditangani' => 'Belum Ditangani', 'dalam_proses' => 'Dalam Proses', 'selesai' => 'Selesai']; ?>
-                            <?php foreach ($statusOptions as $val => $label): ?>
-                                <option value="<?= $val ?>" <?= old('status', $kasus['status']) == $val ? 'selected' : '' ?>><?= $label ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="tingkat_keparahan" class="block text-sm font-medium text-gray-700">Tingkat Keparahan <span class="text-rose-600">*</span></label>
-                        <select id="tingkat_keparahan" name="tingkat_keparahan" required
-                                class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm">
-                            <?php foreach (['Ringan','Sedang','Berat'] as $tk): ?>
-                                <option value="<?= $tk ?>" <?= old('tingkat_keparahan', $kasus['tingkat_keparahan']) == $tk ? 'selected' : '' ?>><?= $tk ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="kelas_nama" class="block text-sm font-bold text-gray-700 mb-2">
+                                <i class="fas fa-school text-indigo-600 mr-1"></i>
+                                Kelas <span class="text-rose-600">*</span>
+                            </label>
+                            <select id="kelas_nama" name="kelas_nama" required
+                                    class="block w-full rounded-xl border-2 border-gray-300 bg-white px-4 py-3 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-medium text-gray-700">
+                                <?php foreach ($kelasList as $kelas): ?>
+                                    <option value="<?= $kelas['nama'] ?>" <?= old('kelas_nama', $kelasDipilih) == $kelas['nama'] ? 'selected' : '' ?>>
+                                        <?= $kelas['nama'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="siswa_id" class="block text-sm font-bold text-gray-700 mb-2">
+                                <i class="fas fa-user text-indigo-600 mr-1"></i>
+                                Nama Siswa <span class="text-rose-600">*</span>
+                            </label>
+                            <select id="siswa_id" name="siswa_id" required
+                                    class="block w-full rounded-xl border-2 border-gray-300 bg-white px-4 py-3 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-medium text-gray-700">
+                                <?php foreach ($siswaList as $s): ?>
+                                    <option value="<?= $s['id'] ?>" <?= old('siswa_id', $kasus['siswa_id']) == $s['id'] ? 'selected' : '' ?>>
+                                        <?= esc($s['nama']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="tanggal_kejadian" class="block text-sm font-bold text-gray-700 mb-2">
+                                <i class="fas fa-calendar text-indigo-600 mr-1"></i>
+                                Tanggal Kejadian <span class="text-rose-600">*</span>
+                            </label>
+                            <input type="date" id="tanggal_kejadian" name="tanggal_kejadian" value="<?= old('tanggal_kejadian', $kasus['tanggal_kejadian']) ?>" required
+                                   class="block w-full rounded-xl border-2 border-gray-300 bg-white px-4 py-3 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-medium text-gray-700" />
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <label for="catatan_guru" class="block text-sm font-medium text-gray-700">Catatan Guru</label>
-                    <textarea id="catatan_guru" name="catatan_guru" rows="3"
-                              class="a11y-focus mt-1 block w-full rounded-md border-gray-300 text-sm"><?= old('catatan_guru', $kasus['catatan_guru']) ?></textarea>
+                <!-- Deskripsi Kasus -->
+                <div class="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
+                            <i class="fas fa-file-lines text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Deskripsi Kasus</h3>
+                            <p class="text-xs text-gray-600">Detail kejadian</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="deskripsi_kasus" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-align-left text-indigo-600 mr-1"></i>
+                            Deskripsi Kasus <span class="text-rose-600">*</span>
+                        </label>
+                        <textarea id="deskripsi_kasus" name="deskripsi_kasus" rows="5" required
+                                  placeholder="Jelaskan kronologi kejadian..."
+                                  class="block w-full rounded-xl border-2 border-gray-300 bg-white px-4 py-3 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-medium text-gray-700 resize-none"><?= old('deskripsi_kasus', $kasus['deskripsi_kasus']) ?></textarea>
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-between">
-                    <a href="<?= base_url('buku-kasus') ?>" class="a11y-focus inline-flex items-center px-4 py-2 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50">
-                        <i class="fa-solid fa-arrow-left mr-2"></i> Kembali
+                <!-- Tindakan -->
+                <div class="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
+                            <i class="fas fa-clipboard-check text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Tindakan yang Diambil</h3>
+                            <p class="text-xs text-gray-600">Penanganan kasus</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="tindakan_yang_diambil" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-tasks text-indigo-600 mr-1"></i>
+                            Tindakan yang Diambil
+                        </label>
+                        <textarea id="tindakan_yang_diambil" name="tindakan_yang_diambil" rows="4"
+                                  placeholder="Uraikan tindakan yang telah diambil..."
+                                  class="block w-full rounded-xl border-2 border-gray-300 bg-white px-4 py-3 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-medium text-gray-700 resize-none"><?= old('tindakan_yang_diambil', $kasus['tindakan_yang_diambil']) ?></textarea>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <a href="<?= base_url('buku-kasus') ?>" 
+                       class="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm hover:shadow-md transition-all">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Kembali</span>
                     </a>
-                    <div class="space-x-2">
-                        <a href="<?= base_url('buku-kasus/detail/' . $kasus['id']) ?>" class="a11y-focus inline-flex items-center px-3 py-2 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50">
-                            <i class="fa-solid fa-eye mr-2"></i> Lihat
-                        </a>
-                        <button type="submit" class="a11y-focus inline-flex items-center px-4 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                            <i class="fa-solid fa-floppy-disk mr-2"></i> Simpan Perubahan
-                        </button>
-                    </div>
+                    <button type="submit" 
+                            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <i class="fas fa-save"></i>
+                        <span>Simpan Perubahan</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -152,10 +205,8 @@ document.addEventListener('DOMContentLoaded', function() {
     kelasSelect.addEventListener('change', function() {
         const kelasNama = this.value;
         
-        if (kelasNama !== '<?= $kasus['kelas'] ?>') {
-            siswaSelect.innerHTML = '<option value="">Loading...</option>';
-            siswaSelect.disabled = true;
-        }
+        siswaSelect.innerHTML = '<option value="">Loading...</option>';
+        siswaSelect.disabled = true;
 
         if (kelasNama) {
             fetch('<?= base_url('buku-kasus/get-siswa-by-kelas') ?>', {
@@ -187,14 +238,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 siswaSelect.innerHTML = '<option value="">Error memuat data siswa</option>';
             });
-        } else {
-            siswaSelect.innerHTML = '<option value="">Pilih kelas terlebih dahulu</option>';
-            siswaSelect.disabled = true;
         }
     });
 
     document.getElementById('formEditKasus').addEventListener('submit', function(e) {
-        const requiredFields = ['tanggal_kejadian', 'jenis_kasus', 'kelas_nama', 'siswa_id', 'deskripsi_kasus', 'status', 'tingkat_keparahan'];
+        const requiredFields = ['tanggal_kejadian', 'kelas_nama', 'siswa_id', 'deskripsi_kasus'];
         let isValid = true;
 
         requiredFields.forEach(fieldName => {
